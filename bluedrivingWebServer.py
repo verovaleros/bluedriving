@@ -146,8 +146,10 @@ def get_unread_registers():
 		
 		array.append(dict)
 
-
-	unread_index = row[0]
+	try:
+		unread_index = row[0]
+	except UnboundLocalError:
+		pass
 
 	return je.encode(top)
 
