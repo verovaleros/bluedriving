@@ -35,26 +35,13 @@
 
 
 # Standard imports
-#import os, pwd
-#from stat import *
-#import types
-#from datetime import datetime
-#from time import mktime
-#from time import strptime
-#import logging
-#from subprocess import Popen
-#from subprocess import PIPE
-#import shlex
-#import copy
-#from pyevolve import *
-#import IPy
 import getopt
 import sys
 import BaseHTTPServer
-#from SimpleHTTPServer import SimpleHTTPRequestHandler
-#from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from os import curdir, sep
 import simplejson as json
+import sqlite3
+import copy
 
 ####################
 # Global Variables
@@ -62,6 +49,8 @@ import simplejson as json
 # Debug
 debug=0
 vernum="0.1"
+unread_index = -1
+####################
 
 
 
@@ -74,7 +63,7 @@ def version():
   print "| the Free Software Foundation; either version 2 of the License, or    |"
   print "| (at your option) any later version.                                  |"
   print "|                                                                      |"
-  print "| Author:                                                              |"
+  print "| Author: Sebastian Garcia, eldraco@gmail.com                          |"
   print "| Mateslab Hackspace, www.mateslab.com.ar                              |"
   print "+----------------------------------------------------------------------+"
   print
@@ -89,7 +78,7 @@ def usage():
   print "| the Free Software Foundation; either version 2 of the License, or    |"
   print "| (at your option) any later version.                                  |"
   print "|                                                                      |"
-  print "| Author:                                                              |"
+  print "| Author: Sebastian Garcia, eldraco@gmail.com                          |"
   print "| Mateslab Hackspace, www.mateslab.com.ar                              |"
   print "+----------------------------------------------------------------------+"
   print "\nusage: %s <options>" % sys.argv[0]
@@ -102,6 +91,9 @@ def usage():
 
 
 def createWebServer(port):
+	""" Crate a web server """
+
+	global debug
 	# By default bind to localhost
 	server_address = ('127.0.0.1', port)
 
@@ -120,18 +112,87 @@ def createWebServer(port):
 		httpd.socket.close()
 
 
+def get_unread_registers():
+	""" Get unread registers from the database since the last read and return a json with all the data"""
+	global unread_index
+	conn = sqlite3.connect('bluedriving.db')
+	cursor = conn.cursor()
+	id = (unread_index,)
+
+	# Encoder
+	je = json.JSONEncoder()
+
+	top = {}
+	array = []
+
+	top['UnReadData'] = array
+
+	for row in cursor.execute('SELECT * FROM devices WHERE Id > ?',id):
+		dict = {}
+
+		# ID
+		dict['id'] = row[0]
+		# MAC
+		dict['mac'] = row[1]
+		# Name
+		dict['name'] = row[2]
+		# FirstSeen
+		dict['firstseen'] = row[3]
+		# LastSeen
+		dict['lastseen'] = row[4]
+		# Global position
+		dict['gps'] = row[5]
+
+		
+		array.append(dict)
+
+
+	unread_index = row[0]
+
+	return je.encode(top)
+
+
 
 class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
-
+	""" Handle the requests """
 	def do_GET(self):
+		global debug
 		try:
-			json_to_send = json.dumps("{'test': Yes}")
-			self.send_response(200)
-			self.send_header('Content-Type',        'text/hml')
-			self.end_headers()
-			#self.wfile.write(file.read())
-			self.wfile.write(json_to_send)
-			#file.close()
+			if debug:
+				print ' >> Path: {0}'.format(self.path)
+
+			# Return the basic info about the MACs since last request
+			if self.path == "/data":
+				# Get the unread registers from the DB since last time
+				json_to_send = get_unread_registers()
+
+				#json_to_send = json.dumps("{'test': Yes}")
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/hml')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+
+			# Get a MAC and return all the info about that MAC
+			elif self.path.rfind("/info?mac=") == 0:
+
+				json_to_send = json.dumps("{'more': data}")
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/hml')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+
+			# Get an X amount and return for every MAC the last X positions.
+			elif self.path.rfind("/map?amount=") == 0:
+
+				json_to_send = json.dumps("{'map': amount}")
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/hml')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+
 			return
 
 
