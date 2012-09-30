@@ -33,8 +33,36 @@
 #
 #
 
+
+# Standard imports
+#import os, pwd
+#from stat import *
+#import types
+#from datetime import datetime
+#from time import mktime
+#from time import strptime
+#import logging
+#from subprocess import Popen
+#from subprocess import PIPE
+#import shlex
+#import copy
+#from pyevolve import *
+#import IPy
+import getopt
+import sys
+import BaseHTTPServer
+#from SimpleHTTPServer import SimpleHTTPRequestHandler
+#from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
+from os import curdir, sep
+import simplejson as json
+
+####################
 # Global Variables
-vernum = '0.1'
+
+# Debug
+debug=0
+vernum="0.1"
+
 
 
 # Print version information and exit
@@ -67,38 +95,48 @@ def usage():
   print "\nusage: %s <options>" % sys.argv[0]
   print "options:"
   print "  -h, --help         	Show this help message and exit"
-
-# standard imports
-import os, pwd, string, sys
-from stat import *
-import getopt
-import types
-#from datetime import datetime
-#from time import mktime
-#from time import strptime
-import logging
-#from subprocess import Popen
-#from subprocess import PIPE
-#import shlex
-#import copy
-#from pyevolve import *
-#import IPy
+  print "  -V, --version        Show the version"
+  print "  -v, --verbose        Be verbose"
+  print "  -D, --debug        Debug"
+  print "  -p, --port        Web server tcp port to use"
 
 
-####################
-# Global Variables
+def createWebServer(port):
+	# By default bind to localhost
+	server_address = ('127.0.0.1', port)
 
-# Debug
-debug=0
+	# Create a webserver
+	try:
+		httpd = BaseHTTPServer.HTTPServer(server_address, MyHandler)
+		# Get the socket
+		sa = httpd.socket.getsockname()
 
-vernum="0.1"
+		print "Serving HTTP on", sa[0], "port", sa[1], "..."
+
+		# Run forever
+		httpd.serve_forever()
+	except KeyboardInterrupt:
+		print ' Received, shutting down the server.'
+		httpd.socket.close()
 
 
 
+class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
+
+	def do_GET(self):
+		try:
+			json_to_send = json.dumps("{'test': Yes}")
+			self.send_response(200)
+			self.send_header('Content-Type',        'text/hml')
+			self.end_headers()
+			#self.wfile.write(file.read())
+			self.wfile.write(json_to_send)
+			#file.close()
+			return
 
 
-
-
+		except IOError:
+			self.send_error(404,'File Not Found: {0}'.format(self.path))
 
 
 
@@ -109,8 +147,10 @@ vernum="0.1"
 def main():
 	try:
 		global debug
+		# Default port to use
+		port = 8000
 
-		opts, args = getopt.getopt(sys.argv[1:], "VvDh", ["help","version","verbose","debug"])
+		opts, args = getopt.getopt(sys.argv[1:], "VvDh", ["help","version","verbose","debug","port"])
 	except getopt.GetoptError: usage()
 
 	for opt, arg in opts:
@@ -118,12 +158,13 @@ def main():
 	    if opt in ("-V", "--version"): version();exit(-1)
 	    if opt in ("-v", "--verbose"): verbose=True
 	    if opt in ("-D", "--debug"): debug=1
+	    if opt in ("-p", "--port"): port=int(arg)
 	try:
 
 		try:
 			if True:
-				usage()
-				sys.exit(1)
+				createWebServer(port)
+				
 
 			else:
 				usage()
