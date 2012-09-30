@@ -1,9 +1,8 @@
 #!/usr/bin/python
 
 # TODO
-# Hacer threads para que un thread este todo el tiempo preguntando por los dispositivos alrededor
-# Tener un thread para pedir info de cada device
-
+# - Hacer threads para que un thread este todo el tiempo preguntando por los dispositivos alrededor
+# standar imports
 import sys
 import re
 import getopt
@@ -15,9 +14,8 @@ import bluetooth
 import time
 import gps
 from gps import *;
-import thread
 
-vernum = '0.2'
+vernum = '0.1'
 debug = False
 
 # Print help information and exit:
@@ -44,57 +42,27 @@ def usage():
   
 
 # Bluedrive function
-def bluedrive():
+def bluedrive(cursor,session):
 	global debug
-	global devices
-
-	devices_list = []
 
 	try:
 		if debug:
 			print 'In Bluedrive() function'
 		
-		while True:
-			try:
-				#devices = bluetooth.discover_devices()
-				hci_discovering = s.popen('hcitool scan').read()
-				devices_list = hci_discovering.split('\t')
-				devices_list.remove('Scanning ...\n')
-				if devices_list:
-					devices.append(devices_list)
-			except KeyboardInterrupt:
-				break
-			except:
-				continue
-		print '\nExiting'
-		sys.exit(1)
-
-	except Exception as inst:
-		print 'Error in bluedrive() function.'
-		print type(inst) # the exception instance
-		print inst.args # arguments stored in .args
-		print inst # _str_ allows args to printed directly
-		x, y = inst # _getitem_ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
-
-
-def lookupdevices(cursor,session):
-	global debug
-	global devices
-
-	try:
 		print '  DATE\t\t\t\tMAC ADDRESS\t\tGLOBAL POSITION\t\t\t\tNAME'
 		print '  -----------------------------------------------------------------------------------------------------------'
-
+		
 		while True:
 			try:
+				try:
+					devices = bluetooth.discover_devices()
+				except:
+					continue
+
 				for bdaddr in devices:
 					location = "Global position not found"
 					mac = bdaddr
-					devices.remove(addr)
-					name = devices[0]
-					devices.remove(name)
+					name = bluetooth.lookup_name(mac)
 					if session:
 						try:
 							current = session.next()
@@ -112,23 +80,18 @@ def lookupdevices(cursor,session):
 					except:
 						cursor.execute("UPDATE Devices SET LastSeen=? WHERE MAC=? and gpsInfo=?", (date,mac,location))
 						pass
-				time.sleep(10)
-				cursor.connection.commit()
 			except KeyboardInterrupt:
 				break
-			except Exception as inst:
-				print 'Error in lookfordevices() function.'
-				print type(inst) # the exception instance
-				print inst.args # arguments stored in .args
-				print inst # _str_ allows args to printed directly
-				x, y = inst # _getitem_ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-	except:
-			print '\nError, trying to continue. Hit CTRL-C to exit.'
-			pass
-	cursor.close()
+			except:
+				print '\nError, trying to continue. Hit CTRL-C to exit.'
+				pass
+		print '\n[+] Exiting'
+		cursor.connection.commit()
+		cursor.close()
 
+	except:
+		print 'Error in bluedrive() function'
+                sys.exit(1)
 
 ##########
 # MAIN
@@ -176,8 +139,7 @@ def main():
 			print '\n No GPS session found'
 			session = False
 
-		thread.start_new_thread(bluedrive,("Bluedrive",2))
-		thread.start_new_thread(lookupdevices(cursor,session),("Lookupdevices",2))
+		bluedrive(cursor,session)
 
         except KeyboardInterrupt:
                 # CTRL-C pretty handling
