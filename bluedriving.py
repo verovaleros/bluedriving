@@ -14,9 +14,13 @@ import bluetooth
 import time
 import gps
 from gps import *;
+import threading
 
 vernum = '0.1'
 debug = False
+threadbreak = False
+database = ""
+gps_session= ""
 
 # Print help information and exit:
 def usage():
@@ -41,66 +45,186 @@ def usage():
 	print 
   
 
-# Bluedrive function
-def bluedrive(cursor,session):
+
+# Discovering function
+def discovering():
+	"""
+	This function performs a continue discovering of the nearby bluetooth devices and then sends the list of devices to the lookupdevices function.
+	"""
+
+	global debug
+	global threadbreak
+	global database
+	global gps_session
+
+	try:
+		if debug:
+			print 'In discovering() function'
+		
+		while not threadbreak:
+			try:
+				try:
+					# Discovering devices
+					devices = bluetooth.discover_devices(lookup_names=True)
+				except:
+					continue
+				
+				# If there is some device discovered, then we do this, else we try to discover again
+				if devices:
+					# If there is a gps session opened then we try to get the current position
+					if gps_session:
+						try:
+							try:
+								# This sometimes fail, so we try to get this a couple of times
+								current = gps_session.next()
+								location =  str(current['lat'])+','+str(current['lon'])
+							except:
+								current = gps_session.next()
+								location =  str(current['lat'])+','+str(current['lon'])
+
+						except:
+							location = "GPS not available"
+					else:
+						# If no position found we set this message 
+						location = "GPS not available"
+					
+					# We set the time of the discovering
+					date = time.asctime()
+
+					# We create a new thread to proccess the discovered devices and store the data to a bd
+					threading.Thread(None,lookupdevices,args=(devices,location,date)).start()
+
+			except KeyboardInterrupt:
+				break
+                        except Exception as inst:
+				print 'Exception in while of discovering() function'
+				threadbreak = True
+				print 'Ending threads, exiting when finished'
+                                print type(inst) # the exception instance
+                                print inst.args # arguments stored in .args
+                                print inst # _str_ allows args to printed directly
+                                x, y = inst # _getitem_ allows args to be unpacked directly
+                                print 'x =', x
+                                print 'y =', y
+				return False
+
+		return True
+	except Exception as inst:
+		print 'Exception in discovering() function'
+		threadbreak = True
+		print 'Ending threads, exiting when finished'
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
+
+
+
+def lookupdevices(devices,location,date):
+	"""
+	This function perform a search of data of the list of devices received and call the persistence function to store the data.
+	"""
 	global debug
 
 	try:
 		if debug:
-			print 'In Bluedrive() function'
-		
-		print '  DATE\t\t\t\tMAC ADDRESS\t\tGLOBAL POSITION\t\t\t\tNAME'
-		print '  -----------------------------------------------------------------------------------------------------------'
-		
-		while True:
+			print 'Inside of lookupdevices() function'
+
+		# We search information of all devices discovered
+		for bdaddr,name in devices:
+			Mac = bdaddr
+			Name = name
+			if Name == 'None':
+				Name = bluetooth.lookup_name(Mac)
+			print '  {}\t{}\t{}\t\t{}'.format(date,Mac,location,Name)
+			persistence(Mac,Name,date,location)
+
+		return True
+	except Exception as inst:
+		print 'Exception in lookupdevices() function'
+		threadbreak = True
+		print 'Ending threads, exiting when finished'
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
+
+def persistence(Mac,Name,FirstSeen,GpsInfo):
+	"""
+	This function stores all the information retrieved about a device and stores it in a sqlite database.
+	"""
+	global debug
+	global database
+
+	try:
+		if debug:
+			print 'In persistence() function'
+
+		# Here we check if the database doesn\'t exists
+		if not os.path.exists(database):
+			if debug:
+				print '[+] Creating database'
+			# If it doesn't exists we create the database
+		    	connection = sqlite3.connect(database)
+		    	# Once created the database we create the tables
+			#connection.execute("CREATE TABLE Devices(Mac TEXT, Name TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT)")
+			connection.execute("CREATE TABLE Devices(Id INTEGER, Mac TEXT , Name TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT, PRIMARY KEY(Mac,GpsInfo))")
+			if debug:
+				print '[+] Connecting to database'
+		else:
+			# If the database exists we use it
+			connection = sqlite3.connect(database)
+
+		# Id of the database for web interaction
+		lastid = connection.execute('select Id from Devices order by Id desc limit 1')
+		unique_id_database = lastid.fetchall()
+		if unique_id_database:
+			Id = unique_id_database[0][0] + 1
+		else:
+			Id = 1
+		try:
+			connection.execute("INSERT INTO Devices(Id, Mac, Name, FirstSeen, LastSeen, GpsInfo) VALUES (?, ?, ?, ?, ?, ?)", (int(Id), repr(Mac), repr(Name), repr(FirstSeen), '-',repr(GpsInfo)))
+		except:
 			try:
-				try:
-					devices = bluetooth.discover_devices()
-				except:
-					continue
+				connection.execute("UPDATE Devices SET LastSeen=? WHERE Mac=? and GpsInfo=?", (FirstSeen, Mac, GpsInfo))
+			except Exception as inst:
+				print 'Error writing to the database'
+		
+		connection.commit()
+		connection.close()
 
-				for bdaddr in devices:
-					location = "Global position not found"
-					mac = bdaddr
-					name = bluetooth.lookup_name(mac)
-					if session:
-						try:
-							current = session.next()
-							location =  str(current['lat'])+','+str(current['lon'])
-						except:
-							current = session.next()
-							try:
-								location =  str(current['lat'])+','+str(current['lon'])
-							except:
-								location = "Global position not found"
-					date = time.asctime()
-					print '  '+date+'\t'+mac+'\t'+location+'\t\t'+name
-					try:
-						cursor.execute("INSERT INTO Devices(MAC, Name, FirstSeen, LastSeen, gpsInfo) VALUES (?, ?, ?, ?, ?)", (mac,name,date,'-',location))
-					except:
-						cursor.execute("UPDATE Devices SET LastSeen=? WHERE MAC=? and gpsInfo=?", (date,mac,location))
-						pass
-			except KeyboardInterrupt:
-				break
-			except:
-				print '\nError, trying to continue. Hit CTRL-C to exit.'
-				pass
-		print '\n[+] Exiting'
-		cursor.connection.commit()
-		cursor.close()
+	except Exception as inst:
+		print 'Exception in persistence() function'
+		threadbreak = True
+		print 'Ending threads, exiting when finished'
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
 
-	except:
-		print 'Error in bluedrive() function'
-                sys.exit(1)
+
 
 ##########
 # MAIN
 ##########
 def main():
         global debug
+	global threadbreak
+	global database
+	global gps_session
 
 	database = "bluedriving.db"
-        session = ""
+        gps_session = ""
+        connection = ""
 
 	try:
                 # By default we crawl a max of 5000 distinct URLs
@@ -114,40 +238,44 @@ def main():
                 if opt in ("-D", "--debug"): debug = True
                 if opt in ("-d", "--database"): database = arg
         try:
-		# Here we check if the database doesn\'t exists
-		if not os.path.exists(database):
-			if debug:
-				print '[+] Creating database'
-			# If it doesn't exists we create the database
-		    	connection = sqlite3.connect(database)
-		    	# Once created the database we create the tables
-			#connection.execute("CREATE TABLE Devices(MAC TEXT, Name TEXT, FirstSeen TEXT, LastSeen TEXT, gpsInfo TEXT)")
-			connection.execute("CREATE TABLE Devices(MAC TEXT , Name TEXT, FirstSeen TEXT, LastSeen TEXT, gpsInfo TEXT, PRIMARY KEY(MAC,gpsInfo))")
-		else:
-			if debug:
-				print '[+] Connecting to database'
-			# If the database exists we use it
-		    	connection = sqlite3.connect(database)
 		
-		# Database cursor 
-		cursor = connection.cursor()
 
 		try:
 			# GPS session
-			session = gps(mode=WATCH_ENABLE)
+			gps_session = gps(mode=WATCH_ENABLE)
 		except:
 			print '\n No GPS session found'
-			session = False
+			gps_session = False
 
-		bluedrive(cursor,session)
+		print '  DATE\t\t\t\tMAC ADDRESS\t\tGLOBAL POSITION\t\t\t\tNAME'
+		print '  -----------------------------------------------------------------------------------------------------------'
+		startTime = time.time()
+		threading.Thread(target = discovering).start()
 
+		while True:
+			key = raw_input()
+			if key == 'Q' or key == 'q':
+				threadbreak = True
+				break
+
+		print '\n[+] Exiting'
         except KeyboardInterrupt:
                 # CTRL-C pretty handling
                 print 'Keyboard Interruption!. Exiting.'
-                sys.exit(1)
-	except:
+		threadbreak = True
+		sys.exit(1)
+
+	except Exception as inst:
 		print 'Error in main() function'
-                sys.exit(1)
+		print 'Ending threads, exiting when finished'
+		threadbreak = True
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
 
 
 if __name__ == '__main__':
