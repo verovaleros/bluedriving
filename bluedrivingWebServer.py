@@ -251,39 +251,76 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				self.end_headers()
 				self.wfile.write(json_to_send)
 
-			else:
-				# Read files in the directory
-				extension = self.path.split('.')[1]
-				
-				file = open(curdir + sep + self.path)
+			elif self.path == "/":
+				# give the index.html
+				file = open(curdir + sep + 'index.html')
 
 				temp_read = file.read()
 				file_len = len(temp_read)
 
 				self.send_response(200)
+				self.send_header('Content-Type','text/html; charset=UTF-8')
+				self.send_header('Content-Length',file_len)
+				self.end_headers()
+
+				self.wfile.write(temp_read)
+				file.close()
+
+
+			elif self.path != "/":
+				# Read files in the directory
+
+				try:
+					extension = self.path.split('.')[1]
+				except:
+					# Does not have . on it...
+					self.send_response(200)
+					return
+
+
+				self.send_response(200)
 
 				if extension == 'css':
+					file = open(curdir + sep + self.path)
+					temp_read = file.read()
+					file_len = len(temp_read)
 					self.send_header('Content-Type','text/css')
 					self.send_header('Content-Length',file_len)
 					self.end_headers()
 
 				elif extension == 'png':
+					file = open(curdir + sep + self.path)
+					temp_read = file.read()
+					file_len = len(temp_read)
 					self.send_header('Content-Type','image/png')
 					self.send_header('Content-Length',file_len)
 					self.end_headers()
 
 				elif extension == 'js':
+					file = open(curdir + sep + self.path)
+					temp_read = file.read()
+					file_len = len(temp_read)
 					self.send_header('Content-Type','text/javascript')
 					self.send_header('Content-Length', file_len)
 					self.end_headers()
 
 				elif extension == 'html':
+					file = open(curdir + sep + self.path)
+					temp_read = file.read()
+					file_len = len(temp_read)
 					self.send_header('Content-Type','text/html; charset=UTF-8')
 					self.send_header('Content-Length',file_len)
 					self.end_headers()
+				else:
+					self.send_header('Content-Type','text/html; charset=UTF-8')
+					self.send_header('Content-Length','9')
+					self.end_headers()
+					self.wfile.write('Hi there.')
+					return
 
 				self.wfile.write(temp_read)
 				file.close()
+
 
 			return
 
