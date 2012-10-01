@@ -10,16 +10,14 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
         <link rel="stylesheet" href="style.css">
-        <link rel="javascript" type="text/javascript" href="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
     </head>
     <script type="text/javascript">
-        $("button").click(function(){
-            $.getJSON("http://127.0.0.1:8000/data",function(result){
-                $.each(result, function(i, field){
-                    $("contentbox").append(field + " ");
-                });
-            });
+    $(document).ready(function(){
+    $.getJSON("/data",function(data){
+                $("#contentbox").append( data.UnReadData + " ");
         });
+    });
     </script>
     <body>
         <div id='header'>
