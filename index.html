@@ -10,14 +10,24 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
         <link rel="stylesheet" href="style.css">
+        <link rel="javascript" type="text/javascript" href="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
     </head>
+    <script type="text/javascript">
+        $("button").click(function(){
+            $.getJSON("/data",function(result){
+                $.each(result, function(i, field){
+                    $("contentbox").append(field + " ");
+                });
+            });
+        });
+    </script>
     <body>
         <div id='header'>
             <ul>
                 <li><a href="#"><img src="img/icon-list.png"></br>Results</a></li>
                 <li><a href="#"><img src="img/icon-devices.png"></br>Devices</a></li>
                 <li><a href="#"><img src="img/icon-map.png"></br>Map</a></li>
-                <li><a href="#"><img src="img/icon-play.png"></br>Start</a></li>
+                <li><button><img src="img/icon-play.png">Start</button></li>
             </ul>
         </div>
         <div id='contentbox'>
