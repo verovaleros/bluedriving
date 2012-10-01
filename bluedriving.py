@@ -67,6 +67,7 @@ def discovering():
 					# Discovering devices
 					devices = bluetooth.discover_devices(lookup_names=True)
 				except:
+					print '.'
 					continue
 				
 				# If there is some device discovered, then we do this, else we try to discover again
@@ -190,9 +191,11 @@ def persistence(Mac,Name,FirstSeen,GpsInfo):
 			Id = 1
 		try:
 			connection.execute("INSERT INTO Devices(Id, Mac, Name, FirstSeen, LastSeen, GpsInfo) VALUES (?, ?, ?, ?, ?, ?)", (int(Id), repr(Mac), repr(Name), repr(FirstSeen), '-',repr(GpsInfo)))
+			os.system('play new.ogg -q 2> /dev/null')
 		except:
 			try:
-				connection.execute("UPDATE Devices SET LastSeen=? WHERE Mac=? and GpsInfo=?", (FirstSeen, Mac, GpsInfo))
+				connection.execute("UPDATE Devices SET LastSeen=? WHERE Mac=? and GpsInfo=?", (repr(FirstSeen), repr(Mac), repr(GpsInfo)))
+				os.system('play new.ogg -q 2> /dev/null')
 			except Exception as inst:
 				print 'Error writing to the database'
 		
