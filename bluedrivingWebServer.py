@@ -254,31 +254,35 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 			else:
 				# Read files in the directory
 				extension = self.path.split('.')[1]
+				
+				file = open(curdir + sep + self.path)
+
+				temp_read = file.read()
+				file_len = len(temp_read)
 
 				self.send_response(200)
 
 				if extension == 'css':
 					self.send_header('Content-Type','text/css')
-					self.send_header('Content-Length','400000')
+					self.send_header('Content-Length',file_len)
 					self.end_headers()
 
 				elif extension == 'png':
 					self.send_header('Content-Type','image/png')
-					self.send_header('Content-Length','400000')
+					self.send_header('Content-Length',file_len)
 					self.end_headers()
 
 				elif extension == 'js':
 					self.send_header('Content-Type','text/javascript')
-					self.send_header('Content-Length','400000')
+					self.send_header('Content-Length', file_len)
 					self.end_headers()
 
 				elif extension == 'html':
 					self.send_header('Content-Type','text/html; charset=UTF-8')
-					self.send_header('Content-Length','400000')
+					self.send_header('Content-Length',file_len)
 					self.end_headers()
 
-				file = open(curdir + sep + self.path)
-				self.wfile.write(file.read())
+				self.wfile.write(temp_read)
 				file.close()
 
 			return
