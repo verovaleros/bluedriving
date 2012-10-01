@@ -65,7 +65,7 @@ def discovering():
 			try:
 				try:
 					# Discovering devices
-					devices = bluetooth.discover_devices(lookup_names=True)
+					devices = bluetooth.discover_devices(duration=5,lookup_names=True)
 				except:
 					print '.'
 					continue
@@ -176,6 +176,7 @@ def persistence(Mac,Name,FirstSeen,GpsInfo):
 		    	# Once created the database we create the tables
 			#connection.execute("CREATE TABLE Devices(Mac TEXT, Name TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT)")
 			connection.execute("CREATE TABLE Devices(Id INTEGER, Mac TEXT , Name TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT, PRIMARY KEY(Mac,GpsInfo))")
+			connection.execute("CREATE TABLE Details(Mac TEXT , TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT, PRIMARY KEY(Mac,GpsInfo))")
 			if debug:
 				print '[+] Connecting to database'
 		else:
@@ -264,7 +265,7 @@ def main():
 		print '\n[+] Exiting'
         except KeyboardInterrupt:
                 # CTRL-C pretty handling
-                print 'Keyboard Interruption!. Exiting.'
+                print 'Exiting. It will take a few seconds to bluedriver to exit.'
 		threadbreak = True
 		sys.exit(1)
 
