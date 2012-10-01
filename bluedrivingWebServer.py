@@ -114,44 +114,97 @@ def createWebServer(port):
 
 def get_unread_registers():
 	""" Get unread registers from the database since the last read and return a json with all the data"""
-	global unread_index
-	conn = sqlite3.connect('bluedriving.db')
-	cursor = conn.cursor()
-	id = (unread_index,)
+	try:
 
-	# Encoder
-	je = json.JSONEncoder()
+		global unread_index
+		global debug
+		conn = sqlite3.connect('bluedriving.db')
+		cursor = conn.cursor()
+		id = (unread_index,)
 
-	top = {}
-	array = []
+		# Encoder
+		je = json.JSONEncoder()
 
-	top['UnReadData'] = array
+		top = {}
+		array = []
 
-	for row in cursor.execute('SELECT * FROM devices WHERE Id > ?',id):
-		dict = {}
+		top['UnReadData'] = array
 
-		# ID
-		dict['id'] = row[0]
-		# MAC
-		dict['mac'] = row[1]
-		# Name
-		dict['name'] = row[2]
-		# FirstSeen
-		dict['firstseen'] = row[3]
-		# LastSeen
-		dict['lastseen'] = row[4]
-		# Global position
-		dict['gps'] = row[5]
+		for row in cursor.execute('SELECT * FROM devices WHERE Id > ?',id):
+			dict = {}
 
-		
-		array.append(dict)
+			# ID
+			dict['id'] = row[0]
+			# MAC
+			dict['mac'] = row[1]
+			# Name
+			dict['name'] = row[2]
+			# FirstSeen
+			dict['firstseen'] = row[3]
+			# LastSeen
+			dict['lastseen'] = row[4]
+			# Global position
+			dict['gps'] = row[5]
+
+			
+			array.append(dict)
+
+		try:
+			unread_index = row[0]
+		except UnboundLocalError:
+			pass
+
+		return je.encode(top)
+
+	except Exception as inst:
+		if debug:
+			print '\tError on get_unread_registers()'
+		print type(inst)     # the exception instance
+		print inst.args      # arguments stored in .args
+		print inst           # __str__ allows args to printed directly
+		x, y = inst          # __getitem__ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		exit(-1)
+
+
+
+
+def get_info_from_mac(temp_mac):
+	""" Get info from one mac """
+	global debug
 
 	try:
-		unread_index = row[0]
-	except UnboundLocalError:
-		pass
+		conn = sqlite3.connect('bluedriving.db')
+		cursor = conn.cursor()
+		mac = (temp_mac,)
 
-	return je.encode(top)
+		# Encoder
+		je = json.JSONEncoder()
+
+		# {"Info" : {"ID":0, "MAC":"00:11:22:33:44:55", "Name":"Test", } }
+
+		top = {}
+		array = []
+
+		top['Info'] = array
+
+		for row in cursor.execute('SELECT * FROM details WHERE mac == ?',mac):
+			print row
+
+
+
+	except Exception as inst:
+		if debug:
+			print '\tError on get_info_from_mac()'
+		print type(inst)     # the exception instance
+		print inst.args      # arguments stored in .args
+		print inst           # __str__ allows args to printed directly
+		x, y = inst          # __getitem__ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		exit(-1)
+
 
 
 
@@ -163,6 +216,8 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 			if debug:
 				print ' >> Path: {0}'.format(self.path)
 
+			# Return the index.html
+
 			# Return the basic info about the MACs since last request
 			if self.path == "/data":
 				# Get the unread registers from the DB since last time
@@ -171,17 +226,18 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				#json_to_send = json.dumps("{'test': Yes}")
 
 				self.send_response(200)
-				self.send_header('Content-Type',        'text/hml')
+				self.send_header('Content-Type',        'text/html')
 				self.end_headers()
 				self.wfile.write(json_to_send)
 
 			# Get a MAC and return all the info about that MAC
 			elif self.path.rfind("/info?mac=") == 0:
-
-				json_to_send = json.dumps("{'more': data}")
+				
+				mac = self.path.split('mac=')[1]
+				json_to_send = get_info_from_mac(mac)
 
 				self.send_response(200)
-				self.send_header('Content-Type',        'text/hml')
+				self.send_header('Content-Type',        'text/html')
 				self.end_headers()
 				self.wfile.write(json_to_send)
 
@@ -191,9 +247,39 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				json_to_send = json.dumps("{'map': amount}")
 
 				self.send_response(200)
-				self.send_header('Content-Type',        'text/hml')
+				self.send_header('Content-Type',        'text/html')
 				self.end_headers()
 				self.wfile.write(json_to_send)
+
+			else:
+				# Read files in the directory
+				extension = self.path.split('.')[1]
+
+				self.send_response(200)
+
+				if extension == 'css':
+					self.send_header('Content-Type','text/css')
+					self.send_header('Content-Length','400000')
+					self.end_headers()
+
+				elif extension == 'png':
+					self.send_header('Content-Type','image/png')
+					self.send_header('Content-Length','400000')
+					self.end_headers()
+
+				elif extension == 'js':
+					self.send_header('Content-Type','text/javascript')
+					self.send_header('Content-Length','400000')
+					self.end_headers()
+
+				elif extension == 'html':
+					self.send_header('Content-Type','text/html; charset=UTF-8')
+					self.send_header('Content-Length','400000')
+					self.end_headers()
+
+				file = open(curdir + sep + self.path)
+				self.wfile.write(file.read())
+				file.close()
 
 			return
 
