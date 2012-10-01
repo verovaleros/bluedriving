@@ -14,7 +14,7 @@
     </head>
     <script type="text/javascript">
         $("button").click(function(){
-            $.getJSON("/data",function(result){
+            $.getJSON("http://127.0.0.1:8000/data",function(result){
                 $.each(result, function(i, field){
                     $("contentbox").append(field + " ");
                 });
@@ -27,8 +27,9 @@
                 <li><a href="#"><img src="img/icon-list.png"></br>Results</a></li>
                 <li><a href="#"><img src="img/icon-devices.png"></br>Devices</a></li>
                 <li><a href="#"><img src="img/icon-map.png"></br>Map</a></li>
-                <li><button><img src="img/icon-play.png">Start</button></li>
+                
             </ul>
+            <button>Start</button>
         </div>
         <div id='contentbox'>
             <table id="hor-zebra" summary="">
