@@ -21,7 +21,10 @@ debug = False
 threadbreak = False
 database = ""
 gps_session= ""
-
+GRE='\033[92m'
+END='\033[0m'
+RED='\033[91m'
+CYA='\033[96m'
 # Print help information and exit:
 def usage():
         """
@@ -56,61 +59,92 @@ def discovering():
 	global threadbreak
 	global database
 	global gps_session
+	global GRE
+	global END
 
 	try:
 		if debug:
-			print 'In discovering() function'
-		# We set a timeout to GPS data retrievement.
-		gps_session.sock.settimeout(1)
-		
+			print GRE+'[+] In discovering() function'+END
+			
 		while not threadbreak:
 			try:
+				location = ""
 				try:
+					if debug:
+						print GRE+' - Discovering devices...'+END
 					# Discovering devices
 					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
 				except:
+					if debug:
+						print GRE+' - Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'+END
 					continue
 				
 				# If there is some device discovered, then we do this, else we try to discover again
 				if devices:
+					if debug:
+						print GRE+' - Devices discovered: '+str(len(devices))+END
 					# If there is a gps session opened then we try to get the current position
 					if not gps_session:
+						if debug:
+							print GRE+' - Not GPS session found. Trying to get one. '+END
 						try:
 							gps_session = gps(mode=WATCH_ENABLE)
+							gps_session.sock.settimeout(1)
+							if debug:
+								print GRE+' - GPS session found!'+END
 						except:
 							gps_session = ""
+							location = "GPS not available"
+							if debug:
+								print GRE+' - NOT GPS session found!'+END
 
-					try:
-						attemps = 0
-						location = ""
-						while not location and attemps < 9:
-							try:
-								# This sometimes fail, so we try to get this a couple of times
-								current = gps_session.next()
-								location =  str(current['lat'])+','+str(current['lon'])
-							except:
-								pass
-							attemps = attemps + 1
+					if gps_session:
+						try:
+							if debug:
+								print GRE+' - Trying to get the location'+END
+							attemps = 0
+							while not location and attemps < 9:
+								try:
+									# This sometimes fail, so we try to get this a couple of times
+									current = gps_session.next()
+									location =  str(current['lat'])+','+str(current['lon'])
+								except:
+									pass
+								attemps = attemps + 1
 
-					except:
-						location = "GPS not available"
-					if not location:
-						location = "GPS not available"
+						except:
+							location = "GPS not available"
+							if debug:
+								print GRE+' - Location unavailable! Number of attemps: '+str(attemps)+END
+						if not location:
+							if debug:
+								print GRE+' - Location not found. Number of attemps: '+str(attemps)+END
+							location = "GPS not available"
+						else: 
+							if debug:
+								print GRE+' - Location found after '+str(attemps)+' attemps.'+END
 
 					# We set the time of the discovering
 					date = time.asctime()
+					if debug:
+						print GRE+' - Date retrieved.'+END
 
 					# We create a new thread to proccess the discovered devices and store the data to a bd
 					threading.Thread(None,lookupdevices,args=(devices,location,date)).start()
+					if debug:
+						print GRE+' - A new thread has been created calling the function lookup devices.'+END
+				else:
+					if debug:
+						print GRE+' - No devices discovered'+END
 
 			except KeyboardInterrupt:
+				print '\nKeyboard interrupt in discovering function(). Exiting.\n This may take a few seconds.'
 				threadbreak = True
 				gps_session.close()
 				break
                         except Exception as inst:
 				print 'Exception in while of discovering() function'
 				threadbreak = True
-				gps_session.close()
 				print 'Ending threads, exiting when finished'
                                 print type(inst) # the exception instance
                                 print inst.args # arguments stored in .args
@@ -121,12 +155,10 @@ def discovering():
 				return False
 
 		threadbreak = True
-		gps_session.close()
 		return True
 	except Exception as inst:
 		print 'Exception in discovering() function'
 		threadbreak = True
-		gps_session.close()
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
@@ -143,25 +175,34 @@ def lookupdevices(devices,location,date):
 	This function perform a search of data of the list of devices received and call the persistence function to store the data.
 	"""
 	global debug
+	global RED
+	global END
 
 	try:
 		if debug:
-			print 'Inside of lookupdevices() function'
+			print RED+'[+] Inside of lookupdevices() function'+END
 
 		# We search information of all devices discovered
 		for bdaddr,name in devices:
+			if debug:
+				print RED+' - Processing device: '+str(bdaddr)+' ('+str(name)+')'+END
 			Mac = bdaddr
 			Name = name
 			if Name == 'None':
 				Name = bluetooth.lookup_name(Mac)
 			print '  {}\t{}\t{}\t\t{}'.format(date,Mac,location,Name)
-			persistence(Mac,Name,date,location)
+			if debug:
+				print RED+' - Sending device information to persistence() function.'+END
+			result = persistence(Mac,Name,date,location)
+			if debug and result:
+				print RED+' - Information stored successfully.'+END
+			if debug and not result:
+				print RED+' - An error ocurred saving information to database.'+END
 
 		return True
 	except Exception as inst:
 		print 'Exception in lookupdevices() function'
 		threadbreak = True
-		gps_session.close()
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
@@ -177,26 +218,30 @@ def persistence(Mac,Name,FirstSeen,GpsInfo):
 	"""
 	global debug
 	global database
+	global CYA
+	global END
 
 	try:
 		if debug:
-			print 'In persistence() function'
+			print CYA+'[+] In persistence() function.'+END
 
 		# Here we check if the database doesn\'t exists
 		if not os.path.exists(database):
 			if debug:
-				print '[+] Creating database'
+				print CYA+'- Database doesn\'t exists. Creating it.'+END
 			# If it doesn't exists we create the database
 		    	connection = sqlite3.connect(database)
 		    	# Once created the database we create the tables
-			#connection.execute("CREATE TABLE Devices(Mac TEXT, Name TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT)")
 			connection.execute("CREATE TABLE Devices(Id INTEGER, Mac TEXT , Name TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT, PRIMARY KEY(Mac,GpsInfo))")
-			connection.execute("CREATE TABLE Details(Mac TEXT , TEXT, FirstSeen TEXT, LastSeen TEXT, GpsInfo TEXT, PRIMARY KEY(Mac,GpsInfo))")
+			connection.execute("CREATE TABLE Details(Mac TEXT PRIMARY KEY, Details TEXT)")
 			if debug:
-				print '[+] Connecting to database'
+				print CYA+'- Database created and connection established successfully.'+END
 		else:
 			# If the database exists we use it
 			connection = sqlite3.connect(database)
+			if debug:
+				print CYA+'- Database found!'+END
+				print CYA+'- Connection established successfully.'+END
 
 		# Id of the database for web interaction
 		lastid = connection.execute('select Id from Devices order by Id desc limit 1')
@@ -205,23 +250,34 @@ def persistence(Mac,Name,FirstSeen,GpsInfo):
 			Id = unique_id_database[0][0] + 1
 		else:
 			Id = 1
+		if debug:
+			print CYA+'[+] Row ID obtained'+END
 		try:
 			connection.execute("INSERT INTO Devices(Id, Mac, Name, FirstSeen, LastSeen, GpsInfo) VALUES (?, ?, ?, ?, ?, ?)", (int(Id), repr(Mac), repr(Name), repr(FirstSeen), '-',repr(GpsInfo)))
 			os.system('play new.ogg -q 2> /dev/null')
+			if debug:
+				print CYA+'- New device found and stored!'+END
 		except:
 			try:
 				connection.execute("UPDATE Devices SET LastSeen=? WHERE Mac=? and GpsInfo=?", (repr(FirstSeen), repr(Mac), repr(GpsInfo)))
 				os.system('play new.ogg -q 2> /dev/null')
+				if debug:
+					print CYA+'- A known device found. Information updated!'+END
 			except Exception as inst:
-				print 'Error writing to the database'
+				print CYA+'Error writing to the database'+END
+				connection.commit()
+				connection.close()
+				return False
 		
 		connection.commit()
 		connection.close()
+		if debug:
+			print CYA+'- Data submitted and database connection  closed.'+END
+		return True
 
 	except Exception as inst:
 		print 'Exception in persistence() function'
 		threadbreak = True
-		gps_session.close()
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
@@ -259,16 +315,21 @@ def main():
                 if opt in ("-d", "--database"): database = arg
         try:
 		
+		print '  DATE\t\t\t\tMAC ADDRESS\t\tGLOBAL POSITION\t\t\t\tNAME'
+		print '  -----------------------------------------------------------------------------------------------------------'
 
 		try:
 			# GPS session
 			gps_session = gps(mode=WATCH_ENABLE)
+			if gps_session:
+				# We set a timeout to GPS data retrievement.
+				gps_session.sock.settimeout(1)
+				if debug:
+					print GRE+' - GPS socket timeout set to 1.'+END
 		except:
-			print '\n No GPS session found'
+			print '[+] No GPS session found'
 			gps_session = False
 
-		print '  DATE\t\t\t\tMAC ADDRESS\t\tGLOBAL POSITION\t\t\t\tNAME'
-		print '  -----------------------------------------------------------------------------------------------------------'
 		startTime = time.time()
 		threading.Thread(target = discovering).start()
 
@@ -278,20 +339,21 @@ def main():
 				break
 
 		threadbreak = True
-		gps_session.close()
+		if gps_session:
+			gps_session.close()
 		print '\n[+] Exiting'
         except KeyboardInterrupt:
                 # CTRL-C pretty handling
-                print 'Exiting. It will take a few seconds to bluedriver to exit.'
+                print '\nExiting. It will take a few seconds to bluedriver to exit.'
 		threadbreak = True
-		gps_session.close()
+		if gps_session:
+			gps_session.close()
 		sys.exit(1)
 
 	except Exception as inst:
 		print 'Error in main() function'
 		print 'Ending threads, exiting when finished'
 		threadbreak = True
-		gps_session.close()
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
 		print inst # _str_ allows args to printed directly
