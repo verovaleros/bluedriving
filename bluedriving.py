@@ -25,7 +25,22 @@ GRE='\033[92m'
 END='\033[0m'
 RED='\033[91m'
 CYA='\033[96m'
-# Print help information and exit:
+
+
+def version():
+        """
+        This function prints information about this utility
+        """
+	global RED
+	global END
+
+        print RED
+        print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
+        print "   Authors: verovaleros, eldraco, nanojaus                               "
+        print "   Bluedriver is a bluetooth warwalking utility.                        "
+        print 
+        print END
+ 
 def usage():
         """
         This function prints the posible options of this program.
@@ -93,16 +108,16 @@ def discovering():
 							if debug:
 								print GRE+' - GPS session found!'+END
 						except:
-							gps_session = ""
+							gps_session = False
 							location = "GPS not available"
 							if debug:
 								print GRE+' - NOT GPS session found!'+END
 
 					if gps_session:
 						try:
+							attemps = 0
 							if debug:
 								print GRE+' - Trying to get the location'+END
-							attemps = 0
 							while not location and attemps < 9:
 								try:
 									# This sometimes fail, so we try to get this a couple of times
@@ -113,7 +128,7 @@ def discovering():
 								attemps = attemps + 1
 
 						except:
-							location = "GPS not available"
+							location = ""
 							if debug:
 								print GRE+' - Location unavailable! Number of attemps: '+str(attemps)+END
 						if not location:
@@ -260,7 +275,7 @@ def persistence(Mac,Name,FirstSeen,GpsInfo):
 		except:
 			try:
 				connection.execute("UPDATE Devices SET LastSeen=? WHERE Mac=? and GpsInfo=?", (repr(FirstSeen), repr(Mac), repr(GpsInfo)))
-				os.system('play new.ogg -q 2> /dev/null')
+				os.system('play old.ogg -q 2> /dev/null')
 				if debug:
 					print CYA+'- A known device found. Information updated!'+END
 			except Exception as inst:
@@ -297,6 +312,9 @@ def main():
 	global threadbreak
 	global database
 	global gps_session
+	global GRE
+	global CYA
+	global END
 
 	database = "bluedriving.db"
         gps_session = ""
@@ -315,8 +333,7 @@ def main():
                 if opt in ("-d", "--database"): database = arg
         try:
 		
-		print '  DATE\t\t\t\tMAC ADDRESS\t\tGLOBAL POSITION\t\t\t\tNAME'
-		print '  -----------------------------------------------------------------------------------------------------------'
+		version()
 
 		try:
 			# GPS session
@@ -327,8 +344,10 @@ def main():
 				if debug:
 					print GRE+' - GPS socket timeout set to 1.'+END
 		except:
-			print '  [+] No GPS session found'
 			gps_session = False
+
+		print '  \t  Date\t\t\t    MAC address\t\t      Global position\t\t\t  Name   '
+		print '  ---------------------------------------------------------------------------------------------------------- '
 
 		startTime = time.time()
 		threading.Thread(target = discovering).start()
