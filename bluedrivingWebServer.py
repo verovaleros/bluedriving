@@ -327,6 +327,98 @@ def get_n_positions(n):
 		exit(-1)
 
 
+def add_note_to(mac,note):
+	""" Get a MAC and a note and add the note to the database """
+	import re
+	global debug
+
+	try:
+		# Replace + with spaces.
+		note = note.replace('+', ' ')
+
+		# verify the data types
+		try:
+			# Are they strings?
+			if type(mac) != str or type(note) != str:
+				if debug:
+					print ' >> Some strange attempt to hack the server:1'
+				return ''
+		        # Is the format ok?
+			if len(mac.split(':')) != 6 or len(mac) != 17:
+				if debug:
+					print ' >> Some strange attempt to hack the server:2'
+				return ''
+			# Characters fot the mac
+			if not re.match('^[a-fA-F0-9:]+$',mac):
+				if debug:
+					print ' >> Some strange attempt to hack the server:3'
+				return ''
+			# Characters fot the note
+			if not re.match('^[a-zA-Z0-9 ]+$',note):
+				if debug:
+					print ' >> Some strange attempt to hack the server:4'
+				return ''
+		except Exception as inst:
+			if debug:
+				print ' >> Some strange attempt to hack the server.5'
+			print type(inst)     # the exception instance
+			print inst.args      # arguments stored in .args
+			print inst           # __str__ allows args to printed directly
+			x, y = inst          # __getitem__ allows args to be unpacked directly
+			print 'x =', x
+			print 'y =', y
+			return ''
+
+		# We are hopefully safe here...
+		if debug:
+			print ' >> We are safe'
+
+		# Search fot that mac on the database first...
+		conn = sqlite3.connect('bluedriving.db')
+		cursor = conn.cursor()
+		askmac = ('%'+mac+'%',)
+
+		row = cursor.execute("SELECT * FROM devices WHERE mac like ? limit 1,1",askmac)
+
+		# Does this mac exists?
+		if len(row.fetchall()) == 0:
+			if debug:
+				print ' >> This mac does not exist'
+			return ''
+			
+		cursor = conn.cursor()
+
+		# Try to insert
+		try:
+			cursor.execute("INSERT INTO Details (Mac,Note) values (?,?) ",(mac,note))
+			conn.commit()
+			if debug:
+				print ' >> Inserted values. Mac: {0}, Note:{1}'.format(mac,note)
+			conn.close()
+		except Exception as inst:
+			if debug:
+				print ' >> Some problem inserting in the database in the funcion add_note_to()'
+			print type(inst)     # the exception instance
+			print inst.args      # arguments stored in .args
+			print inst           # __str__ allows args to printed directly
+			x, y = inst          # __getitem__ allows args to be unpacked directly
+			print 'x =', x
+			print 'y =', y
+			return ''
+
+		return 'Ok'
+
+
+	except Exception as inst:
+		if debug:
+			print '\tadd_note_to()'
+		print type(inst)     # the exception instance
+		print inst.args      # arguments stored in .args
+		print inst           # __str__ allows args to printed directly
+		x, y = inst          # __getitem__ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		exit(-1)
 
 
 
@@ -334,14 +426,15 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 	""" Handle the requests """
 	def do_GET(self):
 		global debug
+		note = ""
 		try:
 			if debug:
 				print ' >> Path: {0}'.format(self.path)
 
-			# Return the index.html
-
 			# Return the basic info about the MACs since last request
-			if self.path == "/data":
+			if self.path == '/data':
+				if debug:
+					print ' >> Get /data'
 				# Get the unread registers from the DB since last time
 				json_to_send = get_unread_registers()
 
@@ -352,8 +445,23 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				self.end_headers()
 				self.wfile.write(json_to_send)
 
+			# Get a MAC and add a note in the database 
+			elif self.path.rfind('/note?mac=') == 0: # and self.path.find("note=") > 0:
+				if debug:
+					print ' >> Get /note'
+				mac = str(self.path.split('mac=')[1].split('&')[0])
+				note = str(self.path.split('note=')[1])
+				json_to_send = add_note_to(mac,note)
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/html')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+
 			# Get a MAC and return all the info about that MAC
-			elif self.path.rfind("/info?mac=") == 0:
+			elif self.path.rfind('/info?mac=') == 0:
+				if debug:
+					print ' >> Get /info'
 				
 				mac = self.path.split('mac=')[1]
 				json_to_send = get_info_from_mac(mac)
@@ -364,7 +472,9 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				self.wfile.write(json_to_send)
 
 			# Get an X amount and return for every MAC the last X positions.
-			elif self.path.rfind("/map?amount=") == 0:
+			elif self.path.rfind('/map?amount=') == 0:
+				if debug:
+					print ' >> Get /map'
 
 				n = self.path.split('amount=')[1]
 
@@ -376,7 +486,9 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				self.wfile.write(json_to_send)
 
 			elif self.path == "/":
-				# give the index.html
+				if debug:
+					print ' >> Get /'
+				# Return the index.html
 				file = open(curdir + sep + 'index.html')
 
 				temp_read = file.read()
@@ -393,6 +505,8 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 
 			elif self.path != "/":
 				# Read files in the directory
+				if debug:
+					print ' >> Get generic file'
 
 				try:
 					extension = self.path.split('.')[1]
