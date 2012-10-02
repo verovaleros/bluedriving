@@ -348,19 +348,24 @@ def add_note_to(mac,note):
 				if debug:
 					print ' >> Some strange attempt to hack the server:2'
 				return ''
+		        # Is the len of the noteok?
+			if len(note) > 255:
+				if debug:
+					print ' >> Some strange attempt to hack the server:4'
+				return ''
 			# Characters fot the mac
 			if not re.match('^[a-fA-F0-9:]+$',mac):
 				if debug:
-					print ' >> Some strange attempt to hack the server:3'
+					print ' >> Some strange attempt to hack the server:4'
 				return ''
 			# Characters fot the note
 			if not re.match('^[a-zA-Z0-9 ]+$',note):
 				if debug:
-					print ' >> Some strange attempt to hack the server:4'
+					print ' >> Some strange attempt to hack the server:5'
 				return ''
 		except Exception as inst:
 			if debug:
-				print ' >> Some strange attempt to hack the server.5'
+				print ' >> Some strange attempt to hack the server.6'
 			print type(inst)     # the exception instance
 			print inst.args      # arguments stored in .args
 			print inst           # __str__ allows args to printed directly
