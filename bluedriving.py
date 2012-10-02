@@ -327,7 +327,7 @@ def main():
 				if debug:
 					print GRE+' - GPS socket timeout set to 1.'+END
 		except:
-			print '[+] No GPS session found'
+			print '  [+] No GPS session found'
 			gps_session = False
 
 		startTime = time.time()
