@@ -60,6 +60,8 @@ def discovering():
 	try:
 		if debug:
 			print 'In discovering() function'
+		# We set a timeout to GPS data retrievement.
+		gps_session.sock.settimeout(1)
 		
 		while not threadbreak:
 			try:
@@ -67,14 +69,16 @@ def discovering():
 					# Discovering devices
 					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
 				except:
-					print '.'
 					continue
 				
 				# If there is some device discovered, then we do this, else we try to discover again
 				if devices:
 					# If there is a gps session opened then we try to get the current position
 					if not gps_session:
-						gps_session = gps(mode=WATCH_ENABLE)
+						try:
+							gps_session = gps(mode=WATCH_ENABLE)
+						except:
+							gps_session = ""
 
 					try:
 						attemps = 0
@@ -100,10 +104,13 @@ def discovering():
 					threading.Thread(None,lookupdevices,args=(devices,location,date)).start()
 
 			except KeyboardInterrupt:
+				threadbreak = True
+				gps_session.close()
 				break
                         except Exception as inst:
 				print 'Exception in while of discovering() function'
 				threadbreak = True
+				gps_session.close()
 				print 'Ending threads, exiting when finished'
                                 print type(inst) # the exception instance
                                 print inst.args # arguments stored in .args
@@ -113,10 +120,13 @@ def discovering():
                                 print 'y =', y
 				return False
 
+		threadbreak = True
+		gps_session.close()
 		return True
 	except Exception as inst:
 		print 'Exception in discovering() function'
 		threadbreak = True
+		gps_session.close()
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
@@ -151,6 +161,7 @@ def lookupdevices(devices,location,date):
 	except Exception as inst:
 		print 'Exception in lookupdevices() function'
 		threadbreak = True
+		gps_session.close()
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
@@ -210,6 +221,7 @@ def persistence(Mac,Name,FirstSeen,GpsInfo):
 	except Exception as inst:
 		print 'Exception in persistence() function'
 		threadbreak = True
+		gps_session.close()
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
@@ -242,7 +254,7 @@ def main():
         except getopt.GetoptError: usage()
 
         for opt, arg in opts:
-                if opt in ("-h", "--help"): usage()
+                if opt in ("-h", "--help"): usage();sys.exit()
                 if opt in ("-D", "--debug"): debug = True
                 if opt in ("-d", "--database"): database = arg
         try:
@@ -261,22 +273,25 @@ def main():
 		threading.Thread(target = discovering).start()
 
 		while True:
-			key = raw_input()
-			if key == 'Q' or key == 'q':
-				threadbreak = True
+			k = raw_input()
+			if k == 'Q' or k == 'q':
 				break
 
+		threadbreak = True
+		gps_session.close()
 		print '\n[+] Exiting'
         except KeyboardInterrupt:
                 # CTRL-C pretty handling
                 print 'Exiting. It will take a few seconds to bluedriver to exit.'
 		threadbreak = True
+		gps_session.close()
 		sys.exit(1)
 
 	except Exception as inst:
 		print 'Error in main() function'
 		print 'Ending threads, exiting when finished'
 		threadbreak = True
+		gps_session.close()
 		print type(inst) # the exception instance
 		print inst.args # arguments stored in .args
 		print inst # _str_ allows args to printed directly
