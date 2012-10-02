@@ -90,6 +90,24 @@ def usage():
   print "  -p, --port        Web server tcp port to use"
 
 
+def uniquify(seq, idfun=None): 
+    """ fastes way to uniquify an array"""
+    # order preserving
+    if idfun is None:
+        def idfun(x): return x
+    seen = {}
+    result = []
+    for item in seq:
+        marker = idfun(item)
+        # in old Python versions:
+        # if seen.has_key(marker)
+        # but in new ones:
+        if marker in seen: continue
+        seen[marker] = 1
+        result.append(item)
+    return result
+
+
 def createWebServer(port):
 	""" Crate a web server """
 
@@ -185,12 +203,14 @@ def get_info_from_mac(temp_mac):
 		# {"Info" : {"ID":0, "MAC":"00:11:22:33:44:55", "Name":"Test", } }
 
 		top = {}
-		array = []
+		info = {}
 
-		top['Info'] = array
+		top['Info'] = info
 
-		for row in cursor.execute('SELECT * FROM details WHERE mac == ?',mac):
-			print row
+		#for row in cursor.execute('SELECT * FROM details WHERE mac == ?',mac):
+			#print row
+
+		return je.encode(top)
 
 
 
@@ -204,6 +224,108 @@ def get_info_from_mac(temp_mac):
 		print 'x =', x
 		print 'y =', y
 		exit(-1)
+
+
+def get_n_positions(n):
+	""" Get the n last positions of every MAC in the database """
+	global debug
+
+	try:
+		conn = sqlite3.connect('bluedriving.db')
+		cursor = conn.cursor()
+
+
+		# Get all the macs into an array
+		temp_macs = []
+		uniq_macs = []
+		for row in cursor.execute('SELECT MAC FROM devices ORDER BY MAC'):
+			temp_macs.append(str(row[0]))
+
+		uniq_macs = uniquify(temp_macs)
+		if debug:
+			print ' >> Unique macs: {0}'.format(uniq_macs)
+
+
+		# Encoder
+		je = json.JSONEncoder()
+		
+		# Example
+		# { "map": [ 
+		#		{ "MAC":"00:11:22:33:44:55", 
+		#			"pos": [ 					// Called pos_vect below
+		#					"gps":"-21.0001 -32.0023", 	// Called gps_data below
+		#					"gps":"-44.5423 -56.65544" 
+		#				] }, 
+		#		{}, // Each of this is called data below
+		#		{}, 
+		#		{} 
+		#	   ] } 
+
+		# Top stores everythin
+		top = {}
+
+		# Map is the vector of name 'Map'
+		map = []
+
+		# Link the map vector with the name 'Map'
+		top['Map'] = map
+
+		# For each mac, obtain the last n positions
+		for mac in uniq_macs:
+			#if debug:
+				#print ' >> Asking for mac: {0}'.format(mac)
+
+			# Data holds information for each mac with all its positions
+			data = {}
+			data['MAC'] = mac
+
+			pos_vect=[]
+			data['pos'] = pos_vect
+
+			# gps_data holds all the gps info for a given mac
+			gps_data = {}
+
+			askmac = ('%'+mac+'%',n)
+
+			# Flag to know if this mac has at least one position and avoid returning an empty position vector.
+			no_gps_at_all = True
+			for row in cursor.execute("SELECT * FROM devices WHERE mac like ? ORDER BY LastSeen DESC limit 1,?",askmac):
+				gps = row[5]
+				#print gps
+				if 'not available' not in gps and gps != '':
+					no_gps_at_all = False
+					gps_data['gps'] = gps
+					pos_vect.append(gps)
+					if debug:
+						print ' >> MAC {0} has position: {1}'.format(mac,gps)
+
+			if no_gps_at_all:
+				if debug:
+					print ' >> MAC {0} has no gps position at all.'.format(mac)
+				# This avoids adding an empty data to the map results.
+				continue
+
+			# Store the info of all the positions of one mac
+			map.append(data)
+
+
+		return je.encode(top)
+
+
+
+
+
+	except Exception as inst:
+		if debug:
+			print '\tget_n_positions()'
+		print type(inst)     # the exception instance
+		print inst.args      # arguments stored in .args
+		print inst           # __str__ allows args to printed directly
+		x, y = inst          # __getitem__ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		exit(-1)
+
 
 
 
@@ -244,7 +366,9 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 			# Get an X amount and return for every MAC the last X positions.
 			elif self.path.rfind("/map?amount=") == 0:
 
-				json_to_send = json.dumps("{'map': amount}")
+				n = self.path.split('amount=')[1]
+
+				json_to_send = get_n_positions(int(n))
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
@@ -344,7 +468,7 @@ def main():
 	except getopt.GetoptError: usage()
 
 	for opt, arg in opts:
-	    if opt in ("-h", "--help"): usage()
+	    if opt in ("-h", "--help"): usage();exit(-1)
 	    if opt in ("-V", "--version"): version();exit(-1)
 	    if opt in ("-v", "--verbose"): verbose=True
 	    if opt in ("-D", "--debug"): debug=1
