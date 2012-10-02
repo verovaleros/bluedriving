@@ -65,7 +65,7 @@ def discovering():
 			try:
 				try:
 					# Discovering devices
-					devices = bluetooth.discover_devices(duration=5,lookup_names=True)
+					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
 				except:
 					print '.'
 					continue
@@ -73,22 +73,26 @@ def discovering():
 				# If there is some device discovered, then we do this, else we try to discover again
 				if devices:
 					# If there is a gps session opened then we try to get the current position
-					if gps_session:
-						try:
+					if not gps_session:
+						gps_session = gps(mode=WATCH_ENABLE)
+
+					try:
+						attemps = 0
+						location = ""
+						while not location and attemps < 9:
 							try:
 								# This sometimes fail, so we try to get this a couple of times
 								current = gps_session.next()
 								location =  str(current['lat'])+','+str(current['lon'])
 							except:
-								current = gps_session.next()
-								location =  str(current['lat'])+','+str(current['lon'])
+								pass
+							attemps = attemps + 1
 
-						except:
-							location = "GPS not available"
-					else:
-						# If no position found we set this message 
+					except:
 						location = "GPS not available"
-					
+					if not location:
+						location = "GPS not available"
+
 					# We set the time of the discovering
 					date = time.asctime()
 
