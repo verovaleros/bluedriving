@@ -15,6 +15,7 @@ import time
 import gps
 from gps import *;
 import threading
+import getCoordinatesFromAddress
 
 vernum = '0.1'
 debug = False
@@ -199,13 +200,19 @@ def lookupdevices(devices,location,date):
 
 		# We search information of all devices discovered
 		for bdaddr,name in devices:
+			address = ""
+			coordinates = ""
+
 			if debug:
 				print RED+' - Processing device: '+str(bdaddr)+' ('+str(name)+')'+END
 			Mac = bdaddr
 			Name = name
 			if Name == 'None':
 				Name = bluetooth.lookup_name(Mac)
-			print '  {}\t{}\t{}\t\t{}'.format(date,Mac,location,Name)
+			if location and location != 'GPS not available':
+				[coordinates,address] = getCoordinatesFromAddress.getCoordinates(location) 
+			#print '  {}\t{}\t{}\t\t{}\t\t{}'.format(date,Mac,location,Name,address)
+			print '  '+date+'\t'+Mac+'\t'+location+'\t\t'+Name+'\t\t'+address
 			if debug:
 				print RED+' - Sending device information to persistence() function.'+END
 			result = persistence(Mac,Name,date,location)
@@ -346,8 +353,8 @@ def main():
 		except:
 			gps_session = False
 
-		print '  \t  Date\t\t\t    MAC address\t\t      Global position\t\t\t  Name   '
-		print '  ---------------------------------------------------------------------------------------------------------- '
+		print '  \t  Date\t\t\t    MAC address\t\t      Global position\t\t\t  Name   \t\t   Address'
+		print '  -------------------------------------------------------------------------------------------------------------------------------------------------------------- '
 
 		startTime = time.time()
 		threading.Thread(target = discovering).start()
