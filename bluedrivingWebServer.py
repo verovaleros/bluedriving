@@ -327,14 +327,22 @@ def get_n_positions(n):
 		exit(-1)
 
 
-def add_note_to(mac,note):
+def add_note_to(typeof_call, mac,note):
 	""" Get a MAC and a note and add the note to the database """
 	import re
 	global debug
 
 	try:
+
+		# Input sanitizing
+		##################
+
 		# Replace + with spaces.
 		note = note.replace('+', ' ')
+		if debug:
+			print ' >> Sanitizing Mac: {0} and Note: {1}'.format(mac, note)
+			print type(mac)
+			print type(note)
 
 		# verify the data types
 		try:
@@ -349,7 +357,7 @@ def add_note_to(mac,note):
 					print ' >> Some strange attempt to hack the server:2'
 				return ''
 		        # Is the len of the noteok?
-			if len(note) > 255:
+			if len(note) > 253:
 				if debug:
 					print ' >> Some strange attempt to hack the server:4'
 				return ''
@@ -377,46 +385,90 @@ def add_note_to(mac,note):
 		# We are hopefully safe here...
 		if debug:
 			print ' >> We are safe'
+		# END Input sanitizing
+		##################
 
-		# Search fot that mac on the database first...
-		conn = sqlite3.connect('bluedriving.db')
-		cursor = conn.cursor()
-		askmac = ('%'+mac+'%',)
 
-		row = cursor.execute("SELECT * FROM devices WHERE mac like ? limit 1,1",askmac)
+		if typeof_call == 'add':
+			# Search fot that mac on the database first...
+			conn = sqlite3.connect('bluedriving.db')
+			cursor = conn.cursor()
+			askmac = ('%'+mac+'%',)
 
-		# Does this mac exists?
-		if len(row.fetchall()) == 0:
-			if debug:
-				print ' >> This mac does not exist'
+			row = cursor.execute("SELECT * FROM devices WHERE mac like ? limit 1,1",askmac)
+
+			# Does this mac exists?
+			if len(row.fetchall()) == 0:
+				if debug:
+					print ' >> This mac does not exist'
+				return ''
+				
+			cursor = conn.cursor()
+
+			# Try to insert
+			try:
+				cursor.execute("INSERT INTO Details (Mac,Note) values (?,?) ",(mac,note))
+				conn.commit()
+				if debug:
+					print ' >> Inserted values. Mac: {0}, Note:{1}'.format(mac,note)
+				conn.close()
+			except Exception as inst:
+				if debug:
+					print ' >> Some problem inserting in the database in the funcion add_note_to()'
+				print type(inst)     # the exception instance
+				print inst.args      # arguments stored in .args
+				print inst           # __str__ allows args to printed directly
+				x, y = inst          # __getitem__ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				return ''
+
+			return 'Added'
+
+		elif typeof_call == 'del':
+			# Search fot that mac on the database first...
+			conn = sqlite3.connect('bluedriving.db')
+			cursor = conn.cursor()
+			askmac = ('%'+mac+'%',)
+
+			row = cursor.execute("SELECT * FROM devices WHERE mac like ? limit 1,1",askmac)
+
+			# Does this mac exists?
+			if len(row.fetchall()) == 0:
+				if debug:
+					print ' >> This mac does not exist'
+				return ''
+		
+			asknote = ('%'+note+'%',)
+
+			# The mac does exist. Let's delete it.
+			cursor2 = conn.cursor()
+
+			# Try to delete
+			try:
+				cursor2.execute("DELETE FROM Details where Mac like ? and Note like ?",(mac,note))
+				conn.commit()
+				if debug:
+					print ' >> Deleted values. Mac: {0}, Note:{1}'.format(mac,note)
+				conn.close()
+			except Exception as inst:
+				if debug:
+					print ' >> Some problem deleting in the database in the funcion add_note_to()'
+				print type(inst)     # the exception instance
+				print inst.args      # arguments stored in .args
+				print inst           # __str__ allows args to printed directly
+				x, y = inst          # __getitem__ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				return ''
+
+			return 'Deleted'
+		else:
 			return ''
-			
-		cursor = conn.cursor()
-
-		# Try to insert
-		try:
-			cursor.execute("INSERT INTO Details (Mac,Note) values (?,?) ",(mac,note))
-			conn.commit()
-			if debug:
-				print ' >> Inserted values. Mac: {0}, Note:{1}'.format(mac,note)
-			conn.close()
-		except Exception as inst:
-			if debug:
-				print ' >> Some problem inserting in the database in the funcion add_note_to()'
-			print type(inst)     # the exception instance
-			print inst.args      # arguments stored in .args
-			print inst           # __str__ allows args to printed directly
-			x, y = inst          # __getitem__ allows args to be unpacked directly
-			print 'x =', x
-			print 'y =', y
-			return ''
-
-		return 'Ok'
-
 
 	except Exception as inst:
 		if debug:
-			print '\tadd_note_to()'
+			print '\tProblem in add_note_to()'
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly
@@ -451,12 +503,25 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				self.wfile.write(json_to_send)
 
 			# Get a MAC and add a note in the database 
-			elif self.path.rfind('/note?mac=') == 0: # and self.path.find("note=") > 0:
+			elif self.path.rfind('/addnote?mac=') == 0: # and self.path.find("note=") > 0:
 				if debug:
-					print ' >> Get /note'
+					print ' >> Get /addnote'
 				mac = str(self.path.split('mac=')[1].split('&')[0])
 				note = str(self.path.split('note=')[1])
-				json_to_send = add_note_to(mac,note)
+				json_to_send = add_note_to('add', mac, note)
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/html')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+
+			# Get a MAC and del a note from the database 
+			elif self.path.rfind('/delnote?mac=') == 0: # and self.path.find("note=") > 0:
+				if debug:
+					print ' >> Get /delnote'
+				mac = str(self.path.split('mac=')[1].split('&')[0])
+				note = str(self.path.split('note=')[1])
+				json_to_send = add_note_to('del', mac, note)
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
