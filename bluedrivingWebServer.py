@@ -341,8 +341,6 @@ def add_note_to(typeof_call, mac,note):
 		note = note.replace('+', ' ')
 		if debug:
 			print ' >> Sanitizing Mac: {0} and Note: {1}'.format(mac, note)
-			print type(mac)
-			print type(note)
 
 		# verify the data types
 		try:
@@ -367,7 +365,7 @@ def add_note_to(typeof_call, mac,note):
 					print ' >> Some strange attempt to hack the server:4'
 				return ''
 			# Characters fot the note
-			if not re.match('^[a-zA-Z0-9 ]+$',note):
+			if not re.match('^[a-zA-Z0-9 .,?]+$',note):
 				if debug:
 					print ' >> Some strange attempt to hack the server:5'
 				return ''
@@ -395,12 +393,12 @@ def add_note_to(typeof_call, mac,note):
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
-			row = cursor.execute("SELECT * FROM devices WHERE mac like ? limit 1,1",askmac)
+			row = cursor.execute("SELECT * FROM Devices WHERE Mac like ? limit 0,1",askmac)
 
 			# Does this mac exists?
 			if len(row.fetchall()) == 0:
 				if debug:
-					print ' >> This mac does not exist'
+					print ' >> This mac does not exist: {0}'.format(mac)
 				return ''
 				
 			cursor = conn.cursor()
