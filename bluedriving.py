@@ -154,7 +154,7 @@ def discovering():
 					if debug:
 						print GRE+' - Discovering devices...'+END
 					# Discovering devices
-					devices = bluetooth.discover_devices(duration=4,lookup_names=True)
+					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
 				except:
 					if debug:
 						print GRE+' - Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'+END
