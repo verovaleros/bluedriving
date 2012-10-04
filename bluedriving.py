@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
 # TODO
-# - Hacer threads para que un thread este todo el tiempo preguntando por los dispositivos alrededor
+# Cache the requested coordinates and addresses to save bandwith
+# Cache the device information to avoid extra queries to the database
+
 # standar imports
 import sys
 import re
@@ -17,17 +19,25 @@ from gps import *;
 import threading
 import getCoordinatesFromAddress
 from bluedrivingWebServer import createWebServer
+import lightblue
 
 vernum = '0.1'
 debug = False
 threadbreak = False
 database = ""
 gps_session= ""
+usegps = True
+globallocation = ""
+sound = True
+internet = True
+lookupservices = True
 GRE='\033[92m'
 END='\033[0m'
 RED='\033[91m'
 CYA='\033[96m'
 
+addresses = {}
+deviceservices = {}
 
 def version():
         """
@@ -47,25 +57,75 @@ def usage():
         """
         This function prints the posible options of this program.
         """
-        print "+----------------------------------------------------------------------+"
-        print "| "+ sys.argv[0] + " Version "+ vernum +"                                      |"
-        print "| This program is free software; you can redistribute it and/or modify |"
-        print "| it under the terms of the GNU General Public License as published by |"
-        print "| the Free Software Foundation; either version 2 of the License, or    |"
-        print "| (at your option) any later version.                                  |"
-        print "|                                                                      |"
-        print "| Author: Veronica Valeros, vero.valeros@gmail.com                     |"
-        print "+----------------------------------------------------------------------+"
+	global RED
+	global END
+        
+	print RED
         print
-        print "\nUsage: %s <options>" % sys.argv[0]
-        print "Options:"
-        print "  -h, --help                           Show this help message and exit."
-        print "  -D, --debug                          Debug mode"
-        print "  -d, --database                       Name of the database to store the data"
-        print "  -w, --webserver                      It runs a local webserver to visualize and interact with the collected information"
+	print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
+        print "   Authors: verovaleros, eldraco, nanojaus                               "
+        print "   Bluedriver is a bluetooth warwalking utility.                        "
+        print 
+        print "\n   Usage: %s <options>" % sys.argv[0]
+        print "   Options:"
+        print "  \t-h, --help                           Show this help message and exit."
+        print "  \t-D, --debug                          Debug mode."
+        print "  \t-d, --database                       Name of the database to store the data."
+        print "  \t-w, --webserver                      It runs a local webserver to visualize and interact with the collected information."
+        print "  \t-s, --not-sound                      Do not play the beatiful discovering sounds. Are you sure you wanna miss this?"
+        print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting coordinates and addresses from the web."
+        print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. It make the discovering a little faster."
+        print "  \t-g, --not-gps            		Use this option when you want to run the bluedriving witouth a gpsd connection."
 	print 
-  
+        print END
+ 
 
+def getCoordinatesFromGPS():
+        """
+        """
+        global debug
+        global globallocation
+	global gps_session
+
+	counter = 0
+        try:
+                while True:
+                        if gps_session:
+                                while True:
+					if counter < 10:
+						try:
+							gpsdata = gps_session.next()
+							globallocation =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
+						except Exception, e:
+							#print "misc. exception (runtime error from user callback?):", e
+							globallocation = False
+							counter = counter + 1
+					else:
+						try:
+							try:
+								gps_session.close()
+							except: 
+								pass
+							gps_session = gps(mode=WATCH_ENABLE)
+							gps_session.sock.settimeout(1)
+							counter = 0
+						except:
+							pass
+                        else:
+				try:
+					gps_session = gps(mode=WATCH_ENABLE)
+					gps_session.sock.settimeout(1)
+				except:
+					time.sleep(10)
+					pass
+
+        except KeyboardInterrupt:
+                # CTRL-C pretty handling.
+                print "Keyboard Interruption!. Exiting."
+                sys.exit(1)
+        except Exception, e:
+		print 'Exception in getCoordinatesFromGPS'
+                print "misc. exception (runtime error from user callback?):", e
 
 # Discovering function
 def discovering():
@@ -77,6 +137,9 @@ def discovering():
 	global threadbreak
 	global database
 	global gps_session
+	global usegps
+	global globallocation
+	global addresses
 	global GRE
 	global END
 
@@ -86,12 +149,12 @@ def discovering():
 			
 		while not threadbreak:
 			try:
-				location = ""
+				location = "Not using GPS"
 				try:
 					if debug:
 						print GRE+' - Discovering devices...'+END
 					# Discovering devices
-					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
+					devices = bluetooth.discover_devices(duration=4,lookup_names=True)
 				except:
 					if debug:
 						print GRE+' - Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'+END
@@ -101,35 +164,15 @@ def discovering():
 				if devices:
 					if debug:
 						print GRE+' - Devices discovered: '+str(len(devices))+END
-					# If there is a gps session opened then we try to get the current position
-					if not gps_session:
-						if debug:
-							print GRE+' - Not GPS session found. Trying to get one. '+END
-						try:
-							gps_session = gps(mode=WATCH_ENABLE)
-							gps_session.sock.settimeout(1)
-							if debug:
-								print GRE+' - GPS session found!'+END
-						except:
-							gps_session = False
-							location = "GPS not available"
-							if debug:
-								print GRE+' - NOT GPS session found!'+END
-
-					if gps_session:
+					if usegps:
+						# We try to get the coordinates from the gps 
 						try:
 							attemps = 0
 							if debug:
 								print GRE+' - Trying to get the location'+END
 							while not location and attemps < 9:
-								try:
-									# This sometimes fail, so we try to get this a couple of times
-									current = gps_session.next()
-									location =  str(current['lat'])+','+str(current['lon'])
-								except:
-									pass
+								location = globallocation
 								attemps = attemps + 1
-
 						except:
 							location = ""
 							if debug:
@@ -193,6 +236,7 @@ def lookupdevices(devices,gpsInfo,date):
 	This function perform a search of data of the list of devices received and call the setDeviceInformation function to store the data.
 	"""
 	global debug
+	global internet
 	global RED
 	global END
 
@@ -202,26 +246,59 @@ def lookupdevices(devices,gpsInfo,date):
 
 		# We search information of all devices discovered
 		for bdaddr,name in devices:
-			address = ""
-			info = ""
+			address = "Unknown"
+			Info = ""
 			coordinates = ""
 
 			if debug:
 				print RED+' - Processing device: '+str(bdaddr)+' ('+str(name)+')'+END
+
+			# We set the mac address and the name of the device
 			Mac = bdaddr
 			Name = name
-			if Name == 'None':
-				Name = bluetooth.lookup_name(Mac)
-			if gpsInfo and gpsInfo != 'GPS not available':
-				[coordinates,address] = getCoordinatesFromAddress.getCoordinates(gpsInfo) 
-			address = address.encode("utf-8")
 
-			print '  {:<24}\t{:<17}\t{:<30}\t{:<27}\t{:<30}'.format(date,Mac,Name,gpsInfo,address)
+			# If there is no name for the device we lookup for it
+			if Name == 'None':
+				if debug:
+					print 'Trying to get bluetooth names.'
+				Name = bluetooth.lookup_name(Mac)
+				if debug:
+					print 'End trying to get bluetooth names.'
+
+			# If there is gps location, we try to get the cached address, else we look for it
+			if internet and usegps:
+				if gpsInfo and gpsInfo != 'GPS not available':
+					try:
+						address = addresses[gpsinfo]
+					except:
+						[coordinates,address] = getCoordinatesFromAddress.getCoordinates(gpsInfo) 
+						address = address.encode("utf-8")
+						addresses[coordinates]=address
+
+			# We try to discover the services of the device
+			counter = 0
+			if lookupservices:
+				try:
+					Info = []
+					data = lightblue.findservices(Mac)
+					if data:
+						for i in data:
+							Info.append(i[2])
+					if Info != deviceservices[Mac]:
+						for i in Info:
+							if i not in deviceservices[Mac]:
+								deviceservices[Mac].append(i)
+						Info = deviceservices[Mac]
+				except:
+					pass
+			
+			shortaddress = address.split(', ')[0]+', '+address.split(', ')[1]
+			print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(date,Mac,Name,gpsInfo,shortaddress,repr(Info))
 
 			if debug:
 				print RED+' - Sending device information to setDeviceInformation() function.'+END
 
-			result = setDeviceInformation(Mac,Name,date,gpsInfo,address,info)
+			result = setDeviceInformation(Mac,Name,date,gpsInfo,address,Info)
 			if debug and result:
 				print RED+' - Information stored successfully.'+END
 
@@ -284,28 +361,6 @@ def getDatabaseConnection(database):
 		print 'y =', y
 		sys.exit(1)
 
-def getLocationFromFile():
-	"""
-	"""
-	global debug
-	global CYA
-	global END
-
-	try:
-		pass
-
-	except Exception as inst:
-		print 'Exception in getDatabaseConnection() function'
-		threadbreak = True
-		print 'Ending threads, exiting when finished'
-		print type(inst) # the exception instance
-		print inst.args # arguments stored in .args
-		print inst # _str_ allows args to printed directly
-		x, y = inst # _getitem_ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
-		sys.exit(1)
-
 def getDeviceId(connection,mac):
 	"""
 	This function receives a database name and returns a connection to a database. 
@@ -345,10 +400,12 @@ def addDevice(connection,Mac,Info):
 	global threadbreak 
 	global CYA
 	global END
+	global deviceservices
 
 	try:
 		try:
 			connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(Mac,Info))
+			deviceservices[Mac]=info
 			return True
 		except:
 			return False
@@ -372,6 +429,7 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 	global debug
 	global database
 	global threadbreak 
+	global sound
 	global CYA
 	global END
 
@@ -401,6 +459,12 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 			except:
 				print 'Cant get deviceid'
 
+		if Info:
+			try:
+				connection.execute("UPDATE Devices SET Info=? WHERE Id=?", (repr(Info), repr(deviceid)))
+			except:
+				print 'could not update info'
+
 		try:
 			# This is the structure of the tables in the database
 			#connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
@@ -408,17 +472,28 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 			#connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
 
 			connection.execute("INSERT INTO Locations(Id, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)", (int(deviceid), repr(GPS),repr(FirstSeen),repr(FirstSeen),repr(Address),repr(Name)))
-			os.system('play new.ogg -q 2> /dev/null')
+			if sound:
+				try:
+					os.system('play new.ogg -q 2> /dev/null')
+				except:
+					pass
 			if debug:
 				print CYA+'- Information added successfully!'+END
 		except:
 			try:
 				connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? and GPS=?", (repr(FirstSeen), repr(deviceid), repr(GPS)))
-				os.system('play old.ogg -q 2> /dev/null')
+				if sound:
+					try:
+						os.system('play old.ogg -q 2> /dev/null')
+					except:
+						pass
 				if debug:
 					print CYA+'- A known device found. Information updated!'+END
 			except Exception as inst:
 				print CYA+'Error writing to the database'+END
+				print type(inst) # the exception instance
+				print inst.args # arguments stored in .args
+				print inst # _str_ allows args to printed directly
 				connection.commit()
 				connection.close()
 				threadbreak = True
@@ -452,6 +527,10 @@ def main():
 	global threadbreak
 	global database
 	global gps_session
+	global sound
+	global internet
+	global usegps
+	global lookupservices
 	global GRE
 	global CYA
 	global END
@@ -463,7 +542,7 @@ def main():
 
 	try:
                 # By default we crawl a max of 5000 distinct URLs
-		opts, args = getopt.getopt(sys.argv[1:], "hDd:w", ["help","debug","database=","webserver"])
+		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilg", ["help","debug","database=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps"])
 
 
         except getopt.GetoptError: usage()
@@ -473,31 +552,45 @@ def main():
                 if opt in ("-D", "--debug"): debug = True
                 if opt in ("-d", "--database"): database = arg
                 if opt in ("-w", "--webserver"): runwebserver = True
+                if opt in ("-s", "--disable-sound"): sound = False
+                if opt in ("-i", "--not-internet"): internet = False
+                if opt in ("-l", "--not-lookup-services"): lookupservices = False
+                if opt in ("-g", "--not-gps"): usegps = False
         try:
 		
 		version()
 
-		try:
-			# GPS session
-			gps_session = gps(mode=WATCH_ENABLE)
-			if gps_session:
-				# We set a timeout to GPS data retrievement.
-				gps_session.sock.settimeout(1)
-				if debug:
-					print GRE+' - GPS socket timeout set to 1.'+END
-		except:
-			gps_session = False
+		if usegps:
+			try:
+				# GPS session
+				gps_session = gps(mode=WATCH_ENABLE)
+				if gps_session:
+					# We set a timeout to GPS data retrievement.
+					gps_session.sock.settimeout(1)
+					if debug:
+						print GRE+' - GPS socket timeout set to 1.'+END
+			except:
+				gps_session = False
 
-		print '  {:<24}\t{:<17}\t{:<30}\t{:<27}\t{:<30}'.format("Date","MAC address","Device name","Global Position","Aproximate address")
-		print '  {:<24}\t{:<17}\t{:<30}\t{:<27}\t{:<30}'.format("----","-----------","-----------","---------------","------------------")
+			gpsthread = threading.Thread(None,target=getCoordinatesFromGPS)
+			gpsthread.setDaemon(True)
+			gpsthread.start()
+
+		print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("Date","MAC address","Device name","Global Position","Aproximate address","Info")
+		print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("----","-----------","-----------","---------------","------------------","----")
 
 		startTime = time.time()
-		threading.Thread(target = discovering).start()
+		discoveringthread = threading.Thread(target = discovering)
+		discoveringthread.setDaemon(True)
+		discoveringthread.start()
+
 		if runwebserver:
 			port = 8000
-			webserver = threading.Thread(None,createWebServer,"WebServer",args=(port,))
-			webserver.setDaemon(True)
-			webserver.start()
+			webserverthread = threading.Thread(None,createWebServer,"WebServer",args=(port,))
+			webserverthread.setDaemon(True)
+			webserverthread.start()
+		
+
 
 		k = ""
 		while True:

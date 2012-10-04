@@ -111,14 +111,17 @@ def getCoordinates(address):
 			address = address.rstrip(' ').strip(' ').replace(' ','+')
 			query = api_url+address
 			
-			answer = urllib2.urlopen(query)
-			content = simplejson.load(answer)
-			lat = content['results'][0]['geometry']['location']['lat']
-			lng = content['results'][0]['geometry']['location']['lng']
+			try:
+				answer = urllib2.urlopen(query)
+				content = simplejson.load(answer)
+				lat = content['results'][0]['geometry']['location']['lat']
+				lng = content['results'][0]['geometry']['location']['lng']
 			
-			coordinates = str(lat)+','+str(lng)
-			formattedaddress = content['results'][0]['formatted_address']
-			return [coordinates,formattedaddress]
+				coordinates = str(lat)+','+str(lng)
+				formattedaddress = content['results'][0]['formatted_address']
+				return [coordinates,formattedaddress]
+			except:
+				return ["",""]
 			
 		except Exception, e:
 			print "misc. exception (runtime error from user callback?):", e
