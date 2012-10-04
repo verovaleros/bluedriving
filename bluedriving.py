@@ -247,6 +247,7 @@ def lookupdevices(devices,gpsInfo,date):
 		# We search information of all devices discovered
 		for bdaddr,name in devices:
 			address = "Unknown"
+			shortaddress = address
 			Info = ""
 			coordinates = ""
 
@@ -274,6 +275,10 @@ def lookupdevices(devices,gpsInfo,date):
 						[coordinates,address] = getCoordinatesFromAddress.getCoordinates(gpsInfo) 
 						address = address.encode("utf-8")
 						addresses[coordinates]=address
+				try:
+					shortaddress = address.split(', ')[0]+', '+address.split(', ')[1]
+				except:
+					shortaddress = address
 
 			# We try to discover the services of the device
 			counter = 0
@@ -292,7 +297,6 @@ def lookupdevices(devices,gpsInfo,date):
 				except:
 					pass
 			
-			shortaddress = address.split(', ')[0]+', '+address.split(', ')[1]
 			print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(date,Mac,Name,gpsInfo,shortaddress,repr(Info))
 
 			if debug:
