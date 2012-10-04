@@ -121,7 +121,8 @@ def createWebServer(port):
 		# Get the socket
 		sa = httpd.socket.getsockname()
 
-		print "Serving HTTP on", sa[0], "port", sa[1], "..."
+		if debug:
+			print "Serving HTTP on", sa[0], "port", sa[1], "..."
 
 		# Run forever
 		httpd.serve_forever()
@@ -479,6 +480,10 @@ def add_note_to(typeof_call, mac,note):
 
 class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 	""" Handle the requests """
+
+	def log_message(self, format, *args):
+		        return
+
 	def do_GET(self):
 		global debug
 		note = ""
