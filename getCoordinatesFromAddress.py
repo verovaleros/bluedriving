@@ -121,14 +121,15 @@ def getCoordinates(address):
 				formattedaddress = content['results'][0]['formatted_address']
 				return [coordinates,formattedaddress]
 			except:
-				return ["",""]
+				return [" "," "]
 			
 		except Exception, e:
 			print "misc. exception (runtime error from user callback?):", e
-			return 'Fail getting the coordinates for the given address'
+			return [" "," "]
 
 	except Exception, e:
 		print "misc. exception (runtime error from user callback?):", e
+		sys.exit(1)
 	except KeyboardInterrupt:
 		sys.exit(1)
 

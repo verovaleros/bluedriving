@@ -49,7 +49,7 @@ def version():
         print RED
         print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
         print "   Authors: verovaleros, eldraco, nanojaus                               "
-        print "   Bluedriver is a bluetooth warwalking utility.                        "
+        print "   Bluedriver is a bluetooth wardriving utility.                        "
         print 
         print END
  
@@ -64,7 +64,7 @@ def usage():
         print
 	print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
         print "   Authors: verovaleros, eldraco, nanojaus                               "
-        print "   Bluedriver is a bluetooth warwalking utility.                        "
+        print "   Bluedriver is a bluetooth wardriving utility.                        "
         print 
         print "\n   Usage: %s <options>" % sys.argv[0]
         print "   Options:"
@@ -149,7 +149,6 @@ def discovering():
 			
 		while not threadbreak:
 			try:
-				location = "Not using GPS"
 				try:
 					if debug:
 						print GRE+' - Discovering devices...'+END
@@ -165,6 +164,7 @@ def discovering():
 					if debug:
 						print GRE+' - Devices discovered: '+str(len(devices))+END
 					if usegps:
+						location = "GPS not available"
 						# We try to get the coordinates from the gps 
 						try:
 							attemps = 0
@@ -184,6 +184,8 @@ def discovering():
 						else: 
 							if debug:
 								print GRE+' - Location found after '+str(attemps)+' attemps.'+END
+					else:
+						location = "Not using GPS"
 
 					# We set the time of the discovering
 					date = time.asctime()
@@ -237,8 +239,11 @@ def lookupdevices(devices,gpsInfo,date):
 	"""
 	global debug
 	global internet
+	global usegps
 	global RED
 	global END
+	global addresses
+	global lookupservices
 
 	try:
 		if debug:
@@ -268,36 +273,56 @@ def lookupdevices(devices,gpsInfo,date):
 
 			# If there is gps location, we try to get the cached address, else we look for it
 			if internet and usegps:
-				if gpsInfo and gpsInfo != 'GPS not available':
+				if gpsInfo and gpsInfo != 'GPS not available' and gpsInfo != 'Not using GPS':
 					try:
-						address = addresses[gpsinfo]
+						if debug:
+							print 'addresses vector: {}'.format(addresses)
+						address = addresses[str(gpsInfo)]
+						
 					except:
-						[coordinates,address] = getCoordinatesFromAddress.getCoordinates(gpsInfo) 
+						[coordinates,address] = getCoordinatesFromAddress.getCoordinates(str(gpsInfo)) 
+						if debug:
+							print 'gpsInfo: {}'.format(gpsInfo)
+							print 'address: {}'.format(address)
+							print 'coordinates: {}'.format(coordinates)
+							print 'addresses vector: {}'.format(addresses)
 						address = address.encode("utf-8")
-						addresses[coordinates]=address
+						addresses[str(coordinates)] = ""
+						addresses[str(coordinates)] = address
 				try:
 					shortaddress = address.split(', ')[0]+', '+address.split(', ')[1]
 				except:
 					shortaddress = address
 
 			# We try to discover the services of the device
-			counter = 0
+			shortinfo=""
 			if lookupservices:
 				try:
-					Info = []
-					data = lightblue.findservices(Mac)
-					if data:
-						for i in data:
-							Info.append(i[2])
-					if Info != deviceservices[Mac]:
+					try:
+						services = ""
+						services = devicesservices[Mac]
+					except:
+						services = ""
+					if not services:
+						deviceservices[Mac] = []
+						Info = []
+						data = lightblue.findservices(Mac)
+						if data:
+							for i in data:
+								Info.append(i[2])
 						for i in Info:
 							if i not in deviceservices[Mac]:
 								deviceservices[Mac].append(i)
+							if i:
+								shortinfo = shortinfo+repr(i)+','
+						#shortinfo = Info
 						Info = deviceservices[Mac]
+					else:
+						Info = services
 				except:
 					pass
 			
-			print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(date,Mac,Name,gpsInfo,shortaddress,repr(Info))
+			print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(date,Mac,Name,gpsInfo,shortaddress,shortinfo)
 
 			if debug:
 				print RED+' - Sending device information to setDeviceInformation() function.'+END
