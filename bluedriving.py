@@ -72,10 +72,10 @@ def usage():
         print "  \t-D, --debug                          Debug mode."
         print "  \t-d, --database                       Name of the database to store the data."
         print "  \t-w, --webserver                      It runs a local webserver to visualize and interact with the collected information."
-        print "  \t-s, --not-sound                      Do not play the beatiful discovering sounds. Are you sure you wanna miss this?"
+        print "  \t-s, --not-sound                      Do not play the beautiful discovering sounds. Are you sure you wanna miss this?"
         print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting coordinates and addresses from the web."
         print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. It make the discovering a little faster."
-        print "  \t-g, --not-gps            		Use this option when you want to run the bluedriving witouth a gpsd connection."
+        print "  \t-g, --not-gps            		Use this option when you want to run the bluedriving withouth a gpsd connection."
 	print 
         print END
  
