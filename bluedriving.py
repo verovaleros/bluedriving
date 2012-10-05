@@ -161,10 +161,10 @@ def discovering():
 				
 				# If there is some device discovered, then we do this, else we try to discover again
 				if devices:
+					location = ""
 					if debug:
 						print GRE+' - Devices discovered: '+str(len(devices))+END
 					if usegps:
-						location = "GPS not available"
 						# We try to get the coordinates from the gps 
 						try:
 							attemps = 0
@@ -281,14 +281,14 @@ def lookupdevices(devices,gpsInfo,date):
 						
 					except:
 						[coordinates,address] = getCoordinatesFromAddress.getCoordinates(str(gpsInfo)) 
+						address = address.encode("utf-8")
+						addresses[str(coordinates)] = ""
+						addresses[str(coordinates)] = address
 						if debug:
 							print 'gpsInfo: {}'.format(gpsInfo)
 							print 'address: {}'.format(address)
 							print 'coordinates: {}'.format(coordinates)
 							print 'addresses vector: {}'.format(addresses)
-						address = address.encode("utf-8")
-						addresses[str(coordinates)] = ""
-						addresses[str(coordinates)] = address
 				try:
 					shortaddress = address.split(', ')[0]+', '+address.split(', ')[1]
 				except:
@@ -434,7 +434,6 @@ def addDevice(connection,Mac,Info):
 	try:
 		try:
 			connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(Mac,Info))
-			deviceservices[Mac]=info
 			return True
 		except:
 			return False
@@ -480,6 +479,8 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 		# If the device is not in the devices table then we add it
 		if not deviceid:
 			result = addDevice(connection,Mac,Info)
+			deviceservices[Mac]=""
+			deviceservices[Mac]=Info
 			if not result: 
 				print ' [!] Error adding a new device. Exiting.'
 				threadbreak = True
