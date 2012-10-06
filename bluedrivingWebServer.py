@@ -345,7 +345,7 @@ def get_n_positions(n):
 		exit(-1)
 
 
-def add_note_to(typeof_call, mac,note):
+def note_to(typeof_call, mac,note):
 	""" Get a MAC and a note and add the note to the database """
 	import re
 	global debug
@@ -411,10 +411,13 @@ def add_note_to(typeof_call, mac,note):
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
-			row = cursor.execute("SELECT * FROM Devices WHERE Mac like ? limit 0,1",askmac)
+			row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
 
-			# Does this mac exists?
-			if len(row.fetchall()) == 0:
+			# Check the results, Does this mac exists?
+			res = row.fetchall()
+			if len(res) != 0:
+				(id,) = res[0]
+			else:
 				if debug:
 					print ' >> This mac does not exist: {0}'.format(mac)
 				return ''
@@ -423,14 +426,14 @@ def add_note_to(typeof_call, mac,note):
 
 			# Try to insert
 			try:
-				cursor.execute("INSERT INTO Details (Mac,Note) values (?,?) ",(mac,note))
+				cursor.execute("INSERT INTO Notes (Id,Note) values (?,?) ",(id,note))
 				conn.commit()
 				if debug:
-					print ' >> Inserted values. Mac: {0}, Note:{1}'.format(mac,note)
+					print ' >> Inserted values. Id: {0}, Note:{1}'.format(id,note)
 				conn.close()
 			except Exception as inst:
 				if debug:
-					print ' >> Some problem inserting in the database in the funcion add_note_to()'
+					print ' >> Some problem inserting in the database in the funcion note_to()'
 				print type(inst)     # the exception instance
 				print inst.args      # arguments stored in .args
 				print inst           # __str__ allows args to printed directly
@@ -469,7 +472,7 @@ def add_note_to(typeof_call, mac,note):
 				conn.close()
 			except Exception as inst:
 				if debug:
-					print ' >> Some problem deleting in the database in the funcion add_note_to()'
+					print ' >> Some problem deleting in the database in the funcion note_to()'
 				print type(inst)     # the exception instance
 				print inst.args      # arguments stored in .args
 				print inst           # __str__ allows args to printed directly
@@ -484,7 +487,7 @@ def add_note_to(typeof_call, mac,note):
 
 	except Exception as inst:
 		if debug:
-			print '\tProblem in add_note_to()'
+			print '\tProblem in note_to()'
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly
@@ -528,7 +531,7 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 					print ' >> Get /addnote'
 				mac = str(self.path.split('mac=')[1].split('&')[0])
 				note = str(self.path.split('note=')[1])
-				json_to_send = add_note_to('add', mac, note)
+				json_to_send = note_to('add', mac, note)
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
@@ -541,7 +544,7 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 					print ' >> Get /delnote'
 				mac = str(self.path.split('mac=')[1].split('&')[0])
 				note = str(self.path.split('note=')[1])
-				json_to_send = add_note_to('del', mac, note)
+				json_to_send = note_to('del', mac, note)
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
