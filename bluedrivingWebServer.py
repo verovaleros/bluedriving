@@ -90,24 +90,6 @@ def usage():
   print "  -p, --port        Web server tcp port to use"
 
 
-def uniquify(seq, idfun=None): 
-    """ fastes way to uniquify an array"""
-    # order preserving
-    if idfun is None:
-        def idfun(x): return x
-    seen = {}
-    result = []
-    for item in seq:
-        marker = idfun(item)
-        # in old Python versions:
-        # if seen.has_key(marker)
-        # but in new ones:
-        if marker in seen: continue
-        seen[marker] = 1
-        result.append(item)
-    return result
-
-
 def createWebServer(port):
 	""" Crate a web server """
 
@@ -255,14 +237,12 @@ def get_n_positions(n):
 
 
 		# Get all the macs into an array
-		temp_macs = []
-		uniq_macs = []
-		for row in cursor.execute('SELECT MAC FROM devices ORDER BY MAC'):
-			temp_macs.append(str(row[0]))
+		id_macs = {}
+		for row in cursor.execute('SELECT Mac,Id FROM devices ORDER BY MAC'):
+			id_macs[str(row[1])] = str(row[0])
 
-		uniq_macs = uniquify(temp_macs)
 		if debug:
-			print ' >> Unique macs: {0}'.format(uniq_macs)
+			print ' >> Unique macs: {0}'.format(id_macs)
 
 
 		# Encoder
@@ -290,9 +270,13 @@ def get_n_positions(n):
 		top['Map'] = map
 
 		# For each mac, obtain the last n positions
-		for mac in uniq_macs:
-			#if debug:
-				#print ' >> Asking for mac: {0}'.format(mac)
+		for id in id_macs:
+
+			cursor2 = conn.cursor()
+
+			mac = id_macs[id]
+			if debug:
+				print ' >> Asking for mac: {0}'.format(mac)
 
 			# Data holds information for each mac with all its positions
 			data = {}
@@ -304,19 +288,24 @@ def get_n_positions(n):
 			# gps_data holds all the gps info for a given mac
 			gps_data = {}
 
-			askmac = ('%'+mac+'%',n)
+			#askid = ('%'+id+'%',n)
+			askid = (id,n)
 
 			# Flag to know if this mac has at least one position and avoid returning an empty position vector.
 			no_gps_at_all = True
-			for row in cursor.execute("SELECT * FROM devices WHERE mac like ? ORDER BY LastSeen DESC limit 1,?",askmac):
-				gps = row[5]
-				#print gps
-				if 'not available' not in gps and gps != '':
+			#for row in cursor2.execute("SELECT * FROM Locations WHERE Id like ? ORDER BY LastSeen DESC limit 1,?",(id)):
+			for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
+				gps = row[1]
+				#if debug:
+					#print '  >> Gps: {0}'.format(gps)
+
+				# Add the other string for no gps
+				if 'not available' not in gps and 'Not using' not in gps and gps != '':
 					no_gps_at_all = False
 					gps_data['gps'] = gps
 					pos_vect.append(gps)
 					if debug:
-						print ' >> MAC {0} has position: {1}'.format(mac,gps)
+						print '\t >> MAC {0} has position: {1}'.format(mac,gps)
 
 			if no_gps_at_all:
 				if debug:
@@ -327,12 +316,7 @@ def get_n_positions(n):
 			# Store the info of all the positions of one mac
 			map.append(data)
 
-
 		return je.encode(top)
-
-
-
-
 
 	except Exception as inst:
 		if debug:
