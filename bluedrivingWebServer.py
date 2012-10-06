@@ -450,12 +450,15 @@ def note_to(typeof_call, mac,note):
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
-			row = cursor.execute("SELECT * FROM devices WHERE mac like ? limit 1,1",askmac)
+			row = cursor.execute("SELECT Id FROM devices WHERE Mac like ? limit 0,1",askmac)
 
-			# Does this mac exists?
-			if len(row.fetchall()) == 0:
+			# Check the results, Does this mac exists?
+			res = row.fetchall()
+			if len(res) != 0:
+				(id,) = res[0]
+			else:
 				if debug:
-					print ' >> This mac does not exist'
+					print ' >> This mac does not exist: {0}'.format(mac)
 				return ''
 		
 			asknote = ('%'+note+'%',)
@@ -465,10 +468,10 @@ def note_to(typeof_call, mac,note):
 
 			# Try to delete
 			try:
-				cursor2.execute("DELETE FROM Details where Mac like ? and Note like ?",(mac,note))
+				cursor2.execute("DELETE FROM Notes where Id like ? and Note like ?",(id,note))
 				conn.commit()
 				if debug:
-					print ' >> Deleted values. Mac: {0}, Note:{1}'.format(mac,note)
+					print ' >> Deleted values. Id: {0}, Note:{1}'.format(id,note)
 				conn.close()
 			except Exception as inst:
 				if debug:
