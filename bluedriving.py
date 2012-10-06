@@ -405,7 +405,8 @@ def getDeviceId(connection,mac):
 			macid = connection.execute("SELECT Id FROM Devices WHERE Mac = \""+mac+"\" limit 1")
 
 			macid = macid.fetchall()
-			print 'Macid in getDeviceID() function: {}'.format(macid)
+			if debug:
+				print 'Macid in getDeviceID() function: {}'.format(macid)
 			return macid[0][0]
 		except:
 			return False
