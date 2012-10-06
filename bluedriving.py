@@ -434,10 +434,19 @@ def addDevice(connection,Mac,Info):
 
 	try:
 		try:
-			connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(Mac,Info))
-			return True
-		except:
-			return False
+			connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(Mac,repr(Info)))
+		except Exception as inst:
+			print 'Exception in connection.execute() function'
+			threadbreak = True
+			print 'Ending threads, exiting when finished'
+			print type(inst) # the exception instance
+			print inst.args # arguments stored in .args
+			print inst # _str_ allows args to printed directly
+			x, y = inst # _getitem_ allows args to be unpacked directly
+			print 'x =', x
+			print 'y =', y
+			sys.exit(1)
+
 
 	except Exception as inst:
 		print 'Exception in addDevice() function'
@@ -482,13 +491,6 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 			result = addDevice(connection,Mac,Info)
 			deviceservices[Mac]=""
 			deviceservices[Mac]=Info
-			if not result: 
-				print ' [!] Error adding a new device.'
-				print ' Connection type: {}'.format(type(connection))
-				print ' Mac: {}'.format(Mac)
-				print ' Info: {}'.format(Info)
-				print ' Deviceservices: {}'.format(deviceservices)
-				threadbreak = True
 			try:
 				deviceid = getDeviceId(connection,Mac)
 			except:

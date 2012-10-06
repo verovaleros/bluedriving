@@ -49,7 +49,7 @@ import copy
 # Debug
 debug=0
 vernum="0.1"
-unread_index = -1
+unread_index = 1
 ####################
 
 
@@ -139,7 +139,6 @@ def get_unread_registers():
 		global debug
 		conn = sqlite3.connect('bluedriving.db')
 		cursor = conn.cursor()
-		id = (unread_index,)
 
 		# Encoder
 		je = json.JSONEncoder()
@@ -149,29 +148,47 @@ def get_unread_registers():
 
 		top['UnReadData'] = array
 
-		for row in cursor.execute('SELECT * FROM devices WHERE Id > ?',id):
-			dict = {}
+		for row in cursor.execute('SELECT * FROM Locations'):
 
-			# ID
-			dict['id'] = row[0]
-			# MAC
-			dict['mac'] = row[1]
-			# Name
-			dict['name'] = row[2]
-			# FirstSeen
-			dict['firstseen'] = row[3]
-			# LastSeen
-			dict['lastseen'] = row[4]
-			# Global position
-			dict['gps'] = row[5]
+			if debug:
+				print ' >> Read locations {0}'.format(row)
+			id = (row[0],)
+			newcursor = conn.cursor()
+			unr_in = (unread_index,)
+			# add the limit!
+			#for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ? limit ?,1',(row[0],unread_index)):
+			for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',id):
 
+				unread_index += 1
+
+				if debug:
+					print '  >> New row:{0}'.format(newrow)
+				dict = {}
+				# ID
+				dict['id'] = row[0]
+				# GPS
+				dict['gps'] = row[1]
+				# first seen
+				dict['firstseen'] = row[2]
+				# last seen
+				dict['lastseen'] = row[3]
+				# address
+				dict['address'] = row[4]
+				# name
+				dict['name'] = row[5]
+				# MAC
+				dict['mac'] = newrow[1]
+				# Name
+				dict['info'] = newrow[2]
 			
-			array.append(dict)
+				array.append(dict)
 
+		"""
 		try:
 			unread_index = row[0]
 		except UnboundLocalError:
 			pass
+		"""
 
 		return je.encode(top)
 
@@ -181,9 +198,9 @@ def get_unread_registers():
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly
-		x, y = inst          # __getitem__ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
+		#x, y = inst          # __getitem__ allows args to be unpacked directly
+		#print 'x =', x
+		#print 'y =', y
 		exit(-1)
 
 
