@@ -482,7 +482,11 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 			deviceservices[Mac]=""
 			deviceservices[Mac]=Info
 			if not result: 
-				print ' [!] Error adding a new device. Exiting.'
+				print ' [!] Error adding a new device.'
+				print ' Connection type: {}'.format(type(connection))
+				print ' Mac: {}'.format(Mac)
+				print ' Info: {}'.format(Info)
+				print ' Deviceservices: {}'.format(deviceservices)
 				threadbreak = True
 			try:
 				deviceid = getDeviceId(connection,Mac)
