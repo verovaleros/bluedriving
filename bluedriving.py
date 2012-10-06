@@ -494,40 +494,44 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 				connection.execute("UPDATE Devices SET Info=? WHERE Id=?", (repr(Info), repr(deviceid)))
 			except:
 				print 'could not update info'
+		if deviceid:
 
-		try:
-			# This is the structure of the tables in the database
-			#connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
-			#connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
-			#connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
-
-			connection.execute("INSERT INTO Locations(Id, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)", (int(deviceid), repr(GPS),repr(FirstSeen),repr(FirstSeen),repr(Address),repr(Name)))
-			if sound:
-				try:
-					os.system('play new.ogg -q 2> /dev/null')
-				except:
-					pass
-			if debug:
-				print CYA+'- Information added successfully!'+END
-		except:
 			try:
-				connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? and GPS=?", (repr(FirstSeen), repr(deviceid), repr(GPS)))
+				# This is the structure of the tables in the database
+				#connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
+				#connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
+				#connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
+
+				connection.execute("INSERT INTO Locations(Id, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)", (int(deviceid), repr(GPS),repr(FirstSeen),repr(FirstSeen),repr(Address),repr(Name)))
 				if sound:
 					try:
-						os.system('play old.ogg -q 2> /dev/null')
+						os.system('play new.ogg -q 2> /dev/null')
 					except:
 						pass
 				if debug:
-					print CYA+'- A known device found. Information updated!'+END
-			except Exception as inst:
-				print CYA+'Error writing to the database'+END
-				print type(inst) # the exception instance
-				print inst.args # arguments stored in .args
-				print inst # _str_ allows args to printed directly
-				connection.commit()
-				connection.close()
-				threadbreak = True
-				return False
+					print CYA+'- Information added successfully!'+END
+			except:
+				try:
+					connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? and GPS=?", (repr(FirstSeen), repr(deviceid), repr(GPS)))
+					if sound:
+						try:
+							os.system('play old.ogg -q 2> /dev/null')
+						except:
+							pass
+					if debug:
+						print CYA+'- A known device found. Information updated!'+END
+				except Exception as inst:
+					print CYA+'Error writing to the database'+END
+					print type(inst) # the exception instance
+					print inst.args # arguments stored in .args
+					print inst # _str_ allows args to printed directly
+					connection.commit()
+					connection.close()
+					threadbreak = True
+					return False
+		else:
+			if debug:
+				print 'Not device id could be retrieved for this mac: {}'.format(Mac)
 		
 		connection.commit()
 		connection.close()
