@@ -637,6 +637,35 @@ def main():
 		k = ""
 		while True:
 			k = raw_input()
+			if k == 's':
+				if sound == True:
+					sound = False
+					print GRE+'Sound desactivated'+END
+				else:
+					sound = True
+					print GRE+'Sound activated'+END
+			if k == 'i':
+				if internet == True:
+					internet = False
+					print GRE+'Internet desactivated'+END
+				else:
+					internet = True
+					print GRE+'Internet activated'+END
+			if k == 'l':
+				if lookupservices == True:
+					lookupservices = False
+					print GRE+'Look up services desactivated'+END
+				else:
+					lookupservices = True
+					print GRE+'Look up services activated'+END
+			if k == 'g':
+				if usegps == True:
+					usegps = False
+					print GRE+'GPS desactivated'+END
+				else:
+					usegps = True
+					print GRE+'GPS activated'+END
+
 			if k == 'Q' or k == 'q':
 				break
 
