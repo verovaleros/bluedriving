@@ -221,13 +221,14 @@ def get_info_from_mac(temp_mac):
 		# {"Info" : {"ID":0, "MAC":"00:11:22:33:44:55", "Name":"Test", } }
 
 		top = {}
-		info = {}
+		info = []
+
+		for row in cursor.execute('SELECT Info FROM Devices WHERE Mac == ?',mac):
+			(info,) = row
+			if debug:
+				print ' >> Info retrived: {0}'.format(info)
 
 		top['Info'] = info
-
-		#for row in cursor.execute('SELECT * FROM details WHERE mac == ?',mac):
-			#print row
-
 		return je.encode(top)
 
 
