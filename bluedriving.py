@@ -153,7 +153,7 @@ def discovering():
 					if debug:
 						print GRE+' - Discovering devices...'+END
 					# Discovering devices
-					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
+					devices = bluetooth.discover_devices(duration=2,lookup_names=True)
 				except:
 					if debug:
 						print GRE+' - Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'+END
@@ -365,7 +365,8 @@ def getDatabaseConnection(database):
 		    	connection = sqlite3.connect(database)
 		    	# Once created the database we create the tables
 			connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
-			connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
+			connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
+			#connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
 			connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
 			if debug:
 				print CYA+'- Database created and connection established successfully.'+END
@@ -436,6 +437,7 @@ def addDevice(connection,Mac,Info):
 	try:
 		try:
 			connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(Mac,repr(Info)))
+			connection.commit()
 		except Exception as inst:
 			print 'Exception in connection.execute() function'
 			threadbreak = True
@@ -479,6 +481,8 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 			print CYA+'[+] In setDeviceInformation() function.'+END
 		# We get a database connection
 		connection = getDatabaseConnection(database)
+		if debug:
+			print CYA+'- Database connection opened'
 
 		if not connection:
 			print ' [!] Error in creating a database connection. Exiting.'
@@ -490,18 +494,51 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 		# If the device is not in the devices table then we add it
 		if not deviceid:
 			result = addDevice(connection,Mac,Info)
+			if debug:
+				print CYA+'- New device added to database.'
 			deviceservices[Mac]=""
 			deviceservices[Mac]=Info
 			try:
 				deviceid = getDeviceId(connection,Mac)
-			except:
-				print 'Cant get deviceid'
+				if debug:
+					print CYA+'- Device Id obtained: {}'.format(deviceid) 
+			except Exception as inst:
+				print 'Exception in getDeviceId() function'
+				threadbreak = True
+				print 'Ending threads, exiting when finished'
+				print type(inst) # the exception instance
+				print inst.args # arguments stored in .args
+				print inst # _str_ allows args to printed directly
+				x, y = inst # _getitem_ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				connection.commit()
+				connection.close()
+				sys.exit(1)
+		else:
+			if debug:
+				print CYA+'- Device exists. Device Id retrieved: {}'.format(deviceid)
 
 		if Info:
 			try:
 				connection.execute("UPDATE Devices SET Info=? WHERE Id=?", (repr(Info), repr(deviceid)))
-			except:
-				print 'could not update info'
+				connection.commit()
+				if debug:
+					print CYA+'- Updated the field Info of the table Devices.'+END
+			except Exception as inst:
+				print 'Exception in connection.execute("UPDATE Devices SET Info=? WHERE Id=?") function'
+				threadbreak = True
+				print 'Ending threads, exiting when finished'
+				print type(inst) # the exception instance
+				print inst.args # arguments stored in .args
+				print inst # _str_ allows args to printed directly
+				x, y = inst # _getitem_ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				connection.commit()
+				connection.close()
+				sys.exit(1)
+
 		if deviceid:
 
 			try:
@@ -510,36 +547,54 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 				#connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
 				#connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
 
-				connection.execute("INSERT INTO Locations(Id, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)", (int(deviceid), repr(GPS),repr(FirstSeen),repr(FirstSeen),repr(Address),repr(Name)))
+				connection.execute("INSERT INTO Locations(MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)", (int(deviceid), repr(GPS),repr(FirstSeen),repr(FirstSeen),repr(Address),repr(Name)))
+				connection.commit()
+				if debug:
+					print CYA+'- Inserted a new location row in the table Locations.'+END
 				if sound:
 					try:
 						os.system('play new.ogg -q 2> /dev/null')
-					except:
-						pass
-				if debug:
-					print CYA+'- Information added successfully!'+END
+					except Exception as inst:
+						print CYA+'Error playing sound new.ogg'+END
+						print type(inst) # the exception instance
+						print inst.args # arguments stored in .args
+						print inst # _str_ allows args to printed directly
+						connection.commit()
+						connection.close()
+						threadbreak = True
+						sys.exit(1)
 			except:
 				try:
-					connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? and GPS=?", (repr(FirstSeen), repr(deviceid), repr(GPS)))
+					connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? AND GPS=?", (repr(FirstSeen), repr(deviceid), repr(GPS)))
+					connection.commit()
 					if sound:
 						try:
 							os.system('play old.ogg -q 2> /dev/null')
-						except:
-							pass
+						except Exception as inst:
+							print CYA+'Error playing sound old.ogg'+END
+							print type(inst) # the exception instance
+							print inst.args # arguments stored in .args
+							print inst # _str_ allows args to printed directly
+							connection.commit()
+							connection.close()
+							threadbreak = True
+							sys.exit(1)
 					if debug:
 						print CYA+'- A known device found. Information updated!'+END
 				except Exception as inst:
-					print CYA+'Error writing to the database'+END
+					print CYA+'Error in connection.execute("UPDATE Location SET LastSeen=? WHERE Id=? AND GPS=?) function'+END
 					print type(inst) # the exception instance
 					print inst.args # arguments stored in .args
 					print inst # _str_ allows args to printed directly
 					connection.commit()
 					connection.close()
 					threadbreak = True
-					return False
+					sys.exit(1)
 		else:
 			if debug:
 				print 'Not device id could be retrieved for this mac: {}'.format(Mac)
+			connection.commit()
+			connection.close()
 		
 		connection.commit()
 		connection.close()
@@ -557,7 +612,9 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 		x, y = inst # _getitem_ allows args to be unpacked directly
 		print 'x =', x
 		print 'y =', y
-		return False
+		connection.commit()
+		connectio.close()
+		sys.exit(1)
 
 
 
@@ -637,6 +694,14 @@ def main():
 		k = ""
 		while True:
 			k = raw_input()
+			if k == 'd' or k == 'D':
+				if debug == True:
+					debug = False
+					print GRE+'Debug mode desactivated'+END
+				else:
+					debug = True
+					print GRE+'Debug mode activated'+END
+	
 			if k == 's':
 				if sound == True:
 					sound = False
