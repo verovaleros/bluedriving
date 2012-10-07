@@ -6,19 +6,25 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title></title>
+        <title>BlueDriving</title>
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
         <link rel="stylesheet" href="style.css">
-        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+
+
+    	<script type="text/javascript">
+		$(document).ready(function(){
+			$.getJSON("http://localhost:8000/data", {},function(data) {
+				$.each(data.UnReadData, function(i,item){
+					// Add the data to the table...
+					$("#hor-zebra").append('<tr><td>'+ item.lastseen +'</td><td>'+ item.mac + '</td><td>'+ item.gps + '</td><td>'+ item.name + '</tr>');
+			    });
+			  });
+		});
+	</script>
+
     </head>
-    <script type="text/javascript">
-    $(document).ready(function(){
-    $.getJSON("/data",function(data){
-                $("#contentbox").append( data.UnReadData + " ");
-        });
-    });
-    </script>
     <body>
         <div id='header'>
             <ul>

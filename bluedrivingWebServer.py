@@ -171,8 +171,10 @@ def get_unread_registers():
 		except UnboundLocalError:
 			pass
 		"""
+		response = je.encode(top)
 
-		return je.encode(top)
+		#response = "{\"UnReadData\" : \"Test\", \"Segundo\" : \"SedundoDato\" }"
+		return response
 
 	except Exception as inst:
 		if debug:
