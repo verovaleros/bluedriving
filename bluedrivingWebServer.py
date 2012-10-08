@@ -149,15 +149,15 @@ def get_unread_registers():
 				# ID
 				dict['id'] = row[0]
 				# GPS
-				dict['gps'] = row[1]
+				dict['gps'] = row[2]
 				# first seen
-				dict['firstseen'] = row[2]
+				dict['firstseen'] = row[3]
 				# last seen
-				dict['lastseen'] = row[3]
+				dict['lastseen'] = row[4]
 				# address
-				dict['address'] = row[4]
+				dict['address'] = row[5]
 				# name
-				dict['name'] = row[5]
+				dict['name'] = row[6]
 				# MAC
 				dict['mac'] = newrow[1]
 				# Name
@@ -295,7 +295,6 @@ def get_n_positions(n):
 
 			# Flag to know if this mac has at least one position and avoid returning an empty position vector.
 			no_gps_at_all = True
-			#for row in cursor2.execute("SELECT * FROM Locations WHERE Id like ? ORDER BY LastSeen DESC limit 1,?",(id)):
 			for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
 				gps = row[1]
 				#if debug:

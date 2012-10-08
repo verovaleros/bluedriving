@@ -122,6 +122,12 @@ textarea {
     background: #e8edff; 
 }
 
+#hor-zebra .selected
+{
+	background: #f8edff;
+}
+
+
 ul {
     float:left;
     width:100%;

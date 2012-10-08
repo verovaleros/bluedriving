@@ -12,66 +12,104 @@
         <link rel="stylesheet" href="style.css">
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 
-
-    	<script type="text/javascript">
+	<!-- This is to add the basic information in the main web page. -->
+	<script type="text/javascript">
 		$(document).ready(function(){
-			$.getJSON("http://localhost:8000/data", {},function(data) {
-				$.each(data.UnReadData, function(i,item){
-					// Add the data to the table...
-					$("#hor-zebra").append('<tr><td>'+ item.lastseen +'</td><td>'+ item.mac + '</td><td>'+ item.gps + '</td><td>'+ item.name + '</tr>');
-			    });
-			  });
-		});
+
+		function utf8_decode (str_data) {
+			var newstring = str_data.replace(/\\x/g,"%");
+		  	return decodeURI(newstring);
+		}
+
+
+
+		// Returns a sanitized version of text
+		function esc( text ) {
+			return text
+				.replace( '&', '&amp;' )
+				.replace( '<', '&lt;' )
+				.replace( '>', '&gt;' )
+			}
+
+
+		function fillTable( devices ) {
+			var e = esc;
+			var html = [], h = -1;
+			html[++h] = '<tbody>';
+			for ( var device, i = -1; device = devices[++i]; ) {
+				html[++h] = '<tr><td class="date">';
+				html[++h] = e(device.lastseen);
+				html[++h] = ' ';
+				html[++h] = '</td><td class="mac">';
+				html[++h] = e(device.mac);
+				html[++h] = ' ';
+				html[++h] = '</td><td class="position">';
+				html[++h] = e(device.gps);
+				html[++h] = ' ';
+				html[++h] = '</td><td class="address">';
+				//html[++h] = utf8_decode(e(device.address));
+				html[++h] = utf8_decode(e(device.address));
+				html[++h] = ' ';
+				html[++h] = '</td><td class="name">';
+				html[++h] = e(device.name);
+				html[++h] = '</td></tr>';
+				}
+			html[++h] = '</tbody>';
+			//$('#hor-zebra')[0].innerHTML = html.join('');
+			$('#hor-zebra').append(html.join(''));
+			}
+
+
+			$.getJSON("http://localhost:8000/data", {}, function(data) {
+				fillTable( data.UnReadData );	
+				changeColors();
+				addClicks();
+				});
+			
+
+
+		// Change the colors of the table
+		function changeColors () {
+			$('#hor-zebra tr:odd').addClass('odd');
+		};
+
+		//Add the click event 
+		function addClicks () {
+			//$('#hor-zebra tr').click( function(){ alert('Clickeaste el item con nombre ' + $('#hor-zebra tr')[$('#hor-zebra tr').index(this)].cells[3].innerHTML);    });
+			$('#hor-zebra tr').click( function(){ 
+						// First de-select rows
+						$('#hor-zebra tr').removeClass('selected') 
+						// second select rows
+						$('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')').addClass('selected') 
+						});
+		};
+
+
+		}); // Ends of ready function
 	</script>
 
     </head>
     <body>
-        <div id='header'>
+        <div id='header' style='width:900px'>
             <ul>
                 <li><a href="#"><img src="img/icon-list.png"></br>Results</a></li>
                 <li><a href="#"><img src="img/icon-devices.png"></br>Devices</a></li>
                 <li><a href="#"><img src="img/icon-map.png"></br>Map</a></li>
                 
             </ul>
-            <button>Start</button>
         </div>
-        <div id='contentbox'>
-            <table id="hor-zebra" summary="">
-                <thead>
-                    <tr>
-                        <th scope="col">DATE</th>
-                        <th scope="col">MAC ADDRESS</th>
-                        <th scope="col">GLOBAL POSITION</th>
-                        <th scope="col">NAME</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr class="odd">
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr class="odd">
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
+        <div id='contentbox' style='width:900px'>
+		<table id="hor-zebra" summary="" style='width:900px'>
+			<thead>
+			    <tr>
+				<th scope="col">DATE</th>
+				<th scope="col">MAC ADDRESS</th>
+				<th scope="col">GLOBAL POSITION</th>
+				<th scope="col">ADDRESS</th>
+				<th scope="col">NAME</th>
+			    </tr>
+			</thead>
+		</table>
         </div>
     </body>
 </html>
