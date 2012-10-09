@@ -16,12 +16,24 @@
 	<script type="text/javascript">
 		$(document).ready(function(){
 
+		// Execute the getData function every x miliseconds.
+		getData();
+
+		// Get the data with json
+		function getData() {
+			$.getJSON("http://localhost:8000/data", {}, function(data) {
+				fillTable( data.UnReadData );	
+				changeColors();
+				addClicks();
+				setTimeout(getData,3000);
+				});
+			};
+
+		// Decode utf8
 		function utf8_decode (str_data) {
 			var newstring = str_data.replace(/\\x/g,"%");
 		  	return decodeURI(newstring);
-		}
-
-
+			};
 
 		// Returns a sanitized version of text
 		function esc( text ) {
@@ -29,9 +41,9 @@
 				.replace( '&', '&amp;' )
 				.replace( '<', '&lt;' )
 				.replace( '>', '&gt;' )
-			}
+			};
 
-
+		// Fill the table with data
 		function fillTable( devices ) {
 			var e = esc;
 			var html = [], h = -1;
@@ -57,32 +69,24 @@
 			html[++h] = '</tbody>';
 			//$('#hor-zebra')[0].innerHTML = html.join('');
 			$('#hor-zebra').append(html.join(''));
-			}
+			};
 
-
-			$.getJSON("http://localhost:8000/data", {}, function(data) {
-				fillTable( data.UnReadData );	
-				changeColors();
-				addClicks();
-				});
-			
 
 
 		// Change the colors of the table
 		function changeColors () {
 			$('#hor-zebra tr:odd').addClass('odd');
-		};
+			};
 
 		//Add the click event 
 		function addClicks () {
-			//$('#hor-zebra tr').click( function(){ alert('Clickeaste el item con nombre ' + $('#hor-zebra tr')[$('#hor-zebra tr').index(this)].cells[3].innerHTML);    });
 			$('#hor-zebra tr').click( function(){ 
-						// First de-select rows
-						$('#hor-zebra tr').removeClass('selected') 
-						// second select rows
-						$('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')').addClass('selected') 
-						});
-		};
+				// First de-select rows
+				$('#hor-zebra tr').removeClass('selected') 
+				// second select rows
+				$('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')').addClass('selected') 
+				});
+			};
 
 
 		}); // Ends of ready function
