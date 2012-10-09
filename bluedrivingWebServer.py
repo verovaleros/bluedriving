@@ -49,7 +49,7 @@ import copy
 # Debug
 debug=0
 vernum="0.1"
-unread_index = 1
+#location_id = 0
 ####################
 
 
@@ -117,8 +117,9 @@ def get_unread_registers():
 	""" Get unread registers from the database since the last read and return a json with all the data"""
 	try:
 
-		global unread_index
+		#global location_id
 		global debug
+
 		conn = sqlite3.connect('bluedriving.db')
 		cursor = conn.cursor()
 
@@ -130,24 +131,40 @@ def get_unread_registers():
 
 		top['UnReadData'] = array
 
-		for row in cursor.execute('SELECT * FROM Locations'):
+		#location_id_tuple = (location_id,)
+
+		# First select all the locations
+		# This can be VERY HEAVY with a huge database...
+		#for row in cursor.execute('SELECT * FROM Locations where id > ? order by Lastseen DESC limit 100',location_id_tuple):
+		#for row in cursor.execute('SELECT * FROM Locations order by Lastseen DESC limit 100',location_id_tuple):
+		#for row in cursor.execute('SELECT * FROM Locations order by Id DESC limit 100',location_id_tuple):
+		#for row in cursor.execute('SELECT * FROM Locations order by Id DESC limit 100'):
+		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 100'):
 
 			if debug:
 				print ' >> Read locations {0}'.format(row)
-			id = (row[0],)
+			#id = (row[0],)
+			dev_id = (row[1],)
+
+			# Update location id
+			#cursor3 = conn.cursor()
+			#temp_row = cursor3.execute('SELECT count(*) FROM Locations')
+			#location_id_tuple = temp_row.fetchall()[0]
+			#print location_id_tuple
+			#location_id = row[0]
+			#location_id_ask = (location_id,)
+
 			newcursor = conn.cursor()
-			unr_in = (unread_index,)
+
 			# add the limit!
 			#for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ? limit ?,1',(row[0],unread_index)):
-			for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',id):
-
-				unread_index += 1
-
-				if debug:
-					print '  >> New row:{0}'.format(newrow)
+			#for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',id):
+			for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',dev_id):
+				#if debug:
+					#print '  >> New row:{0}'.format(newrow)
 				dict = {}
 				# ID
-				dict['id'] = row[0]
+				#dict['locid'] = row[0]
 				# GPS
 				dict['gps'] = row[2]
 				# first seen
@@ -172,8 +189,6 @@ def get_unread_registers():
 			pass
 		"""
 		response = je.encode(top)
-
-		#response = "{\"UnReadData\" : \"Test\", \"Segundo\" : \"SedundoDato\" }"
 		return response
 
 	except Exception as inst:

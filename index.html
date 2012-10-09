@@ -48,6 +48,15 @@
 			var e = esc;
 			var html = [], h = -1;
 			html[++h] = '<tbody>';
+			html[++h] = '<thead>';
+			html[++h] = '<tr>';
+			html[++h] = '<th scope="col">DATE</th>';
+			html[++h] = '<th scope="col">MAC ADDRESS</th>';
+			html[++h] = '<th scope="col">GLOBAL POSITION</th>';
+			html[++h] = '<th scope="col">ADDRESS</th>';
+			html[++h] = '<th scope="col">NAME</th>';
+			html[++h] = '</tr>';
+			html[++h] = '</thead>';
 			for ( var device, i = -1; device = devices[++i]; ) {
 				html[++h] = '<tr><td class="date">';
 				html[++h] = e(device.lastseen);
@@ -67,7 +76,8 @@
 				html[++h] = '</td></tr>';
 				}
 			html[++h] = '</tbody>';
-			//$('#hor-zebra')[0].innerHTML = html.join('');
+			//$('#hor-zebra').append(html.join(''));
+			$('#hor-zebra').empty();
 			$('#hor-zebra').append(html.join(''));
 			};
 
@@ -104,15 +114,6 @@
         </div>
         <div id='contentbox' style='width:900px'>
 		<table id="hor-zebra" summary="" style='width:900px'>
-			<thead>
-			    <tr>
-				<th scope="col">DATE</th>
-				<th scope="col">MAC ADDRESS</th>
-				<th scope="col">GLOBAL POSITION</th>
-				<th scope="col">ADDRESS</th>
-				<th scope="col">NAME</th>
-			    </tr>
-			</thead>
 		</table>
         </div>
     </body>
