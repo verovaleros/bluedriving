@@ -24,6 +24,7 @@ import threading
 import getCoordinatesFromAddress
 from bluedrivingWebServer import createWebServer
 import lightblue
+import Queue
 
 vernum = '0.1'
 debug = False
@@ -154,6 +155,7 @@ def discovering():
 	global addresses
 	global GRE
 	global END
+	global g_devices
 
 	try:
 		if debug:
@@ -165,8 +167,23 @@ def discovering():
 					if debug:
 						print GRE+' - Discovering devices...'+END
 					# Discovering devices
-					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
-					print devices
+					data = bluetooth.discover_devices(duration=3,lookup_names=True)
+					
+					if data:
+						for d in data:
+							try:
+								g_devices[d[0]]=d[1]
+							except:
+								if debug:
+									print 'No new device found'
+							ftime = time.asctime()
+							print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(ftime,d[0],d[1],"NO GPS","NO ADDRESS","NO INFO")
+							g_devices.put([ftime,d[0],d[1],"NO GPS","NO ADDRESS","NO INFO"])
+							if debug:
+								print 'Data loaded to queue'
+					else: 
+						print '  -'
+
 				except:
 					if debug:
 						print GRE+' - Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'+END
@@ -200,156 +217,56 @@ def discovering():
 		print 'y =', y
 		sys.exit(1)
 
-
-
-def lookupdevices(devices,gpsInfo,date):
-	"""
-	This function perform a search of data of the list of devices received and call the setDeviceInformation function to store the data.
-	"""
+def create_database(database_name):
 	global debug
-	global internet
-	global usegps
-	global RED
-	global END
-	global addresses
-	global lookupservices
-
-	try:
-		if debug:
-			print RED+'[+] Inside of lookupdevices() function'+END
-
-		# We search information of all devices discovered
-		for bdaddr,name in devices:
-			address = "Unknown"
-			shortaddress = address
-			Info = ""
-			coordinates = ""
-
-			if debug:
-				print RED+' - Processing device: '+str(bdaddr)+' ('+str(name)+')'+END
-
-			# We set the mac address and the name of the device
-			Mac = bdaddr
-			Name = name
-
-			# If there is no name for the device we lookup for it
-			if Name == 'None':
-				if debug:
-					print 'Trying to get bluetooth names.'
-				Name = bluetooth.lookup_name(Mac)
-				if debug:
-					print 'End trying to get bluetooth names.'
-
-			# If there is gps location, we try to get the cached address, else we look for it
-			if internet and usegps:
-				if gpsInfo and gpsInfo != 'GPS not available' and gpsInfo != 'Not using GPS':
-					try:
-						if debug:
-							print 'addresses vector: {}'.format(addresses)
-						address = addresses[str(gpsInfo)]
-						
-					except:
-						[coordinates,address] = getCoordinatesFromAddress.getCoordinates(str(gpsInfo)) 
-						address = address.encode("utf-8")
-						addresses[str(coordinates)] = ""
-						addresses[str(coordinates)] = address
-						if debug:
-							print 'gpsInfo: {}'.format(gpsInfo)
-							print 'address: {}'.format(address)
-							print 'coordinates: {}'.format(coordinates)
-							print 'addresses vector: {}'.format(addresses)
-				try:
-					shortaddress = address.split(', ')[0]+', '+address.split(', ')[1]
-				except:
-					shortaddress = address
-
-			# We try to discover the services of the device
-			shortinfo=""
-			if lookupservices:
-				try:
-					try:
-						services = ""
-						services = devicesservices[Mac]
-					except:
-						services = ""
-					if not services:
-						deviceservices[Mac] = []
-						Info = []
-						data = lightblue.findservices(Mac)
-						if data:
-							for i in data:
-								Info.append(i[2])
-						for i in Info:
-							if i not in deviceservices[Mac]:
-								deviceservices[Mac].append(i)
-							if i:
-								shortinfo = shortinfo+repr(i)+','
-						#shortinfo = Info
-						Info = deviceservices[Mac]
-					else:
-						Info = services
-				except:
-					pass
-			
-			print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(date,Mac,Name,gpsInfo,shortaddress,shortinfo)
-
-			if debug:
-				print RED+' - Sending device information to setDeviceInformation() function.'+END
-
-			result = setDeviceInformation(Mac,Name,date,gpsInfo,address,Info)
-			if debug and result:
-				print RED+' - Information stored successfully.'+END
-
-			if debug and not result:
-				print RED+' - An error ocurred saving information to database.'+END
-
-		return True
-	except Exception as inst:
-		print 'Exception in lookupdevices() function'
-		threadbreak = True
-		print 'Ending threads, exiting when finished'
-		print type(inst) # the exception instance
-		print inst.args # arguments stored in .args
-		print inst # _str_ allows args to printed directly
-		x, y = inst # _getitem_ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
-		sys.exit(1)
-
-def getDatabaseConnection(database):
-	"""
-	This function receives a database name and returns a connection to a database. 
-	If the database does not exists, it creates it.
-	"""
-	global debug
+	global verbose
 	global CYA
 	global END
 
 	try:
-		# Here we check if the database doesn\'t exists
-		if not os.path.exists(database):
+		# We check if the database exists
+		if not os.path.exists(database_name):
 			if debug:
-				print CYA+'- Database doesn\'t exists. Creating it.'+END
-			# If it doesn't exists we create the database
-		    	connection = sqlite3.connect(database)
-		    	# Once created the database we create the tables
+				print CYA+'Creating database'+END
+			# Creating database
+		    	connection = sqlite3.connect(database_name)
+			# Creating tables
 			connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
-			connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
-			#connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
+			connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, 
+					     	GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
 			connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
 			if debug:
-				print CYA+'- Database created and connection established successfully.'+END
+				print CYA+'Database created'+END
 		else:
-			# If the database exists we use it
-			connection = sqlite3.connect(database)
 			if debug:
-				print CYA+'- Database found!'+END
-				print CYA+'- Connection established successfully.'+END
+				print CYA+'Database already exist'+END
+	except Exception as inst:
+		print 'Exception in create_database(database_name) function'
+		threadbreak = True
+		print 'Ending threads, exiting when finished'
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
 
+def get_database_connection(database_name):
+	global debug
+	global verbose
+	global CYA
+	global END
+
+	try:
+		if not os.path.exists(database_name):
+			create_database(database_name)
+		connection = sqlite3.connect(database_name)
+		if debug:
+			print CYA+'Database connection retrieved'+END
 		return connection
-
 	except Exception as inst:
-		print 'Exception in getDatabaseConnection() function'
+		print 'Exception in create_database(database_name) function'
 		threadbreak = True
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
@@ -360,219 +277,17 @@ def getDatabaseConnection(database):
 		print 'y =', y
 		sys.exit(1)
 
-def getDeviceId(connection,mac):
-	"""
-	This function receives a database name and returns a connection to a database. 
-	If the database does not exists, it creates it.
-	"""
+def add_device(connection,Mac,Info):
 	global debug
+	global verbose
 	global CYA
 	global END
 
 	try:
-		macid = ""
-		try:
-			macid = connection.execute("SELECT Id FROM Devices WHERE Mac = \""+mac+"\" limit 1")
-
-			macid = macid.fetchall()
-			if debug:
-				print 'Macid in getDeviceID() function: {}'.format(macid)
-			return macid[0][0]
-		except:
-			return False
-
-	except Exception as inst:
-		print 'Exception in getDeviceID() function'
-		threadbreak = True
-		print 'Ending threads, exiting when finished'
-		print type(inst) # the exception instance
-		print inst.args # arguments stored in .args
-		print inst # _str_ allows args to printed directly
-		x, y = inst # _getitem_ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
-		sys.exit(1)
-
-def addDevice(connection,Mac,Info):
-	"""
-	This function adds a new device to the table Devices
-	"""
-	global debug
-	global threadbreak 
-	global CYA
-	global END
-	global deviceservices
-
-	try:
-		try:
-			connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(Mac,repr(Info)))
-			connection.commit()
-		except Exception as inst:
-			print 'Exception in connection.execute() function'
-			threadbreak = True
-			print 'Ending threads, exiting when finished'
-			print type(inst) # the exception instance
-			print inst.args # arguments stored in .args
-			print inst # _str_ allows args to printed directly
-			x, y = inst # _getitem_ allows args to be unpacked directly
-			print 'x =', x
-			print 'y =', y
-			sys.exit(1)
-
-
-	except Exception as inst:
-		print 'Exception in addDevice() function'
-		threadbreak = True
-		print 'Ending threads, exiting when finished'
-		print type(inst) # the exception instance
-		print inst.args # arguments stored in .args
-		print inst # _str_ allows args to printed directly
-		x, y = inst # _getitem_ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
-		sys.exit(1)
-
-def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
-	"""
-	This function stores all the information retrieved about a device and stores it in a sqlite database.
-	"""
-	global debug
-	global database
-	global threadbreak 
-	global sound
-	global CYA
-	global END
-
-	connection = ""
-
-	try:
-		if debug:
-			print CYA+'[+] In setDeviceInformation() function.'+END
-		# We get a database connection
-		connection = getDatabaseConnection(database)
-		if debug:
-			print CYA+'- Database connection opened'
-
-		if not connection:
-			print ' [!] Error in creating a database connection. Exiting.'
-			threadbreak = True
-
-		# Id of the database for web interaction
-		deviceid = getDeviceId(connection,Mac)
-
-		# If the device is not in the devices table then we add it
-		if not deviceid:
-			result = addDevice(connection,Mac,Info)
-			if debug:
-				print CYA+'- New device added to database.'
-			deviceservices[Mac]=""
-			deviceservices[Mac]=Info
-			try:
-				deviceid = getDeviceId(connection,Mac)
-				if debug:
-					print CYA+'- Device Id obtained: {}'.format(deviceid) 
-			except Exception as inst:
-				print 'Exception in getDeviceId() function'
-				threadbreak = True
-				print 'Ending threads, exiting when finished'
-				print type(inst) # the exception instance
-				print inst.args # arguments stored in .args
-				print inst # _str_ allows args to printed directly
-				x, y = inst # _getitem_ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-				connection.commit()
-				connection.close()
-				sys.exit(1)
-		else:
-			if debug:
-				print CYA+'- Device exists. Device Id retrieved: {}'.format(deviceid)
-
-		if Info:
-			try:
-				connection.execute("UPDATE Devices SET Info=? WHERE Id=?", (repr(Info), repr(deviceid)))
-				connection.commit()
-				if debug:
-					print CYA+'- Updated the field Info of the table Devices.'+END
-			except Exception as inst:
-				print 'Exception in connection.execute("UPDATE Devices SET Info=? WHERE Id=?") function'
-				threadbreak = True
-				print 'Ending threads, exiting when finished'
-				print type(inst) # the exception instance
-				print inst.args # arguments stored in .args
-				print inst # _str_ allows args to printed directly
-				x, y = inst # _getitem_ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-				connection.commit()
-				connection.close()
-				sys.exit(1)
-
-		if deviceid:
-
-			try:
-				# This is the structure of the tables in the database
-				#connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
-				#connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
-				#connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
-
-				connection.execute("INSERT INTO Locations(MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)", (int(deviceid), repr(GPS),repr(FirstSeen),repr(FirstSeen),repr(Address),repr(Name)))
-				connection.commit()
-				if debug:
-					print CYA+'- Inserted a new location row in the table Locations.'+END
-				if sound:
-					try:
-						os.system('play new.ogg -q 2> /dev/null')
-					except Exception as inst:
-						print CYA+'Error playing sound new.ogg'+END
-						print type(inst) # the exception instance
-						print inst.args # arguments stored in .args
-						print inst # _str_ allows args to printed directly
-						connection.commit()
-						connection.close()
-						threadbreak = True
-						sys.exit(1)
-			except:
-				try:
-					connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? AND GPS=?", (repr(FirstSeen), repr(deviceid), repr(GPS)))
-					connection.commit()
-					if sound:
-						try:
-							os.system('play old.ogg -q 2> /dev/null')
-						except Exception as inst:
-							print CYA+'Error playing sound old.ogg'+END
-							print type(inst) # the exception instance
-							print inst.args # arguments stored in .args
-							print inst # _str_ allows args to printed directly
-							connection.commit()
-							connection.close()
-							threadbreak = True
-							sys.exit(1)
-					if debug:
-						print CYA+'- A known device found. Information updated!'+END
-				except Exception as inst:
-					print CYA+'Error in connection.execute("UPDATE Location SET LastSeen=? WHERE Id=? AND GPS=?) function'+END
-					print type(inst) # the exception instance
-					print inst.args # arguments stored in .args
-					print inst # _str_ allows args to printed directly
-					connection.commit()
-					connection.close()
-					threadbreak = True
-					sys.exit(1)
-		else:
-			if debug:
-				print 'Not device id could be retrieved for this mac: {}'.format(Mac)
-			connection.commit()
-			connection.close()
-		
+		connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(Mac,repr(Info)))
 		connection.commit()
-		connection.close()
-		if debug:
-			print CYA+'- Data submitted and database connection  closed.'+END
-		return True
-
 	except Exception as inst:
-		print 'Exception in setDeviceInformation() function'
+		print 'Exception in connection.execute() function'
 		threadbreak = True
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
@@ -581,11 +296,30 @@ def setDeviceInformation(Mac,Name,FirstSeen,GPS,Address,Info):
 		x, y = inst # _getitem_ allows args to be unpacked directly
 		print 'x =', x
 		print 'y =', y
-		connection.commit()
-		connectio.close()
 		sys.exit(1)
 
 
+def test():
+	global g_devices
+
+	try:
+		while True:
+			if not g_devices.empty():
+				temp = g_devices.get()
+				print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
+			time.sleep(5)
+
+	except Exception as inst:
+		print 'Exception in discovering() function'
+		threadbreak = True
+		print 'Ending threads, exiting when finished'
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
 
 ##########
 # MAIN
@@ -599,6 +333,7 @@ def main():
 	global internet
 	global usegps
 	global lookupservices
+	global g_devices
 	global GRE
 	global CYA
 	global END
@@ -627,6 +362,7 @@ def main():
         try:
 		
 		version()
+		g_devices = Queue.Queue()
 
 		if usegps:
 			try:
@@ -651,6 +387,10 @@ def main():
 		discoveringthread = threading.Thread(target = discovering)
 		discoveringthread.setDaemon(True)
 		discoveringthread.start()
+
+		test_thread = threading.Thread(target = test)
+		test_thread.setDaemon(True)
+		test_thread.start()
 
 		if runwebserver:
 			port = 8000
