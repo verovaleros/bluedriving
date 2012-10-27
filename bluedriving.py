@@ -1,8 +1,12 @@
 #!/usr/bin/python
+# UPDATES:
+#  - Cache the requested coordinates and addresses to save bandwith
+#  - Cache the device information to avoid extra queries to the database
 
 # TODO
-# Cache the requested coordinates and addresses to save bandwith
-# Cache the device information to avoid extra queries to the database
+# Redesign the whole program. 
+# Fix crashing when multiple threads try to write in the database
+# 
 
 # standar imports
 import sys
@@ -89,7 +93,7 @@ def getCoordinatesFromGPS():
 
 	counter = 0
         try:
-                while True:
+		while True:
                         if gps_session:
                                 while True:
 					if counter < 10:
@@ -123,9 +127,17 @@ def getCoordinatesFromGPS():
                 # CTRL-C pretty handling.
                 print "Keyboard Interruption!. Exiting."
                 sys.exit(1)
-        except Exception, e:
+	except Exception as inst:
 		print 'Exception in getCoordinatesFromGPS'
-                print "misc. exception (runtime error from user callback?):", e
+		threadbreak = True
+		print 'Ending threads, exiting when finished'
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
 
 # Discovering function
 def discovering():
@@ -153,58 +165,15 @@ def discovering():
 					if debug:
 						print GRE+' - Discovering devices...'+END
 					# Discovering devices
-					devices = bluetooth.discover_devices(duration=4,lookup_names=True)
+					devices = bluetooth.discover_devices(duration=3,lookup_names=True)
+					print devices
 				except:
 					if debug:
 						print GRE+' - Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'+END
 					continue
 				
-				# If there is some device discovered, then we do this, else we try to discover again
-				if devices:
-					location = ""
-					if debug:
-						print GRE+' - Devices discovered: '+str(len(devices))+END
-					if usegps:
-						# We try to get the coordinates from the gps 
-						try:
-							attemps = 0
-							if debug:
-								print GRE+' - Trying to get the location'+END
-							while not location and attemps < 9:
-								location = globallocation
-								attemps = attemps + 1
-						except:
-							location = ""
-							if debug:
-								print GRE+' - Location unavailable! Number of attemps: '+str(attemps)+END
-						if not location:
-							if debug:
-								print GRE+' - Location not found. Number of attemps: '+str(attemps)+END
-							location = "GPS not available"
-						else: 
-							if debug:
-								print GRE+' - Location found after '+str(attemps)+' attemps.'+END
-					else:
-						location = "Not using GPS"
-
-					# We set the time of the discovering
-					date = time.asctime()
-					if debug:
-						print GRE+' - Date retrieved.'+END
-
-					# We create a new thread to proccess the discovered devices and store the data to a bd
-					threading.Thread(None,lookupdevices,args=(devices,location,date)).start()
-					if debug:
-						print GRE+' - A new thread has been created calling the function lookup devices.'+END
-				else:
-					if debug:
-						print GRE+' - No devices discovered'+END
-
 			except KeyboardInterrupt:
-				print '\nKeyboard interrupt in discovering function(). Exiting.\n This may take a few seconds.'
 				threadbreak = True
-				gps_session.close()
-				break
                         except Exception as inst:
 				print 'Exception in while of discovering() function'
 				threadbreak = True
@@ -215,7 +184,7 @@ def discovering():
                                 x, y = inst # _getitem_ allows args to be unpacked directly
                                 print 'x =', x
                                 print 'y =', y
-				return False
+				sys.exit(1)
 
 		threadbreak = True
 		return True
