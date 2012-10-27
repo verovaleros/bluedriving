@@ -141,8 +141,8 @@ def get_unread_registers():
 		#for row in cursor.execute('SELECT * FROM Locations order by Id DESC limit 100'):
 		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 100'):
 
-			if debug:
-				print ' >> Read locations {0}'.format(row)
+			#if debug:
+				#print ' >> Read locations {0}'.format(row)
 			#id = (row[0],)
 			dev_id = (row[1],)
 
@@ -160,8 +160,8 @@ def get_unread_registers():
 			#for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ? limit ?,1',(row[0],unread_index)):
 			#for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',id):
 			for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',dev_id):
-				#if debug:
-					#print '  >> New row:{0}'.format(newrow)
+				if debug:
+					print '  >> New row:{0}'.format(newrow)
 				dict = {}
 				# ID
 				#dict['locid'] = row[0]
@@ -216,8 +216,6 @@ def get_info_from_mac(temp_mac):
 
 		# Encoder
 		je = json.JSONEncoder()
-
-		# {"Info" : {"ID":0, "MAC":"00:11:22:33:44:55", "Name":"Test", } }
 
 		top = {}
 		info = []

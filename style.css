@@ -90,7 +90,7 @@ textarea {
     font-family: "Helvetica", "Arial";
 }
 
-#contentbox{
+#contentbox #info{
     width: 100%;
     height: 600px;
 /*    background: url('img/bg-content.png') #333333; */
@@ -160,7 +160,16 @@ a img {
 li {display:inline;}
 
 
+#frame {
+	margin-left:auto;
+	margin-right:auto;
+	text-align:left;
+	width:960px;
+}
 
+#page {
+	padding: 0px 10px 10px 10px;
+}
 
 
 

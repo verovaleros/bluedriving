@@ -16,16 +16,19 @@
 	<script type="text/javascript">
 		$(document).ready(function(){
 
-		// Execute the getData function every x miliseconds.
-		getData();
+		// Execute the getLiveData function every x miliseconds.
+		getLiveData();
+
 
 		// Get the data with json
-		function getData() {
+		function getLiveData() {
 			$.getJSON("http://localhost:8000/data", {}, function(data) {
 				fillTable( data.UnReadData );	
 				changeColors();
 				addClicks();
-				setTimeout(getData,3000);
+				timeVar = setTimeout(getLiveData,3000);
+				//alert(row_selected.html('class'));
+				//alert(row_selected.data('td'));
 				});
 			};
 
@@ -76,9 +79,13 @@
 				html[++h] = '</td></tr>';
 				}
 			html[++h] = '</tbody>';
-			//$('#hor-zebra').append(html.join(''));
 			$('#hor-zebra').empty();
 			$('#hor-zebra').append(html.join(''));
+
+			if (typeof row_selected!="undefined") {
+				row_selected.addClass('selected');
+				};
+
 			};
 
 
@@ -92,9 +99,12 @@
 		function addClicks () {
 			$('#hor-zebra tr').click( function(){ 
 				// First de-select rows
-				$('#hor-zebra tr').removeClass('selected') 
+				//$('#hor-zebra tr').removeClass('selected') ;
+				//alert(row_selected.html());
 				// second select rows
-				$('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')').addClass('selected') 
+				//$('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')').addClass('selected') ;
+				row_selected = $('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')') ;
+				row_selected.addClass('selected');
 				});
 			};
 
@@ -103,18 +113,184 @@
 	</script>
 
     </head>
+
+
     <body>
-        <div id='header' style='width:900px'>
-            <ul>
-                <li><a href="#"><img src="img/icon-list.png"></br>Results</a></li>
-                <li><a href="#"><img src="img/icon-devices.png"></br>Devices</a></li>
-                <li><a href="#"><img src="img/icon-map.png"></br>Map</a></li>
-                
-            </ul>
-        </div>
-        <div id='contentbox' style='width:900px'>
-		<table id="hor-zebra" summary="" style='width:900px'>
-		</table>
-        </div>
+
+	<script>
+		// Funtion to execute when the device button is pressed.
+		function show_info() {
+			// Stop the pulling
+			clearInterval(timeVar)
+			// Get the data from the webserver.
+			mac = row_selected.find('td:eq(1)').html();
+			//$('#contentbox').hide();
+			$('#info').append("<h3>Device Features</h3>");
+			getSpecificData(mac);
+		}
+
+		function fillMap( information ) {
+			//$('#mapdiv').append("<h3>Map</h3>");
+			    map = new OpenLayers.Map("mapdiv");
+			    map.addLayer(new OpenLayers.Layer.OSM());
+			    
+			    epsg4326 =  new OpenLayers.Projection("EPSG:4326"); //WGS 1984 projection
+			    projectTo = map.getProjectionObject(); //The map projection (Spherical Mercator)
+			   
+			    var lonLat = new OpenLayers.LonLat( -0.1279688 ,51.5077286 ).transform(epsg4326, projectTo);
+				  
+			    var zoom=14;
+			    map.setCenter(lonLat, zoom);
+
+			    /*
+			    var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
+			    
+			    // Define markers as "features" of the vector layer:
+			    var feature = new OpenLayers.Feature.Vector(
+
+			    new OpenLayers.Geometry.Point( -0.1279688, 51.5077286 ).transform(epsg4326, projectTo),
+				{description:'This is the value of<br>the description attribute'} ,
+				{externalGraphic: 'img/marker.png', graphicHeight: 25, graphicWidth: 21, graphicXOffset:-12, graphicYOffset:-25  }
+				);    
+			    vectorLayer.addFeatures(feature);
+						    
+			    var feature = new OpenLayers.Feature.Vector(
+			    new OpenLayers.Geometry.Point( -0.1244324, 51.5006728  ).transform(epsg4326, projectTo),
+				{description:'Big Ben'} ,
+				{externalGraphic: 'img/marker.png', graphicHeight: 25, graphicWidth: 21, graphicXOffset:-12, graphicYOffset:-25  }
+				);    
+			    vectorLayer.addFeatures(feature);
+
+			    var feature = new OpenLayers.Feature.Vector(
+			    new OpenLayers.Geometry.Point( -0.119623, 51.503308  ).transform(epsg4326, projectTo),
+				{description:'London Eye'} ,
+				{externalGraphic: 'img/marker.png', graphicHeight: 25, graphicWidth: 21, graphicXOffset:-12, graphicYOffset:-25  }
+				);    
+			    vectorLayer.addFeatures(feature);
+						  
+			    map.addLayer(vectorLayer);
+					     
+					    
+			    //Add a selector control to the vectorLayer with popup functions
+			    var controls = {
+				selector: new OpenLayers.Control.SelectFeature(vectorLayer, { onSelect: createPopup, onUnselect: destroyPopup })
+				};
+
+			    function createPopup(feature) {
+				  feature.popup = new OpenLayers.Popup.FramedCloud("pop",
+				  feature.geometry.getBounds().getCenterLonLat(),
+				  null,
+				  '<div class="markerContent">'+feature.attributes.description+'</div>',
+				  null,
+				  true,
+				  function() { controls['selector'].unselectAll(); }
+			      );
+			      //feature.popup.closeOnMove = true;
+			      map.addPopup(feature.popup);
+			    }
+
+			    function destroyPopup(feature) {
+				      feature.popup.destroy();
+					feature.popup = null;
+					}
+				    
+			    map.addControl(controls['selector']);
+			    controls['selector'].activate();
+			    */
+			}
+
+
+		function fillSpecificTable( information ) {
+
+			$('#info').append("<table id='infotable' align='left'></table>");
+
+			for ( var i = 0; i < information.split('[')[1].split(']')[0].split(',').length; i++ ) {
+				piece = information.split('[')[1].split(']')[0].split(',')[i];
+				//alert(information.split('[')[1].split(']')[0].split(',')[i])
+
+				var html = [], h = -1;
+				html[++h] = '<tbody>';
+				html[++h] = '<tr><td class="information">';
+				html[++h] = piece;
+				html[++h] = '</td></tr></tbody>';
+				$('#infotable').append(html.join(''));
+				}
+			}
+
+
+		// Get the data with json
+		function getSpecificData(mac) {
+				$.getJSON("http://localhost:8000/info?mac="+mac, {}, function(data) {
+				$('#info').append("<table id='deviceInfoTable' align='left'></table>")
+
+				// Show the device information
+				$('#contentbox').hide();
+				var html = [], h = -1;
+				html[++h] = '<thead>';
+				html[++h] = '<tr>';
+				html[++h] = '<th scope="col">DATE</th>';
+				html[++h] = '<th scope="col">MAC ADDRESS</th>';
+				html[++h] = '<th scope="col">GLOBAL POSITION</th>';
+				html[++h] = '<th scope="col">ADDRESS</th>';
+				html[++h] = '<th scope="col">NAME</th>';
+				html[++h] = '</tr>';
+				html[++h] = '</thead>';
+				html[++h] = '<tbody>';
+				html[++h] = '<tr><td class="date">';
+				html[++h] = row_selected.find('td:eq(0)').html();
+				html[++h] = '</td>';
+				html[++h] = '<td class="mac">';
+				html[++h] = row_selected.find('td:eq(1)').html();
+				html[++h] = '</td>';
+				html[++h] = '<td class="gps">';
+				html[++h] = row_selected.find('td:eq(2)').html();
+				html[++h] = '</td>';
+				html[++h] = '<td class="address">';
+				html[++h] = row_selected.find('td:eq(3)').html();
+				html[++h] = '</td>';
+				html[++h] = '<td class="name">';
+				html[++h] = row_selected.find('td:eq(4)').html();
+				html[++h] = '</td>';
+				html[++h] = '</tr>';
+				html[++h] = '</tbody>';
+				$('#deviceInfoTable').append(html.join(''));
+
+				fillSpecificTable( data.Info );	
+				//fillMap( data.Info );	
+
+				});
+			};
+
+	</script>
+
+
+	<div id='frame'>
+		<div id='page'>
+			<div id='header'>
+			    <ul>
+				<li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
+				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Devices</a></li>
+				<li><a href="#"><img src="img/icon-map.png"></br>Map</a></li>
+				
+			    </ul>
+			</div>
+
+			<div id="contentbox" class="content">
+				<table id="hor-zebra" summary=""> </table>
+			</div>
+
+			<div id="info" class="info"></div>
+
+			<div id="demoMap" class="map"></div>
+
+				<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+				<script>
+					    map = new OpenLayers.Map("demoMap");
+					    map.addLayer(new OpenLayers.Layer.OSM());
+					    map.zoomToMaxExtent();
+				</script>
+		</div>
+	</div>
+
     </body>
 </html>
