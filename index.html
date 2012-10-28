@@ -16,9 +16,16 @@
 	<script type="text/javascript">
 		$(document).ready(function(){
 
+			$(window).scroll(function () {
+			    //after window scroll fire it will add define pixel added to that element.
+			    set = $(document).scrollTop()+"px";
+			    //this is the jQuery animate function to fixed the div position after scrolling.
+			    $('#header').animate({top:set},{duration:500,queue:false});
+			});
+
 		// Execute the getLiveData function every x miliseconds.
 		getLiveData();
-
+		
 
 		// Get the data with json
 		function getLiveData() {
@@ -120,6 +127,9 @@
 	<script>
 		// Funtion to execute when the device button is pressed.
 		function show_info() {
+			$('#header').animate({top:'0px'},{duration:0,queue:false});
+			$('#header').stop();
+
 			// Stop the pulling
 			clearInterval(timeVar)
 			// Get the data from the webserver.
