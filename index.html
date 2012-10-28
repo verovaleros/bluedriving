@@ -129,74 +129,18 @@
 			getSpecificData(mac);
 		}
 
-		function fillMap( information ) {
-			//$('#mapdiv').append("<h3>Map</h3>");
-			    map = new OpenLayers.Map("mapdiv");
-			    map.addLayer(new OpenLayers.Layer.OSM());
-			    
-			    epsg4326 =  new OpenLayers.Projection("EPSG:4326"); //WGS 1984 projection
-			    projectTo = map.getProjectionObject(); //The map projection (Spherical Mercator)
-			   
-			    var lonLat = new OpenLayers.LonLat( -0.1279688 ,51.5077286 ).transform(epsg4326, projectTo);
-				  
-			    var zoom=14;
-			    map.setCenter(lonLat, zoom);
-
-			    /*
-			    var vectorLayer = new OpenLayers.Layer.Vector("Overlay");
-			    
-			    // Define markers as "features" of the vector layer:
-			    var feature = new OpenLayers.Feature.Vector(
-
-			    new OpenLayers.Geometry.Point( -0.1279688, 51.5077286 ).transform(epsg4326, projectTo),
-				{description:'This is the value of<br>the description attribute'} ,
-				{externalGraphic: 'img/marker.png', graphicHeight: 25, graphicWidth: 21, graphicXOffset:-12, graphicYOffset:-25  }
-				);    
-			    vectorLayer.addFeatures(feature);
-						    
-			    var feature = new OpenLayers.Feature.Vector(
-			    new OpenLayers.Geometry.Point( -0.1244324, 51.5006728  ).transform(epsg4326, projectTo),
-				{description:'Big Ben'} ,
-				{externalGraphic: 'img/marker.png', graphicHeight: 25, graphicWidth: 21, graphicXOffset:-12, graphicYOffset:-25  }
-				);    
-			    vectorLayer.addFeatures(feature);
-
-			    var feature = new OpenLayers.Feature.Vector(
-			    new OpenLayers.Geometry.Point( -0.119623, 51.503308  ).transform(epsg4326, projectTo),
-				{description:'London Eye'} ,
-				{externalGraphic: 'img/marker.png', graphicHeight: 25, graphicWidth: 21, graphicXOffset:-12, graphicYOffset:-25  }
-				);    
-			    vectorLayer.addFeatures(feature);
-						  
-			    map.addLayer(vectorLayer);
-					     
-					    
-			    //Add a selector control to the vectorLayer with popup functions
-			    var controls = {
-				selector: new OpenLayers.Control.SelectFeature(vectorLayer, { onSelect: createPopup, onUnselect: destroyPopup })
-				};
-
-			    function createPopup(feature) {
-				  feature.popup = new OpenLayers.Popup.FramedCloud("pop",
-				  feature.geometry.getBounds().getCenterLonLat(),
-				  null,
-				  '<div class="markerContent">'+feature.attributes.description+'</div>',
-				  null,
-				  true,
-				  function() { controls['selector'].unselectAll(); }
-			      );
-			      //feature.popup.closeOnMove = true;
-			      map.addPopup(feature.popup);
-			    }
-
-			    function destroyPopup(feature) {
-				      feature.popup.destroy();
-					feature.popup = null;
-					}
-				    
-			    map.addControl(controls['selector']);
-			    controls['selector'].activate();
-			    */
+		function fillMap( gpsinformation ) {
+			latitude = gpsinformation.split(',')[0].split("'")[1];
+			longitude = gpsinformation.split(',')[1].split("'")[0];
+			smallerlongitude = parseFloat(longitude) - 0.01 + '';
+			biggerlongitude = parseFloat(longitude) + 0.01 + '';
+	
+			var html = [], h = -1;
+			html[++h] = "<center>";
+			html[++h] = "<iframe id='mapiframe' width='425' height='350' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='http://www.openstreetmap.org/export/embed.html?bbox="+smallerlongitude+","+latitude+","+biggerlongitude+","+latitude+"&amp;layer=mapnik&amp;marker="+latitude+","+longitude+"' style='border: 1px solid black'></iframe>";
+			html[++h] = "</center>";
+			$('#map').append(html.join(''));
+			
 			}
 
 
@@ -256,7 +200,7 @@
 				$('#deviceInfoTable').append(html.join(''));
 
 				fillSpecificTable( data.Info );	
-				//fillMap( data.Info );	
+				fillMap( row_selected.find('td:eq(2)').html() );	
 
 				});
 			};
@@ -280,15 +224,8 @@
 			</div>
 
 			<div id="info" class="info"></div>
+			<div id="map" class="map" > </div>
 
-			<div id="demoMap" class="map"></div>
-
-				<script src="http://www.openlayers.org/api/OpenLayers.js"></script>
-				<script>
-					    map = new OpenLayers.Map("demoMap");
-					    map.addLayer(new OpenLayers.Layer.OSM());
-					    map.zoomToMaxExtent();
-				</script>
 		</div>
 	</div>
 
