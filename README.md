@@ -8,10 +8,10 @@ Bluedriver is a bluetooth wardriving utility.
 
 Usage: ./bluedriving.py <options>
 Options:
- -h, --help
-  Show this help message and exit.
- -D, --debug
-  Debug mode ON. Prints debug information on the screen.
+-h, --help
+Show this help message and exit.
+-D, --debug
+Debug mode ON. Prints debug information on the screen.
  -d, --database-name
   Name of the database to store the data. The default database name is bluedriving.db.
  -w, --webserver
