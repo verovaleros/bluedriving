@@ -1,5 +1,5 @@
-bluedriving
-===========
+README
+------
 
 ./bluedriving.py Version 0.1 @COPYLEFT                    
 Authors: verovaleros, eldraco, nanojaus                               
