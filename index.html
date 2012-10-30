@@ -127,17 +127,63 @@
 	<script>
 		// Funtion to execute when the device button is pressed.
 		function show_info() {
-			$('#header').animate({top:'0px'},{duration:0,queue:false});
-			$('#header').stop();
+			// Script to control de Device Info button in the header
+
+			// Stop the animation
+			$(window).scroll(function () {
+			    $('#header').animate({top:'0px'},{duration:500,queue:false});
+			});
 
 			// Stop the pulling
 			clearInterval(timeVar)
+
 			// Get the data from the webserver.
 			mac = row_selected.find('td:eq(1)').html();
-			//$('#contentbox').hide();
-			$('#info').append("<h3>Device Features</h3>");
+
+			// Get the device features
 			getSpecificData(mac);
+
+			// Fill the map if there is sth to fill
+			if (row_selected.find('td:eq(2)').html().indexOf("not") == -1 ) {
+				fillMap( row_selected.find('td:eq(2)').html() );	
+			}
+
+			// Fill notes
+			fillNotes();
+
+			// Fill the interaction div
+			fillInteraction();
 		}
+
+		function fillNotes(){
+			// Call a json with the notes...
+
+		};
+
+		function fillInteraction() {
+			// Set the alarm
+			$('#interAlarm').append('<h3>Set a voice alarm when seen</h3>');
+			$('#interAlarm').append('<button type="button" onclick="setAlarm()">Set Alarm</button>');
+			
+			// Set the notes
+			$('#interNote').append('<br><h3>Set or Delete a Note</h3>');
+			$('#interNote').append('<input type="text" id="note" maxlength="100" size="10"/> <button type="button" onclick="setNote()">Set Note</button><button type="button" onclick="delNote()">Delete Note</button>');
+
+		};
+
+		function setAlarm() {
+			alert('set alarm');
+		};
+
+		function setNote() {
+			noteText = $('#note').val();
+			$.getJSON("http://localhost:8000/addnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
+				alert(data.Result);
+				});
+		};
+
+		function delNote() {
+		};
 
 		function fillMap( gpsinformation ) {
 			latitude = gpsinformation.split(',')[0].split("'")[1];
@@ -156,37 +202,48 @@
 
 		function fillSpecificTable( information ) {
 
-			$('#info').append("<table id='infotable' align='left'></table>");
+			$('#info').append("<div id='table2'> <table id='infotable'></table>");
 
+			var html = [], h = -1;
+			html[++h] = '<thead>';
+			html[++h] = '<tr>';
+			html[++h] = '<th scope="col">Device Features</th>';
+			html[++h] = '</tr>';
+			html[++h] = '</thead>';
+			$('#infotable').append(html.join(''));
+		
 			for ( var i = 0; i < information.split('[')[1].split(']')[0].split(',').length; i++ ) {
-				piece = information.split('[')[1].split(']')[0].split(',')[i];
-				//alert(information.split('[')[1].split(']')[0].split(',')[i])
-
 				var html = [], h = -1;
+				piece = information.split('[')[1].split(']')[0].split(',')[i];
 				html[++h] = '<tbody>';
 				html[++h] = '<tr><td class="information">';
 				html[++h] = piece;
 				html[++h] = '</td></tr></tbody>';
 				$('#infotable').append(html.join(''));
-				}
+			}
+
+			var html = [], h = -1;
+			html[++h] = '</div>';
+			$('#infotable').append(html.join(''));
 			}
 
 
 		// Get the data with json
 		function getSpecificData(mac) {
 				$.getJSON("http://localhost:8000/info?mac="+mac, {}, function(data) {
-				$('#info').append("<table id='deviceInfoTable' align='left'></table>")
+
+				$('#info').append("<div id=table1> <table id='deviceInfoTable' align='left'></table>")
 
 				// Show the device information
 				$('#contentbox').hide();
 				var html = [], h = -1;
 				html[++h] = '<thead>';
 				html[++h] = '<tr>';
-				html[++h] = '<th scope="col">DATE</th>';
-				html[++h] = '<th scope="col">MAC ADDRESS</th>';
-				html[++h] = '<th scope="col">GLOBAL POSITION</th>';
-				html[++h] = '<th scope="col">ADDRESS</th>';
-				html[++h] = '<th scope="col">NAME</th>';
+				html[++h] = '<th scope="col">Date</th>';
+				html[++h] = '<th scope="col">Mac Address</th>';
+				html[++h] = '<th scope="col">Global Position</th>';
+				html[++h] = '<th scope="col">Address</th>';
+				html[++h] = '<th scope="col">Name</th>';
 				html[++h] = '</tr>';
 				html[++h] = '</thead>';
 				html[++h] = '<tbody>';
@@ -206,17 +263,15 @@
 				html[++h] = row_selected.find('td:eq(4)').html();
 				html[++h] = '</td>';
 				html[++h] = '</tr>';
-				html[++h] = '</tbody>';
+				html[++h] = '</tbody></div>';
 				$('#deviceInfoTable').append(html.join(''));
 
 				fillSpecificTable( data.Info );	
-				fillMap( row_selected.find('td:eq(2)').html() );	
 
 				});
 			};
 
 	</script>
-
 
 	<div id='frame'>
 		<div id='page'>
@@ -228,13 +283,18 @@
 				
 			    </ul>
 			</div>
-
 			<div id="contentbox" class="content">
 				<table id="hor-zebra" summary=""> </table>
 			</div>
 
-			<div id="info" class="info"></div>
-			<div id="map" class="map" > </div>
+			<div id="info" class="info"> </div>
+			<div id="notes" class="notes"> </div>
+			<div id="map" class="map"> </div>
+			<div id="interaction" class="interaction"> 
+				<div id="interNote"></div>
+				<div id="interAlarm"></div>
+			</div>
+			<div id="largemap" class="map"> </div>
 
 		</div>
 	</div>

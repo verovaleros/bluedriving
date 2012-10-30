@@ -441,7 +441,7 @@ def note_to(typeof_call, mac,note):
 				print 'y =', y
 				return ''
 
-			return 'Added'
+			return "{'Result':'Added'}"
 
 		elif typeof_call == 'del':
 			# Search fot that mac on the database first...
