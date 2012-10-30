@@ -114,7 +114,7 @@ def get_coordinates_from_gps():
 								global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
 							except Exception,e:
 								#print "misc. exception (runtime error from user callback?):", e
-								global_location = 'Not retrieved'
+								global_location = False
 								counter = counter + 1
 					else:
 						try:
@@ -160,20 +160,21 @@ def get_address_from_gps(location_gps):
 	coordinates = ""
 	address = ""
 	try:
-		if debug:
-			print 'Coordinates: {}'.format(location_gps)
-		try:
-			# If the location is already stored, we get it.
-			address = address_cache[location_gps]
-		except:
-			if flag_internet:
-				[coordinates,address] = getCoordinatesFromAddress.getCoordinates(location_gps)
-				if debug:
-					print 'Coordinates: {} Address: {}'.format(coordinates,address)
-				address = address.encode('utf-8')
-				address_cache[location_gps] = address
-			else:
-				address = "Internet deactivated"
+		if location_gps:
+			if debug:
+				print 'Coordinates: {}'.format(location_gps)
+			try:
+				# If the location is already stored, we get it.
+				address = address_cache[location_gps]
+			except:
+				if flag_internet:
+					[coordinates,address] = getCoordinatesFromAddress.getCoordinates(location_gps)
+					if debug:
+						print 'Coordinates: {} Address: {}'.format(coordinates,address)
+					address = address.encode('utf-8')
+					address_cache[location_gps] = address
+				else:
+					address = "Internet deactivated"
 		return address
 
 	except KeyboardInterrupt:
