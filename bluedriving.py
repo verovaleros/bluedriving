@@ -109,9 +109,13 @@ def get_coordinates_from_gps():
 							gpsdata = gps_session.next()
 							global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
 						except Exception, e:
-							#print "misc. exception (runtime error from user callback?):", e
-							global_location = 'Not retrieved'
-							counter = counter + 1
+							try:
+								gpsdata = gps_session.next()
+								global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
+							except Exception,e:
+								#print "misc. exception (runtime error from user callback?):", e
+								global_location = 'Not retrieved'
+								counter = counter + 1
 					else:
 						try:
 							try:
@@ -177,6 +181,9 @@ def get_address_from_gps(location_gps):
 		threadbreak = True
 	except Exception as inst:
 		print 'Exception in get_address_from_gps()'
+		print 'Received coordinates: {}'.format(location_gps)
+		print 'Retrieved coordinates: {}'.format(coordinates)
+		print 'Retrieved Address: {}'.format(address)
 		threadbreak = True
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
@@ -208,7 +215,8 @@ def bluetooth_discovering():
 					if debug:
 						print 'Discovering devices...'
 					# Discovering devices
-					data = bluetooth.discover_devices(duration=3,lookup_names=True)
+					data = bluetooth.bluez.discover_devices(lookup_names=True)
+					#data = bluetooth.discover_devices(duration=3,lookup_names=True)
 					if debug:
 						print data
 					
@@ -219,12 +227,10 @@ def bluetooth_discovering():
 						process_device_information_thread.start()
 					else: 
 						print '  -'
-
 				except:
 					if debug:
 						print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
 					continue
-				
 			except KeyboardInterrupt:
 				print 'Exiting. It may take a few seconds.'
 				threadbreak = True
@@ -239,10 +245,8 @@ def bluetooth_discovering():
                                 print 'x =', x
                                 print 'y =', y
 				sys.exit(1)
-
 		threadbreak = True
 		return True
-
 	except KeyboardInterrupt:
 		print 'Exiting. It may take a few seconds.'
 		threadbreak = True
@@ -593,47 +597,47 @@ def store_device_information(database_name):
 	try:
 		# We create a database connection
 		connection = db_get_database_connection(database_name)
-		while True:
-			# We clear the variables to use
-			device_id = ""
-			device_bdaddr = ""
-			device_name = ""
-			device_information = ""
-			location_gps = ""
-			location_address = ""
-			first_seen = ""
-			last_seen = ""
+		while not threadbreak:
+			while not queue_devices.empty():
+				# We clear the variables to use
+				device_id = ""
+				device_bdaddr = ""
+				device_name = ""
+				device_information = ""
+				location_gps = ""
+				location_address = ""
+				first_seen = ""
+				last_seen = ""
 
-			if not queue_devices.empty():
-				# We extract the device from the queue
-				temp = queue_devices.get()
+				if not queue_devices.empty():
+					# We extract the device from the queue
+					temp = queue_devices.get()
 
-				# We load the information
-				first_seen = temp[0]
-				last_seen = temp[0]
-				device_bdaddr = temp[1]
-				device_name = temp[2]
-				location_gps = temp[3]
-				location_address = temp[4]
-				device_information = temp[5]
-				
-				device_id = db_get_device_id(connection,device_bdaddr,device_information)
+					# We load the information
+					first_seen = temp[0]
+					last_seen = temp[0]
+					device_bdaddr = temp[1]
+					device_name = temp[2]
+					location_gps = temp[3]
+					location_address = temp[4]
+					device_information = temp[5]
+					
+					device_id = db_get_device_id(connection,device_bdaddr,device_information)
 
-				if device_id:
-					# If we have a device information, then we update the information for the device
-					result = db_update_device(connection,device_id,device_information)
-					if not result:
-						print 'Device information could not be updated'
-					# We try to store a new location
-					result = db_add_location(connection,device_id,location_gps,first_seen,location_address,device_name)
+					if device_id:
+						# If we have a device information, then we update the information for the device
+						result = db_update_device(connection,device_id,device_information)
+						if not result:
+							print 'Device information could not be updated'
+						# We try to store a new location
+						result = db_add_location(connection,device_id,location_gps,first_seen,location_address,device_name)
 
-					# If the location has not changed, result will be False. We update the last seen field into locations.
-					if not result:
-						result = db_update_location(connection,device_id,location_gps,first_seen)
+						# If the location has not changed, result will be False. We update the last seen field into locations.
+						if not result:
+							result = db_update_location(connection,device_id,location_gps,first_seen)
 
-				#print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
-			else:
-				time.sleep(5)
+					#print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
+			time.sleep(2)
 
 	except KeyboardInterrupt:
 		print 'Exiting. It may take a few seconds.'
