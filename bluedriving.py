@@ -80,7 +80,7 @@ def usage():
         print "\n   Usage: %s <options>" % sys.argv[0]
         print "   Options:"
         print "  \t-h, --help                           Show this help message and exit."
-        print "  \t-D, --debug                          Debug mode."
+        print "  \t-D, --debug                          Debug mode ON. Prints debug information on the screen."
         print "  \t-d, --database-name                  Name of the database to store the data."
         print "  \t-w, --webserver                      It runs a local webserver to visualize and interact with the collected information."
         print "  \t-s, --not-sound                      Do not play the beautiful discovering sounds. Are you sure you wanna miss this?"
@@ -306,7 +306,14 @@ def process_devices(device_list):
 						for i in services_data:
 							device_services.append(i[2])
 
-				print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(ftime,d[0],d[1],location_gps,location_address.split(',')[0],device_services)
+				if len(device_services) > 1:
+					print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(ftime,d[0],d[1],location_gps,location_address.split(',')[0],device_services[0])
+					for service in device_services[1:]:
+						print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format('','','','','',service)
+						#print '\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t{:<30}'.format(service)
+				else:
+					print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(ftime,d[0],d[1],location_gps,location_address.split(',')[0],device_services)
+					
 				if flag_sound:
 					if flag_new_device:
 						pygame.mixer.music.load('new.ogg')
@@ -681,14 +688,14 @@ def main():
         except getopt.GetoptError: usage()
 
         for opt, arg in opts:
-                if opt in ("-h", "--help"): usage();sys.exit()
+                if opt in ("-h", "--help"): usage(); sys.exit()
                 if opt in ("-D", "--debug"): debug = True
                 if opt in ("-d", "--database-name"): database_name = arg
                 if opt in ("-w", "--webserver"): flag_run_webserver = True
                 if opt in ("-s", "--disable-sound"): flag_sound = False
                 if opt in ("-i", "--not-internet"): flag_internet = False
                 if opt in ("-l", "--not-lookup-services"): flag_lookup_services = False
-                if opt in ("-g", "--not-gps"): flag_gps = False
+                if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
         try:
 		
 		version()
@@ -763,7 +770,9 @@ def main():
 			if k == 'g':
 				if flag_gps == True:
 					flag_gps = False
+					flag_internet = False
 					print GRE+'GPS desactivated'+END
+					print GRE+'Internet desactivated'+END
 				else:
 					flag_gps = True
 					print GRE+'GPS activated'+END
