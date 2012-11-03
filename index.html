@@ -55,21 +55,27 @@
 
 		// Fill the table with data
 		function fillTable( devices ) {
+                        $('#interaction').attr('style','display: none;')
+			
 			var e = esc;
 			var html = [], h = -1;
 			html[++h] = '<tbody>';
 			html[++h] = '<thead>';
 			html[++h] = '<tr>';
-			html[++h] = '<th scope="col">DATE</th>';
-			html[++h] = '<th scope="col">MAC ADDRESS</th>';
-			html[++h] = '<th scope="col">GLOBAL POSITION</th>';
-			html[++h] = '<th scope="col">ADDRESS</th>';
-			html[++h] = '<th scope="col">NAME</th>';
+			html[++h] = '<th scope="col">Last Seen</th>';
+			html[++h] = '<th scope="col">First Seen</th>';
+			html[++h] = '<th scope="col">Mac Address</th>';
+			html[++h] = '<th scope="col">Global Position</th>';
+			html[++h] = '<th scope="col">Address</th>';
+			html[++h] = '<th scope="col">Name</th>';
 			html[++h] = '</tr>';
 			html[++h] = '</thead>';
 			for ( var device, i = -1; device = devices[++i]; ) {
 				html[++h] = '<tr><td class="date">';
 				html[++h] = e(device.lastseen);
+				html[++h] = ' ';
+				html[++h] = '</td><td class="date">';
+				html[++h] = e(device.firstseen);
 				html[++h] = ' ';
 				html[++h] = '</td><td class="mac">';
 				html[++h] = e(device.mac);
@@ -132,36 +138,43 @@
 			// Stop the animation
 			$(window).scroll(function () {
 			    $('#header').animate({top:'0px'},{duration:500,queue:false});
-			});
+		       });
+
+			$('#interaction').removeAttr('style');
 
 			// Stop the pulling
 			clearInterval(timeVar)
 
 			// Get the data from the webserver.
-			mac = row_selected.find('td:eq(1)').html();
+			mac = row_selected.find('td:eq(2)').html();
 
 			// Get the device features
 			getSpecificData(mac);
+
+			// Fill notes
+			fillNotes(mac);
+
+			// Fill the interaction div
+			fillInteraction();
 
 			// Fill the map if there is sth to fill
 			if (row_selected.find('td:eq(2)').html().indexOf("not") == -1 ) {
 				fillMap( row_selected.find('td:eq(2)').html() );	
 			}
 
-			// Fill notes
-			fillNotes();
-
-			// Fill the interaction div
-			fillInteraction();
 		}
 
-		function fillNotes(){
+		function fillNotes(mac){
 			// Call a json with the notes...
+			$.getJSON("http://localhost:8000/getnote?mac="+mac.substr(0,17), {}, function(data) {
+				alert(data);
+				});
 
 		};
 
 		function fillInteraction() {
 			// Set the alarm
+
 			$('#interAlarm').append('<h3>Set a voice alarm when seen</h3>');
 			$('#interAlarm').append('<button type="button" onclick="setAlarm()">Set Alarm</button>');
 			
@@ -232,14 +245,15 @@
 		function getSpecificData(mac) {
 				$.getJSON("http://localhost:8000/info?mac="+mac, {}, function(data) {
 
-				$('#info').append("<div id=table1> <table id='deviceInfoTable' align='left'></table>")
+				$('#info').append("<div id=table1> <table id='deviceInfoTable'></table>")
 
 				// Show the device information
 				$('#contentbox').hide();
 				var html = [], h = -1;
 				html[++h] = '<thead>';
 				html[++h] = '<tr>';
-				html[++h] = '<th scope="col">Date</th>';
+				html[++h] = '<th scope="col">Last Seen</th>';
+				html[++h] = '<th scope="col">First Seen</th>';
 				html[++h] = '<th scope="col">Mac Address</th>';
 				html[++h] = '<th scope="col">Global Position</th>';
 				html[++h] = '<th scope="col">Address</th>';
@@ -250,17 +264,20 @@
 				html[++h] = '<tr><td class="date">';
 				html[++h] = row_selected.find('td:eq(0)').html();
 				html[++h] = '</td>';
-				html[++h] = '<td class="mac">';
+				html[++h] = '<td class="date">';
 				html[++h] = row_selected.find('td:eq(1)').html();
 				html[++h] = '</td>';
-				html[++h] = '<td class="gps">';
+				html[++h] = '<td class="mac">';
 				html[++h] = row_selected.find('td:eq(2)').html();
 				html[++h] = '</td>';
-				html[++h] = '<td class="address">';
+				html[++h] = '<td class="gps">';
 				html[++h] = row_selected.find('td:eq(3)').html();
 				html[++h] = '</td>';
-				html[++h] = '<td class="name">';
+				html[++h] = '<td class="address">';
 				html[++h] = row_selected.find('td:eq(4)').html();
+				html[++h] = '</td>';
+				html[++h] = '<td class="name">';
+				html[++h] = row_selected.find('td:eq(5)').html();
 				html[++h] = '</td>';
 				html[++h] = '</tr>';
 				html[++h] = '</tbody></div>';
@@ -289,11 +306,11 @@
 
 			<div id="info" class="info"> </div>
 			<div id="notes" class="notes"> </div>
-			<div id="map" class="map"> </div>
 			<div id="interaction" class="interaction"> 
 				<div id="interNote"></div>
 				<div id="interAlarm"></div>
 			</div>
+			<div id="map" class="map"> </div>
 			<div id="largemap" class="map"> </div>
 
 		</div>

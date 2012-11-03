@@ -382,7 +382,7 @@ def note_to(typeof_call, mac,note):
 					print ' >> Some strange attempt to hack the server:4'
 				return ''
 			# Characters fot the note
-			if not re.match('^[a-zA-Z0-9 .,?]+$',note):
+			if note and not re.match('^[a-zA-Z0-9 .,?]+$',note):
 				if debug:
 					print ' >> Some strange attempt to hack the server:5'
 				return ''
@@ -484,6 +484,55 @@ def note_to(typeof_call, mac,note):
 				return ''
 
 			return 'Deleted'
+
+		elif typeof_call == 'get':
+			# Search fot that mac on the database first...
+			conn = sqlite3.connect('bluedriving.db')
+			cursor = conn.cursor()
+			askmac = ('%'+mac+'%',)
+
+		        je = json.JSONEncoder()
+
+			row = cursor.execute("SELECT Id FROM devices WHERE Mac like ? limit 0,1",askmac)
+
+			# Check the results, Does this mac exists?
+			res = row.fetchall()
+			if len(res) != 0:
+				(id,) = res[0]
+			else:
+				if debug:
+					print ' >> This mac does not exist: {0}'.format(mac)
+				return ''
+			# The mac does exist. Let's delete it.
+			cursor2 = conn.cursor()
+
+			notesdict = {}
+                        notes = []
+			notesdict['Notes'] = notes
+
+			# Try to get the values
+			try:
+				row2 = cursor2.execute("SELECT Note from notes where Id like ? ",(id,))
+				#row2 = cursor2.execute("SELECT Note from notes")
+				for row in row2:
+					notes.append(str(row[0]))
+
+				conn.commit()
+				if debug:
+					print ' >> Getting values. Id: {0}, Note:{1}'.format(id,note)
+				conn.close()
+			except Exception as inst:
+				if debug:
+					print ' >> Some problem getting the notes in the funcion note_to()'
+				print type(inst)     # the exception instance
+				print inst.args      # arguments stored in .args
+				print inst           # __str__ allows args to printed directly
+				x, y = inst          # __getitem__ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				return ''
+		        response = je.encode(notes)
+			return response
 		else:
 			return ''
 
@@ -546,13 +595,24 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 					print ' >> Get /delnote'
 				mac = str(self.path.split('mac=')[1].split('&')[0])
 				note = str(self.path.split('note=')[1])
-				json_to_send = note_to('del', mac, note)
+				json_to_send = note_to('del', mac, "")
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
 				self.end_headers()
 				self.wfile.write(json_to_send)
 
+			# Get a MAC and get all the notes from the database 
+			elif self.path.rfind('/getnote?mac=') == 0: # and self.path.find("note=") > 0:
+				if debug:
+					print ' >> Get /getnote'
+				mac = str(self.path.split('mac=')[1].split('&')[0])
+				json_to_send = note_to('get', mac, note)
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/html')
+				self.end_headers()
+				self.wfile.write(json_to_send)
 			# Get a MAC and return all the info about that MAC
 			elif self.path.rfind('/info?mac=') == 0:
 				if debug:
