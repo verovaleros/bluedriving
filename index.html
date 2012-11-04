@@ -10,7 +10,8 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
         <link rel="stylesheet" href="style.css">
-	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script> 
+	<!--<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script> -->
+	<script type="text/javascript" src="jquery-1.8.2.min.js"></script> 
 
 	<!-- This is to add the basic information in the main web page. -->
 	<script type="text/javascript">
@@ -55,7 +56,13 @@
 
 		// Fill the table with data
 		function fillTable( devices ) {
-                        $('#interaction').attr('style','display: none;')
+			$('#interaction').attr('style','display: none;')
+
+			previousselectedmac = "";
+			if (typeof row_selected!="undefined") {
+				previousselectedmac = $.trim (row_selected.find('td:eq(2)').html());
+				//alert(previousselectedmac);
+				};
 			
 			var e = esc;
 			var html = [], h = -1;
@@ -71,13 +78,19 @@
 			html[++h] = '</tr>';
 			html[++h] = '</thead>';
 			for ( var device, i = -1; device = devices[++i]; ) {
-				html[++h] = '<tr><td class="date">';
+				if ( e(device.mac) == previousselectedmac ){
+					html[++h] = '<tr class="selected"><td class="date">';
+				}
+				else {
+					html[++h] = '<tr><td class="date">';
+				}
 				html[++h] = e(device.lastseen);
 				html[++h] = ' ';
 				html[++h] = '</td><td class="date">';
 				html[++h] = e(device.firstseen);
 				html[++h] = ' ';
-				html[++h] = '</td><td class="mac">';
+				//alert(e(device.mac));
+				html[++h] = '</td><td class="mac" >';
 				html[++h] = e(device.mac);
 				html[++h] = ' ';
 				html[++h] = '</td><td class="position">';
@@ -95,9 +108,6 @@
 			$('#hor-zebra').empty();
 			$('#hor-zebra').append(html.join(''));
 
-			if (typeof row_selected!="undefined") {
-				row_selected.addClass('selected');
-				};
 
 			};
 
@@ -112,11 +122,12 @@
 		function addClicks () {
 			$('#hor-zebra tr').click( function(){ 
 				// First de-select rows
-				//$('#hor-zebra tr').removeClass('selected') ;
+				$('#hor-zebra tr').removeClass('selected') ;
 				//alert(row_selected.html());
 				// second select rows
 				//$('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')').addClass('selected') ;
 				row_selected = $('#hor-zebra tr:eq('+$('#hor-zebra tr').index(this)+')') ;
+				//alert(row_selected.html());
 				row_selected.addClass('selected');
 				});
 			};
@@ -135,10 +146,13 @@
 		function show_info() {
 			// Script to control de Device Info button in the header
 
+			//Del the previous stuff
+			$('#info').html('');
+
 			// Stop the animation
-			$(window).scroll(function () {
-			    $('#header').animate({top:'0px'},{duration:500,queue:false});
-		       });
+			$('#header').css('top','0px');
+			$(window).unbind('scroll');
+
 
 			$('#interaction').removeAttr('style');
 
@@ -154,48 +168,114 @@
 			// Fill notes
 			fillNotes(mac);
 
+			// Fill alarms
+			fillAlarms(mac);
+
 			// Fill the interaction div
 			fillInteraction();
 
 			// Fill the map if there is sth to fill
-			if (row_selected.find('td:eq(2)').html().indexOf("not") == -1 ) {
-				fillMap( row_selected.find('td:eq(2)').html() );	
+			if (row_selected.find('td:eq(2)').html().indexOf("not") == -1 || row_selected.find('td:eq(2)').text() != "" ) {
+				fillMap( row_selected.find('td:eq(3)').html() );	
 			}
 
 		}
 
+
+		function fillAlarms(mac){
+			//$('#notes').html('')
+			$('#alarms').html("<div id='AlarmsDiv'> Device Alarms </div>")
+
+			// Call a json with the notes...
+			$.getJSON("http://localhost:8000/getalarm?mac="+mac.substr(0,17), {}, function(data) {
+				for ( i = 0; i < data.Alarms.length ; i++ ) {
+					var html = [], h = -1;
+					html[++h] = "<div class='alarm'>" + data.Alarms[i] + "</div>"
+					$('#alarms').append(html.join(''));
+				}
+
+				});
+		};
+
+
 		function fillNotes(mac){
+			//$('#notes').html('')
+			$('#notes').html("<div id='NotesDiv'> Device Notes </div>")
+
 			// Call a json with the notes...
 			$.getJSON("http://localhost:8000/getnote?mac="+mac.substr(0,17), {}, function(data) {
-				alert(data);
-				});
+				for ( i = 0; i < data.Notes.length ; i++ ) {
+					var html = [], h = -1;
+					html[++h] = "<div class='nota'>" + data.Notes[i] + "</div>"
+					$('#notes').append(html.join(''));
+				}
 
+				});
 		};
+
+
+
 
 		function fillInteraction() {
 			// Set the alarm
+			var html = [], h = -1;
+			html[++h] = '<h4>Set a voice alarm when seen</h4>';
+			html[++h] = '<select id="selectalarm" class="alarmmenu" >';
+			html[++h] = '<option class="alarmmenu">Sound</option>';
+			html[++h] = '<option class="alarmmenu">Festival</option>';
+			html[++h] = '<option class="alarmmenu">Mail</option>';
+			html[++h] = '</select>';
+		        $('#interAlarm').html(html.join(''));
 
-			$('#interAlarm').append('<h3>Set a voice alarm when seen</h3>');
+			/*var html = [], h = -1;
+			html[++h] = '<h4>Set a voice alarm when seen</h4>';
+			html[++h] = '<ul id="drop-down-menu" class="alarmmenu">';
+			html[++h] = '<li class="alarmmenu"><a class="alarm" href="alarm.html">Alarm</a>';
+			html[++h] = '<ul class="alarmmenu">';
+			html[++h] = '<li class="alarmmenu"><a class="alarm" href="sound.html">Sound</a></li>';
+			html[++h] = '</ul>';
+			html[++h] = '</li>';
+			html[++h] = '</ul>';
+			html[++h] = '<p class="clear_all"></p>';
+		        $('#interAlarm').append(html.join(''));
+			*/	
 			$('#interAlarm').append('<button type="button" onclick="setAlarm()">Set Alarm</button>');
+			$('#interAlarm').append('<button type="button" onclick="delAlarm()">Delete Alarm</button>');
+
+
 			
 			// Set the notes
-			$('#interNote').append('<br><h3>Set or Delete a Note</h3>');
+			$('#interNote').html('<h4>Set or Delete a Note</h4>');
 			$('#interNote').append('<input type="text" id="note" maxlength="100" size="10"/> <button type="button" onclick="setNote()">Set Note</button><button type="button" onclick="delNote()">Delete Note</button>');
 
 		};
 
 		function setAlarm() {
-			alert('set alarm');
+			type_of_alarm = $('#selectalarm').val();
+			$.getJSON("http://localhost:8000/addalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
+			fillAlarms(mac);
 		};
+
+		function delAlarm() {
+			type_of_alarm = $('#selectalarm').val();
+			$.getJSON("http://localhost:8000/delalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
+			fillAlarms(mac);
+		};
+
+
 
 		function setNote() {
 			noteText = $('#note').val();
 			$.getJSON("http://localhost:8000/addnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
-				alert(data.Result);
 				});
+			fillNotes(mac);
 		};
 
 		function delNote() {
+			noteText = $('#note').val();
+			$.getJSON("http://localhost:8000/delnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
+				});
+			fillNotes(mac);
 		};
 
 		function fillMap( gpsinformation ) {
@@ -208,7 +288,7 @@
 			html[++h] = "<center>";
 			html[++h] = "<iframe id='mapiframe' width='425' height='350' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='http://www.openstreetmap.org/export/embed.html?bbox="+smallerlongitude+","+latitude+","+biggerlongitude+","+latitude+"&amp;layer=mapnik&amp;marker="+latitude+","+longitude+"' style='border: 1px solid black'></iframe>";
 			html[++h] = "</center>";
-			$('#map').append(html.join(''));
+			$('#map').html(html.join(''));
 			
 			}
 
@@ -223,8 +303,8 @@
 			html[++h] = '<th scope="col">Device Features</th>';
 			html[++h] = '</tr>';
 			html[++h] = '</thead>';
-			$('#infotable').append(html.join(''));
-		
+		        $('#infotable').append(html.join(''));
+
 			for ( var i = 0; i < information.split('[')[1].split(']')[0].split(',').length; i++ ) {
 				var html = [], h = -1;
 				piece = information.split('[')[1].split(']')[0].split(',')[i];
@@ -282,7 +362,7 @@
 				html[++h] = '</tr>';
 				html[++h] = '</tbody></div>';
 				$('#deviceInfoTable').append(html.join(''));
-
+				
 				fillSpecificTable( data.Info );	
 
 				});
@@ -306,9 +386,11 @@
 
 			<div id="info" class="info"> </div>
 			<div id="notes" class="notes"> </div>
+			<div id="alarms" class="alarms"> </div>
 			<div id="interaction" class="interaction"> 
 				<div id="interNote"></div>
 				<div id="interAlarm"></div>
+				<div id="clear" style="clear:both;"></div>
 			</div>
 			<div id="map" class="map"> </div>
 			<div id="largemap" class="map"> </div>

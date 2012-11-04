@@ -115,7 +115,7 @@ textarea {
     margin-left:auto; 
     margin-right:auto; 
     width: auto;
-    background: none repeat scroll 0 0 powderblue;
+    /*background: none repeat scroll 0 0 powderblue;*/
 }
 
 #info {
@@ -215,6 +215,7 @@ li {
 	width: 40%;
 	margin-left: 1%;
 	padding: 1%;*/
+	background: none repeat scroll 0 0 snow;
 	font-size: smaller;
 	margin: 10px
 }
@@ -223,3 +224,70 @@ li {
 	border-style: dotted;
 	padding: 5px;
 }
+
+#interNote, #interAlarm {
+	width: 50%;
+	float: left;
+
+}
+
+#map {
+	padding: 10px;
+	clear:both;
+	display: block:
+}
+
+#notes, #alarms {
+	clear:both;
+	display: block:
+	background: none repeat scroll 0 0 snow;
+}
+
+#NotesDiv, #AlarmsDiv {
+	font-size: larger;
+	font-family: Verdana;
+	font-weight: bold;
+}
+
+
+.nota, .alarm {
+	padding: 2px;
+	margin-left: 10px;
+}
+
+
+
+/* Dropdown menu 
+#drop-down-menu{margin-left:20px}
+
+ul .alarmmenu{
+	font-weight:bold;color:#ffffff;
+	margin:0;
+	padding:0;
+	list-style:none}
+ul li .alarmmenu{
+	display:block;
+	position:relative;
+	float:left}
+li ul .alarmmenu{display:none}
+ul li a .alarmmenu{
+	display:block;
+	margin-left:1px;
+	text-decoration:none;
+	color:#ffffff;
+	border-top:1px solid #B75963;
+	padding: 5px 15px 5px 15px;
+	background:#6E5463;
+	white-space:nowrap}
+ul li a:hover .alarmmenu{background:#985963;color:inherit}
+li:hover ul .alarmmenu{ 
+	display:block; 
+	position:absolute}
+li:hover li .alarmmenu{ 
+	font-size:70%;
+	clear:left; 
+	width:12em}
+li:hover a .alarmmenu{ background:#985963;color:inherit}
+li:hover li a:hover .alarmmenu{background:#B75963;color:inherit}
+.clear_all{clear:both;height:0.5em;}
+*/

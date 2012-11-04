@@ -87,6 +87,7 @@ def usage():
         print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting coordinates and addresses from the web."
         print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. It make the discovering a little faster."
         print "  \t-g, --not-gps            		Use this option when you want to run the bluedriving withouth a gpsd connection."
+        print "  \t-f, --fake-gps            		Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
 	print 
         print END
  
@@ -358,6 +359,7 @@ def db_create_database(database_name):
 			connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
 			connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
 			connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
+			connection.execute("CREATE TABLE Alarms(Id INTEGER, Alarm TEXT)")
 			if debug:
 				print 'Database created'
 		else:
@@ -676,13 +678,14 @@ def main():
 	global GRE
 	global CYA
 	global END
+	global global_location
 
 	database_name = "bluedriving.db"
 	flag_run_webserver = False
 
 	try:
                 # By default we crawl a max of 5000 distinct URLs
-		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilg", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps"])
+		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps","fake-gps="])
 
 
         except getopt.GetoptError: usage()
@@ -696,6 +699,7 @@ def main():
                 if opt in ("-i", "--not-internet"): flag_internet = False
                 if opt in ("-l", "--not-lookup-services"): flag_lookup_services = False
                 if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
+                if opt in ("-f", "--fake-gps"): fake_gps = arg
         try:
 		
 		version()
@@ -707,10 +711,15 @@ def main():
 		print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("----","-----------","-----------","---------------","------------------","----")
 
 		# Here we start the thread to get gps location		
-		if flag_gps:
+		if flag_gps and not fake_gps:
 			gps_thread = threading.Thread(None,target=get_coordinates_from_gps)
 			gps_thread.setDaemon(True)
 			gps_thread.start()
+		elif fake_gps:
+			# Verify fake_gps
+			if debug:
+				print 'Using the fake gps address: {0}'.format(fake_gps)
+			global_location = fake_gps
 		
 		# Here we start the web server
 		if flag_run_webserver:
