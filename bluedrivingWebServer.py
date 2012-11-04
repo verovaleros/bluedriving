@@ -135,36 +135,22 @@ def get_unread_registers():
 
 		# First select all the locations
 		# This can be VERY HEAVY with a huge database...
-		#for row in cursor.execute('SELECT * FROM Locations where id > ? order by Lastseen DESC limit 100',location_id_tuple):
-		#for row in cursor.execute('SELECT * FROM Locations order by Lastseen DESC limit 100',location_id_tuple):
-		#for row in cursor.execute('SELECT * FROM Locations order by Id DESC limit 100',location_id_tuple):
-		#for row in cursor.execute('SELECT * FROM Locations order by Id DESC limit 100'):
 		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 100'):
 
 			#if debug:
 				#print ' >> Read locations {0}'.format(row)
-			#id = (row[0],)
 			dev_id = (row[1],)
 
 			# Update location id
-			#cursor3 = conn.cursor()
-			#temp_row = cursor3.execute('SELECT count(*) FROM Locations')
-			#location_id_tuple = temp_row.fetchall()[0]
-			#print location_id_tuple
-			#location_id = row[0]
-			#location_id_ask = (location_id,)
 
 			newcursor = conn.cursor()
 
 			# add the limit!
-			#for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ? limit ?,1',(row[0],unread_index)):
-			#for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',id):
 			for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',dev_id):
 				if debug:
 					print '  >> New row:{0}'.format(newrow)
 				dict = {}
 				# ID
-				#dict['locid'] = row[0]
 				# GPS
 				dict['gps'] = row[2]
 				# first seen
@@ -182,12 +168,31 @@ def get_unread_registers():
 			
 				array.append(dict)
 
-		"""
-		try:
-			unread_index = row[0]
-		except UnboundLocalError:
-			pass
-		"""
+				""" This should go in the bluedriving.py 
+				# Find if we have any alarm for this mac...
+				if debug:
+					print 'Finding alarms for mac: {0}'.format(dict['mac'])
+
+					# First get the id of the mac
+					askmac = ('%'+dict['mac']+'%',)
+					cursor2 = conn.cursor()
+					row2 = cursor2.execute("SELECT Id FROM devices WHERE Mac like ? limit 0,1",askmac)
+
+					# Check the results, Does this mac exists?
+					res = row2.fetchall()
+					if len(res) != 0:
+						(id,) = res[0]
+					else:
+						if debug:
+							print ' >> This mac does not exist: {0}'.format(dict['mac'])
+						return ''
+
+					cursor3 = conn.cursor()
+					for row3 in cursor3.execute('SELECT Alarm FROM Alarms where id like ?',(id,)):
+						if debug:
+							print ' > Found alarm: {0} for mac: {1}'.format(row3, dict['mac'])
+				"""
+
 		response = je.encode(top)
 		return response
 
@@ -197,11 +202,7 @@ def get_unread_registers():
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly
-		#x, y = inst          # __getitem__ allows args to be unpacked directly
-		#print 'x =', x
-		#print 'y =', y
 		exit(-1)
-
 
 
 
@@ -356,6 +357,8 @@ def note_to(typeof_call, mac,note):
 
 		# Replace + with spaces.
 		note = note.replace('+', ' ')
+		# Replace %20 with spaces.
+		note = note.replace('%20', ' ')
 		if debug:
 			print ' >> Sanitizing Mac: {0} and Note: {1}'.format(mac, note)
 
@@ -531,7 +534,7 @@ def note_to(typeof_call, mac,note):
 				print 'x =', x
 				print 'y =', y
 				return ''
-		        response = je.encode(notes)
+		        response = je.encode(notesdict)
 			return response
 		else:
 			return ''
@@ -539,6 +542,195 @@ def note_to(typeof_call, mac,note):
 	except Exception as inst:
 		if debug:
 			print '\tProblem in note_to()'
+		print type(inst)     # the exception instance
+		print inst.args      # arguments stored in .args
+		print inst           # __str__ allows args to printed directly
+		x, y = inst          # __getitem__ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		exit(-1)
+
+def alarm_to(type_ofcall, mac, alarm_type):
+	""" Get a MAC and add, get or remove an alarm """
+	global debug
+	import re
+
+	try:
+		# verify the data types
+		try:
+			# Are they strings?
+			if type(mac) != str or type(alarm_type) != str:
+				if debug:
+					print ' >> Some strange attempt to hack the server:1'
+				return ''
+		        # Is the format ok?
+			if len(mac.split(':')) != 6 or len(mac) != 17:
+				if debug:
+					print ' >> Some strange attempt to hack the server:2'
+				return ''
+		        # Is the len of the noteok?
+			if len(alarm_type) > 253:
+				if debug:
+					print ' >> Some strange attempt to hack the server:4'
+				return ''
+			# Characters fot the mac
+			if not re.match('^[a-fA-F0-9:]+$',mac):
+				if debug:
+					print ' >> Some strange attempt to hack the server:4'
+				return ''
+			# Characters fot the note
+			if alarm_type and not re.match('^[a-zA-Z0-9 .,?]+$',alarm_type):
+				if debug:
+					print ' >> Some strange attempt to hack the server:5'
+				return ''
+		except Exception as inst:
+			if debug:
+				print ' >> Some strange attempt to hack the server.6'
+			print type(inst)     # the exception instance
+			print inst.args      # arguments stored in .args
+			print inst           # __str__ allows args to printed directly
+			x, y = inst          # __getitem__ allows args to be unpacked directly
+			print 'x =', x
+			print 'y =', y
+			return ''
+
+
+		if type_ofcall == 'add':
+
+			# Search fot that mac on the database first...
+			conn = sqlite3.connect('bluedriving.db')
+			cursor = conn.cursor()
+			askmac = ('%'+mac+'%',)
+
+			row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
+
+			# Check the results, Does this mac exists?
+			res = row.fetchall()
+			if len(res) != 0:
+				(id,) = res[0]
+			else:
+				if debug:
+					print ' >> This mac does not exist: {0}'.format(mac)
+				return ''
+				
+			cursor = conn.cursor()
+
+
+			# Try to insert
+			try:
+				cursor.execute("INSERT INTO Alarms (Id,Alarm) values (?,?) ",(id,alarm_type))
+				conn.commit()
+				if debug:
+					print ' >> Inserted values. Id: {0}, Alarm:{1}, Mac:{2}'.format(id, alarm_type, mac)
+				conn.close()
+			except Exception as inst:
+				if debug:
+					print ' >> Some problem inserting in the database in the funcion alarm_to()'
+				print type(inst)     # the exception instance
+				print inst.args      # arguments stored in .args
+				print inst           # __str__ allows args to printed directly
+				x, y = inst          # __getitem__ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				return ''
+
+			return "{'Result':'Added'}"
+
+		elif type_ofcall == 'del':
+
+			# Search fot that mac on the database first...
+			conn = sqlite3.connect('bluedriving.db')
+			cursor = conn.cursor()
+			askmac = ('%'+mac+'%',)
+
+			row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
+
+			# Check the results, Does this mac exists?
+			res = row.fetchall()
+			if len(res) != 0:
+				(id,) = res[0]
+			else:
+				if debug:
+					print ' >> This mac does not exist: {0}'.format(mac)
+				return ''
+				
+			cursor = conn.cursor()
+
+
+			# Try to insert
+			try:
+				cursor.execute("DELETE From Alarms where Id like ? and Alarm like ?",(id,alarm_type))
+				conn.commit()
+				if debug:
+					print ' >> Deleted values. Id: {0}, Alarm:{1}, Mac:{2}'.format(id, alarm_type, mac)
+				conn.close()
+			except Exception as inst:
+				if debug:
+					print ' >> Some problem deleting in the database in the funcion alarm_to()'
+				print type(inst)     # the exception instance
+				print inst.args      # arguments stored in .args
+				print inst           # __str__ allows args to printed directly
+				x, y = inst          # __getitem__ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				return ''
+
+			return "{'Result':'Deleted'}"
+
+		elif type_ofcall == 'get':
+
+			# Search fot that mac on the database first...
+			conn = sqlite3.connect('bluedriving.db')
+			cursor = conn.cursor()
+			askmac = ('%'+mac+'%',)
+
+		        je = json.JSONEncoder()
+
+			row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
+
+			# Check the results, Does this mac exists?
+			res = row.fetchall()
+			if len(res) != 0:
+				(id,) = res[0]
+			else:
+				if debug:
+					print ' >> This mac does not exist: {0}'.format(mac)
+				return ''
+				
+			cursor = conn.cursor()
+
+                        alarmsdict = {}
+                        alarms = []
+			alarmsdict['Alarms'] = alarms
+			# Try to insert
+			try:
+				row2 = cursor.execute("SELECT Alarm from Alarms where Id like ?",(id,))
+                                for row in row2:
+					print row
+                                        alarms.append(row)
+
+				conn.commit()
+				if debug:
+					print ' >> Get values. Id: {0}, Alarm:{1}, Mac:{2}'.format(id, alarm_type, mac)
+				conn.close()
+			except Exception as inst:
+				if debug:
+					print ' >> Some problem getting from the database in the funcion alarm_to()'
+				print type(inst)     # the exception instance
+				print inst.args      # arguments stored in .args
+				print inst           # __str__ allows args to printed directly
+				x, y = inst          # __getitem__ allows args to be unpacked directly
+				print 'x =', x
+				print 'y =', y
+				return ''
+
+		        response = je.encode(alarmsdict)
+			return response
+
+
+	except Exception as inst:
+		if debug:
+			print '\tProblem in alarm_to()'
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly
@@ -558,6 +750,7 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 	def do_GET(self):
 		global debug
 		note = ""
+		alarm_type = ""
 		try:
 			if debug:
 				print ' >> Path: {0}'.format(self.path)
@@ -595,7 +788,7 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 					print ' >> Get /delnote'
 				mac = str(self.path.split('mac=')[1].split('&')[0])
 				note = str(self.path.split('note=')[1])
-				json_to_send = note_to('del', mac, "")
+				json_to_send = note_to('del', mac, note)
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
@@ -607,7 +800,43 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				if debug:
 					print ' >> Get /getnote'
 				mac = str(self.path.split('mac=')[1].split('&')[0])
-				json_to_send = note_to('get', mac, note)
+				json_to_send = note_to('get', mac, "")
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/html')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+			# Get alarms from a MAC  
+			elif self.path.rfind('/getalarm?mac=') == 0: # and self.path.find("note=") > 0:
+				if debug:
+					print ' >> Get /getalarm'
+				mac = str(self.path.split('mac=')[1].split('&')[0])
+				#alarm_type = str(self.path.split('type=')[1].split('&')[0])
+				json_to_send = alarm_to('get', mac, '')
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/html')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+			# Add an alarm to a MAC  
+			elif self.path.rfind('/addalarm?mac=') == 0: # and self.path.find("note=") > 0:
+				if debug:
+					print ' >> Get /addalarm'
+				mac = str(self.path.split('mac=')[1].split('&')[0])
+				alarm_type = str(self.path.split('type=')[1].split('&')[0])
+				json_to_send = alarm_to('add', mac, alarm_type)
+
+				self.send_response(200)
+				self.send_header('Content-Type',        'text/html')
+				self.end_headers()
+				self.wfile.write(json_to_send)
+			# Del an alarm from a MAC  
+			elif self.path.rfind('/delalarm?mac=') == 0: # and self.path.find("note=") > 0:
+				if debug:
+					print ' >> Get /delalarm'
+				mac = str(self.path.split('mac=')[1].split('&')[0])
+				alarm_type = str(self.path.split('type=')[1].split('&')[0])
+				json_to_send = alarm_to('del', mac, alarm_type)
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
@@ -664,7 +893,7 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 					print ' >> Get generic file'
 
 				try:
-					extension = self.path.split('.')[1]
+					extension = self.path.split('.')[-1]
 				except:
 					# Does not have . on it...
 					self.send_response(200)
