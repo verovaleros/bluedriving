@@ -170,9 +170,10 @@ def get_address_from_gps(location_gps):
 			except:
 				if flag_internet:
 					[coordinates,address] = getCoordinatesFromAddress.getCoordinates(location_gps)
+					address = address.encode('utf-8')
 					if debug:
 						print 'Coordinates: {} Address: {}'.format(coordinates,address)
-					address = address.encode('utf-8')
+					
 					address_cache[location_gps] = address
 				else:
 					address = "Internet deactivated"
