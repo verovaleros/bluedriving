@@ -707,7 +707,7 @@ def main():
 		version()
 		queue_devices = Queue.Queue()
 		startTime = time.time()
-		fake_gps = ''
+
 
 		# We print the header for printing results on console
 		print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("Date","MAC address","Device name","Global Position","Aproximate address","Info")
