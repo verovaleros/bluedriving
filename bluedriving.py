@@ -683,6 +683,7 @@ def main():
 
 	database_name = "bluedriving.db"
 	flag_run_webserver = False
+	fake_gps = False
 
 	try:
                 # By default we crawl a max of 5000 distinct URLs
