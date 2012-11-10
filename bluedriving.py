@@ -292,7 +292,8 @@ def process_devices(device_list):
 					flag_new_device = True
 					if debug:
 						print 'New device found'
-				ftime = time.asctime()
+				#ftime = time.asctime()
+				ftime = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
 
 				# We get location's related information
 				if flag_gps:
@@ -625,8 +626,17 @@ def store_device_information(database_name):
 					temp = queue_devices.get()
 
 					# We load the information
-					first_seen = temp[0]
+
+					# From the text to time structure
+                                        #temp2 = time.strptime(temp[0],"%a %b %d %H:%M:%S %Y")
+
+					# From time structure to supported text.
+					#temp_date = time.strftime("%Y-%m-%d %H:%M:%S",temp2)
+
+					#first_seen = temp_date
+					#first_seen = temp_date
 					last_seen = temp[0]
+					first_seen = temp[0]
 					device_bdaddr = temp[1]
 					device_name = temp[2]
 					location_gps = temp[3]
