@@ -37,6 +37,7 @@ flag_sound = True
 flag_internet = True
 flag_gps = True
 flag_lookup_services = True
+flag_alarm = True
 list_devices = {}
 queue_devices = ""
 
@@ -598,12 +599,47 @@ def db_update_location(connection,device_id,location_gps,first_seen):
 		print 'y =', y
 		sys.exit(1)
 
+def device_alert(device_id,device_name,database_name):
+	global debug
+	global verbose
+
+	try:
+		connection = db_get_database_connection(database_name)
+		result = connection.execute('select * from alarms where id = ?',(repr(device_id)))
+		data = result.fetchall()
+		
+		for alarm in data:
+			if 'sound' in alarm:
+				pygame.mixer.music.load('alarm.ogg')
+				pygame.mixer.music.play()
+				break
+			if 'festival' in alarm:
+				os.system("echo "+device_name+"|festival --tts")
+				break
+		connection.commit()
+		connection.close()
+
+	except KeyboardInterrupt:
+		print 'Exiting. It may take a few seconds.'
+		threadbreak = True
+	except Exception as inst:
+		print 'Exception in device_alert() function'
+		threadbreak = True
+		print 'Ending threads, exiting when finished'
+		print type(inst) # the exception instance
+		print inst.args # arguments stored in .args
+		print inst # _str_ allows args to printed directly
+		x, y = inst # _getitem_ allows args to be unpacked directly
+		print 'x =', x
+		print 'y =', y
+		sys.exit(1)
 
 def store_device_information(database_name):
 	global debug
 	global verbose
 	global queue_devices
 	global threadbreak
+	global flag_alarm
 
 	connection = ""
 	try:
@@ -633,8 +669,6 @@ def store_device_information(database_name):
 					# From time structure to supported text.
 					#temp_date = time.strftime("%Y-%m-%d %H:%M:%S",temp2)
 
-					#first_seen = temp_date
-					#first_seen = temp_date
 					last_seen = temp[0]
 					first_seen = temp[0]
 					device_bdaddr = temp[1]
@@ -644,6 +678,12 @@ def store_device_information(database_name):
 					device_information = temp[5]
 					
 					device_id = db_get_device_id(connection,device_bdaddr,device_information)
+					
+					if flag_alarm: 
+						# Here we start the discovering devices threads
+						device_alert_thread = threading.Thread(None,target = device_alert, args=(device_id,device_name,database_name))
+						device_alert_thread.setDaemon(True)
+						device_alert_thread.start()
 
 					if device_id:
 						# If we have a device information, then we update the information for the device
@@ -685,6 +725,7 @@ def main():
 	global flag_internet
 	global flag_gps
 	global flag_lookup_services
+	global flag_alarm
 	global queue_devices
 	global GRE
 	global CYA
@@ -759,8 +800,16 @@ def main():
 		k = ""
 		while True:
 			k = raw_input()
+			if k == 'a' or k == 'A':
+				if flag_alarm: 
+					flag_alarm = False
+					print GRE+'Alarms desactivated'+END
+				else:
+					flag_alarm = True
+					print GRE+'Alarms activated'+END
+
 			if k == 'd' or k == 'D':
-				if debug == True:
+				if debug:
 					debug = False
 					print GRE+'Debug mode desactivated'+END
 				else:
