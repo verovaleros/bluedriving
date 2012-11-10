@@ -168,31 +168,6 @@ def get_unread_registers():
 			
 				array.append(dict)
 
-				""" This should go in the bluedriving.py 
-				# Find if we have any alarm for this mac...
-				if debug:
-					print 'Finding alarms for mac: {0}'.format(dict['mac'])
-
-					# First get the id of the mac
-					askmac = ('%'+dict['mac']+'%',)
-					cursor2 = conn.cursor()
-					row2 = cursor2.execute("SELECT Id FROM devices WHERE Mac like ? limit 0,1",askmac)
-
-					# Check the results, Does this mac exists?
-					res = row2.fetchall()
-					if len(res) != 0:
-						(id,) = res[0]
-					else:
-						if debug:
-							print ' >> This mac does not exist: {0}'.format(dict['mac'])
-						return ''
-
-					cursor3 = conn.cursor()
-					for row3 in cursor3.execute('SELECT Alarm FROM Alarms where id like ?',(id,)):
-						if debug:
-							print ' > Found alarm: {0} for mac: {1}'.format(row3, dict['mac'])
-				"""
-
 		response = je.encode(top)
 		return response
 
@@ -255,6 +230,7 @@ def get_n_positions(n):
 		# Get all the macs into an array
 		id_macs = {}
 		for row in cursor.execute('SELECT Mac,Id FROM devices ORDER BY MAC'):
+			print row
 			id_macs[str(row[1])] = str(row[0])
 
 		if debug:
@@ -310,12 +286,12 @@ def get_n_positions(n):
 			# Flag to know if this mac has at least one position and avoid returning an empty position vector.
 			no_gps_at_all = True
 			for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
-				gps = row[1]
+				gps = row[2]
 				#if debug:
 					#print '  >> Gps: {0}'.format(gps)
 
 				# Add the other string for no gps
-				if 'not available' not in gps and 'Not using' not in gps and gps != '':
+				if 'not available' not in gps and 'Not using' not in gps and gps != '' and 'False' not in gps :
 					no_gps_at_all = False
 					gps_data['gps'] = gps
 					pos_vect.append(gps)
@@ -335,7 +311,7 @@ def get_n_positions(n):
 
 	except Exception as inst:
 		if debug:
-			print '\tget_n_positions()'
+			print '\tProblem in get_n_positions()'
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly

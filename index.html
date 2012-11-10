@@ -142,6 +142,65 @@
     <body>
 
 	<script>
+		
+		// Function to show the complete map of points for one device	
+		function show_complete_map(){
+			// Hide the table
+			$('#contentbox').hide();
+			//Del the previous stuff
+			$('#interaction').html('');
+			$('#interaction').css('border-style','none');
+			$('#info').html('');
+			$('#notes').html('');
+			$('#alarms').html('');
+			$('#map').html('');
+
+			// Stop the animation
+			$('#header').css('top','0px');
+			$(window).unbind('scroll');
+
+			// Stop the pulling
+			clearInterval(timeVar);
+
+			// Get the data from the webserver.
+			mac = row_selected.find('td:eq(2)').html();
+
+			// Get the data for the complete map
+			getCompleteData('1');
+			
+			// fill the page
+			fill_complete_map();
+		}	
+
+
+		// Get the complete data 
+		function getCompleteData(nbr) {
+			$.getJSON("http://localhost:8000/map?amount="+nbr, {}, function(data) { 
+			for ( i = 0; i < data.Map.length ; i++ ) {
+				alert(data.Map[i].MAC);	
+				alert(data.Map[i].pos);	
+			};
+			
+			});
+
+		}
+
+		// Fill the map with info
+		function fill_complete_map() {
+			$.getScript("OpenLayers.js", function(){
+
+
+
+			// <div id="map" class="map"> </div>
+			});
+		};
+
+
+
+
+
+
+		
 		// Funtion to execute when the device button is pressed.
 		function show_info() {
 			// Script to control de Device Info button in the header
@@ -157,7 +216,7 @@
 			$('#interaction').removeAttr('style');
 
 			// Stop the pulling
-			clearInterval(timeVar)
+			clearInterval(timeVar);
 
 			// Get the data from the webserver.
 			mac = row_selected.find('td:eq(2)').html();
@@ -376,7 +435,7 @@
 			    <ul>
 				<li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
 				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Devices</a></li>
-				<li><a href="#"><img src="img/icon-map.png"></br>Map</a></li>
+				<li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Map</a></li>
 				
 			    </ul>
 			</div>
