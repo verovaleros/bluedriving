@@ -91,9 +91,9 @@ def usage():
         print "  \t-s, --not-sound                      Do not play the beautiful discovering sounds. Are you sure you wanna miss this?"
         print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting coordinates and addresses from the web."
         print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. It make the discovering a little faster."
-        print "  \t-g, --not-gps            		Use this option when you want to run the bluedriving withouth a gpsd connection."
-        print "  \t-f, --fake-gps            		Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
-        print "  \t-m, --mail-user            		Gmail user to send mails from and to when a mail alarm is found. The password is entered later."
+        print "  \t-g, --not-gps              	     Use this option when you want to run the bluedriving withouth a gpsd connection."
+        print "  \t-f, --fake-gps            	     Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
+        print "  \t-m, --mail-user            	     Gmail user to send mails from and to when a mail alarm is found. The password is entered later."
 	print 
         print END
  
