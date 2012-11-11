@@ -611,7 +611,7 @@ def device_alert(device_id,device_name,database_name):
 
 	try:
 		connection = db_get_database_connection(database_name)
-		result = connection.execute('select * from alarms where id = ?',(repr(device_id)))
+		result = connection.execute('select * from alarms where id = ?',(device_id,))
 		data = result.fetchall()
 		
 		for alarm in data:
