@@ -27,6 +27,8 @@ from bluedrivingWebServer import createWebServer
 import lightblue
 import Queue
 import pygame
+import getpass
+import smtplib
 
 # Global variables
 vernum = '0.1'
@@ -40,6 +42,8 @@ flag_lookup_services = True
 flag_alarm = True
 list_devices = {}
 queue_devices = ""
+mail_username = ""
+mail_password = ""
 
 address_cache = {}
 deviceservices = {}
@@ -225,7 +229,7 @@ def bluetooth_discovering():
 					if debug:
 						print 'Discovering devices...'
 					# Discovering devices
-					data = bluetooth.bluez.discover_devices(lookup_names=True)
+					data = bluetooth.bluez.discover_devices(duration=3,lookup_names=True)
 					#data = bluetooth.discover_devices(duration=3,lookup_names=True)
 					if debug:
 						print data
@@ -605,9 +609,12 @@ def db_update_location(connection,device_id,location_gps,first_seen):
 		print 'y =', y
 		sys.exit(1)
 
-def device_alert(device_id,device_name,database_name):
+def device_alert(device_id,device_name,database_name,location_gps,location_address,last_seen):
 	global debug
 	global verbose
+	global mail_username
+	global mail_password
+	global flag_internet
 
 	try:
 		connection = db_get_database_connection(database_name)
@@ -623,7 +630,16 @@ def device_alert(device_id,device_name,database_name):
 				os.system("echo "+device_name+"|festival --tts")
 				break
 			if 'Mail' in alarm:
-				pass
+				if flag_internet:
+					fromaddr = mail_username+'@gmail.com'
+					toaddrs = mail_username+'@gmail.com'
+					msg = 'Device '+device_name+'\nLocation '+location_gps+'\nAddress '+location_address+'\nLast seen '+last_seen
+					server = smtplib.SMTP('smtp.gmail.com:587')
+					server.starttls()
+					server.login(mail_username,mail_password)
+					server.sendmail(fromaddr, toaddrs, msg)
+					server.quit()
+				break
 		connection.commit()
 		connection.close()
 
@@ -689,7 +705,7 @@ def store_device_information(database_name):
 					
 					if flag_alarm: 
 						# Here we start the discovering devices threads
-						device_alert_thread = threading.Thread(None,target = device_alert, args=(device_id,device_name,database_name))
+						device_alert_thread = threading.Thread(None,target = device_alert, args=(device_id,device_name,database_name,location_gps,location_address,last_seen))
 						device_alert_thread.setDaemon(True)
 						device_alert_thread.start()
 
@@ -739,14 +755,18 @@ def main():
 	global CYA
 	global END
 	global global_location
+	global mail_username
+	global mail_password
 
 	database_name = "bluedriving.db"
 	flag_run_webserver = False
 	fake_gps = ''
+	mail_username = ""
+	mail_password = ""
 
 	try:
                 # By default we crawl a max of 5000 distinct URLs
-		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps","fake-gps="])
+		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps","fake-gps=","mail-user="])
 
 
         except getopt.GetoptError: usage()
@@ -761,6 +781,7 @@ def main():
                 if opt in ("-l", "--not-lookup-services"): flag_lookup_services = False
                 if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
                 if opt in ("-f", "--fake-gps"): fake_gps = arg
+		if opt in ("-m", "--mail-user"): mail_username = arg; print 'Provide your gmail password for given user: ',; mail_password = getpass.getpass()
         try:
 		
 		version()
