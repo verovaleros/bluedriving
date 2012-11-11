@@ -696,6 +696,7 @@ def alarm_to(type_ofcall, mac, alarm_type):
 			try:
 				row2 = cursor.execute("SELECT Alarm from Alarms where Id like ?",(id,))
                                 for row in row2:
+					print row
                                         alarms.append(row)
 
 				conn.commit()

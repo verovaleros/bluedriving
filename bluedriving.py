@@ -25,29 +25,18 @@ import threading
 import getCoordinatesFromAddress
 from bluedrivingWebServer import createWebServer
 import lightblue
-import Queue
-import pygame
-import getpass
-import smtplib
 
 # Global variables
 vernum = '0.1'
 debug = False
 threadbreak = False
-global_location = ""
-flag_sound = True
-flag_internet = True
-flag_gps = True
-flag_lookup_services = True
-flag_alarm = True
-list_devices = {}
-queue_devices = ""
-mail_username = ""
-mail_password = ""
-
-address_cache = {}
-deviceservices = {}
-
+database = ""
+gps_session= ""
+usegps = True
+globallocation = ""
+sound = True
+internet = True
+lookupservices = True
 GRE='\033[92m'
 END='\033[0m'
 RED='\033[91m'
@@ -92,8 +81,6 @@ def usage():
         print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting coordinates and addresses from the web."
         print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. It make the discovering a little faster."
         print "  \t-g, --not-gps            		Use this option when you want to run the bluedriving withouth a gpsd connection."
-        print "  \t-f, --fake-gps            		Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
-        print "  \t-m, --mail-user            		If you want to send mail alarms, provide your gmail username. The program will ask for your password"
 	print 
         print END
  
@@ -106,8 +93,6 @@ def get_coordinates_from_gps():
 	global threadbreak
 
 	counter = 0
-	gps_session = ""
-	gps_flag = False
         try:
 		while True:
                         if gps_session:
@@ -115,11 +100,7 @@ def get_coordinates_from_gps():
 					if counter < 10:
 						try:
 							gpsdata = gps_session.next()
-							global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
-							if global_location and not gps_flag:
-								pygame.mixer.music.load('gps.ogg')
-								pygame.mixer.music.play()
-								gps_flag = True
+							globallocation =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
 						except Exception, e:
 							try:
 								gpsdata = gps_session.next()
@@ -137,7 +118,6 @@ def get_coordinates_from_gps():
 							gps_session = gps(mode=WATCH_ENABLE)
 							gps_session.sock.settimeout(1)
 							counter = 0
-							gps_flag = False
 						except:
 							pass
                         else:
@@ -230,18 +210,7 @@ def bluetooth_discovering():
 					if debug:
 						print 'Discovering devices...'
 					# Discovering devices
-					data = bluetooth.bluez.discover_devices(duration=3,lookup_names=True)
-					#data = bluetooth.discover_devices(duration=3,lookup_names=True)
-					if debug:
-						print data
-					
-					if data:
-						# We start a new thread that process the information retrieved 
-						process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,))
-						process_device_information_thread.setDaemon(True)
-						process_device_information_thread.start()
-					else: 
-						print '  -'
+					devices = bluetooth.discover_devices(duration=4,lookup_names=True)
 				except:
 					if debug:
 						print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
@@ -610,45 +579,71 @@ def db_update_location(connection,device_id,location_gps,first_seen):
 		print 'y =', y
 		sys.exit(1)
 
-def device_alert(device_id,device_name,database_name,location_gps,location_address,last_seen):
-	global debug
-	global verbose
-	global mail_username
-	global mail_password
-	global flag_internet
+		if deviceid:
 
-	try:
-		connection = db_get_database_connection(database_name)
-		result = connection.execute('select * from alarms where id = ?',(device_id,))
-		data = result.fetchall()
+			try:
+				# This is the structure of the tables in the database
+				#connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
+				#connection.execute("CREATE TABLE Locations(Id INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, PRIMARY KEY(Id,GPS))")
+				#connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
+
+				connection.execute("INSERT INTO Locations(MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)", (int(deviceid), repr(GPS),repr(FirstSeen),repr(FirstSeen),repr(Address),repr(Name)))
+				connection.commit()
+				if debug:
+					print CYA+'- Inserted a new location row in the table Locations.'+END
+				if sound:
+					try:
+						os.system('play new.ogg -q 2> /dev/null')
+					except Exception as inst:
+						print CYA+'Error playing sound new.ogg'+END
+						print type(inst) # the exception instance
+						print inst.args # arguments stored in .args
+						print inst # _str_ allows args to printed directly
+						connection.commit()
+						connection.close()
+						threadbreak = True
+						sys.exit(1)
+			except:
+				try:
+					connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? AND GPS=?", (repr(FirstSeen), repr(deviceid), repr(GPS)))
+					connection.commit()
+					if sound:
+						try:
+							os.system('play old.ogg -q 2> /dev/null')
+						except Exception as inst:
+							print CYA+'Error playing sound old.ogg'+END
+							print type(inst) # the exception instance
+							print inst.args # arguments stored in .args
+							print inst # _str_ allows args to printed directly
+							connection.commit()
+							connection.close()
+							threadbreak = True
+							sys.exit(1)
+					if debug:
+						print CYA+'- A known device found. Information updated!'+END
+				except Exception as inst:
+					print CYA+'Error in connection.execute("UPDATE Location SET LastSeen=? WHERE Id=? AND GPS=?) function'+END
+					print type(inst) # the exception instance
+					print inst.args # arguments stored in .args
+					print inst # _str_ allows args to printed directly
+					connection.commit()
+					connection.close()
+					threadbreak = True
+					sys.exit(1)
+		else:
+			if debug:
+				print 'Not device id could be retrieved for this mac: {}'.format(Mac)
+			connection.commit()
+			connection.close()
 		
-		for alarm in data:
-			if 'Sound' in alarm:
-				pygame.mixer.music.load('alarm.ogg')
-				pygame.mixer.music.play()
-				break
-			if 'Festival' in alarm:
-				os.system("echo "+device_name+"|festival --tts")
-				break
-			if 'Mail' in alarm:
-				if flag_internet:
-					fromaddr = mail_username+'@gmail.com'
-					toaddrs = mail_username+'@gmail.com'
-					msg = 'Device '+device_name+'\nLocation '+location_gps+'\nAddress '+location_address+'\nLast seen '+last_seen
-					server = smtplib.SMTP('smtp.gmail.com:587')
-					server.starttls()
-					server.login(mail_username,mail_password)
-					server.sendmail(fromaddr, toaddrs, msg)
-					server.quit()
-				break
 		connection.commit()
 		connection.close()
+		if debug:
+			print CYA+'- Data submitted and database connection  closed.'+END
+		return True
 
-	except KeyboardInterrupt:
-		print 'Exiting. It may take a few seconds.'
-		threadbreak = True
 	except Exception as inst:
-		print 'Exception in device_alert() function'
+		print 'Exception in setDeviceInformation() function'
 		threadbreak = True
 		print 'Ending threads, exiting when finished'
 		print type(inst) # the exception instance
@@ -659,86 +654,7 @@ def device_alert(device_id,device_name,database_name,location_gps,location_addre
 		print 'y =', y
 		sys.exit(1)
 
-def store_device_information(database_name):
-	global debug
-	global verbose
-	global queue_devices
-	global threadbreak
-	global flag_alarm
 
-	connection = ""
-	try:
-		# We create a database connection
-		connection = db_get_database_connection(database_name)
-		while not threadbreak:
-			while not queue_devices.empty():
-				# We clear the variables to use
-				device_id = ""
-				device_bdaddr = ""
-				device_name = ""
-				device_information = ""
-				location_gps = ""
-				location_address = ""
-				first_seen = ""
-				last_seen = ""
-
-				if not queue_devices.empty():
-					# We extract the device from the queue
-					temp = queue_devices.get()
-
-					# We load the information
-
-					# From the text to time structure
-                                        #temp2 = time.strptime(temp[0],"%a %b %d %H:%M:%S %Y")
-
-					# From time structure to supported text.
-					#temp_date = time.strftime("%Y-%m-%d %H:%M:%S",temp2)
-
-					last_seen = temp[0]
-					first_seen = temp[0]
-					device_bdaddr = temp[1]
-					device_name = temp[2]
-					location_gps = temp[3]
-					location_address = temp[4]
-					device_information = temp[5]
-					
-					device_id = db_get_device_id(connection,device_bdaddr,device_information)
-					
-					if flag_alarm: 
-						# Here we start the discovering devices threads
-						device_alert_thread = threading.Thread(None,target = device_alert, args=(device_id,device_name,database_name,location_gps,location_address,last_seen))
-						device_alert_thread.setDaemon(True)
-						device_alert_thread.start()
-
-					if device_id:
-						# If we have a device information, then we update the information for the device
-						result = db_update_device(connection,device_id,device_information)
-						if not result:
-							print 'Device information could not be updated'
-						# We try to store a new location
-						result = db_add_location(connection,device_id,location_gps,first_seen,location_address,device_name)
-
-						# If the location has not changed, result will be False. We update the last seen field into locations.
-						if not result:
-							result = db_update_location(connection,device_id,location_gps,first_seen)
-
-					#print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
-			time.sleep(2)
-
-	except KeyboardInterrupt:
-		print 'Exiting. It may take a few seconds.'
-		threadbreak = True
-	except Exception as inst:
-		print 'Exception in store_device_information() function'
-		threadbreak = True
-		print 'Ending threads, exiting when finished'
-		print type(inst) # the exception instance
-		print inst.args # arguments stored in .args
-		print inst # _str_ allows args to printed directly
-		x, y = inst # _getitem_ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
-		sys.exit(1)
 
 ##########
 # MAIN
@@ -746,28 +662,24 @@ def store_device_information(database_name):
 def main():
         global debug
 	global threadbreak
-	global flag_sound
-	global flag_internet
-	global flag_gps
-	global flag_lookup_services
-	global flag_alarm
-	global queue_devices
+	global database
+	global gps_session
+	global sound
+	global internet
+	global usegps
+	global lookupservices
 	global GRE
 	global CYA
 	global END
-	global global_location
-	global mail_username
-	global mail_password
 
-	database_name = "bluedriving.db"
-	flag_run_webserver = False
-	fake_gps = ''
-	mail_username = ""
-	mail_password = ""
+	database = "bluedriving.db"
+        gps_session = ""
+        connection = ""
+	runwebserver = False
 
 	try:
                 # By default we crawl a max of 5000 distinct URLs
-		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps","fake-gps=","mail-user="])
+		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilg", ["help","debug","database=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps"])
 
 
         except getopt.GetoptError: usage()
@@ -775,14 +687,12 @@ def main():
         for opt, arg in opts:
                 if opt in ("-h", "--help"): usage(); sys.exit()
                 if opt in ("-D", "--debug"): debug = True
-                if opt in ("-d", "--database-name"): database_name = arg
-                if opt in ("-w", "--webserver"): flag_run_webserver = True
-                if opt in ("-s", "--disable-sound"): flag_sound = False
-                if opt in ("-i", "--not-internet"): flag_internet = False
-                if opt in ("-l", "--not-lookup-services"): flag_lookup_services = False
-                if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
-                if opt in ("-f", "--fake-gps"): fake_gps = arg
-		if opt in ("-m", "--mail-user"): mail_username = arg; print 'Provide your gmail password for given user: ',; mail_password = getpass.getpass()
+                if opt in ("-d", "--database"): database = arg
+                if opt in ("-w", "--webserver"): runwebserver = True
+                if opt in ("-s", "--disable-sound"): sound = False
+                if opt in ("-i", "--not-internet"): internet = False
+                if opt in ("-l", "--not-lookup-services"): lookupservices = False
+                if opt in ("-g", "--not-gps"): usegps = False
         try:
 		
 		version()
@@ -829,16 +739,8 @@ def main():
 		k = ""
 		while True:
 			k = raw_input()
-			if k == 'a' or k == 'A':
-				if flag_alarm: 
-					flag_alarm = False
-					print GRE+'Alarms desactivated'+END
-				else:
-					flag_alarm = True
-					print GRE+'Alarms activated'+END
-
 			if k == 'd' or k == 'D':
-				if debug:
+				if debug == True:
 					debug = False
 					print GRE+'Debug mode desactivated'+END
 				else:
