@@ -102,6 +102,7 @@ def get_coordinates_from_gps():
 
 	counter = 0
 	gps_session = ""
+	gps_flag = False
         try:
 		while True:
                         if gps_session:
@@ -110,6 +111,10 @@ def get_coordinates_from_gps():
 						try:
 							gpsdata = gps_session.next()
 							global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
+							if global_location and not gps_flag:
+								pygame.mixer.music.load('gps.ogg')
+								pygame.mixer.music.play()
+								gps_flag = True
 						except Exception, e:
 							try:
 								gpsdata = gps_session.next()
@@ -127,6 +132,7 @@ def get_coordinates_from_gps():
 							gps_session = gps(mode=WATCH_ENABLE)
 							gps_session.sock.settimeout(1)
 							counter = 0
+							gps_flag = False
 						except:
 							pass
                         else:
