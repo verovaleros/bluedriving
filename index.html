@@ -147,20 +147,33 @@
 
 		// Function to show the complete map of points for one device	
 		function show_complete_map(){
+
 			// Hide the table
 			$('#contentbox').hide();
 			//Del the previous stuff
-			$('#interaction').html('');
+			$('#interaction').hide('');
 			$('#interaction').css('border-style','none');
-			//$('#info').html('');
-			$('#notes').html('');
-			$('#alarms').html('');
+
+			$('#notes').hide('');
+
+			$('#alarms').hide('');
+
 			$('#map').html('');
+
 			$('#Map').html('');
+			$('#Map').show();
+
+			$('#info').html('');
+
 
 			// Stop the animation
 			$('#header').css('top','0px');
 			$(window).unbind('scroll');
+
+			mac = row_selected.find('td:eq(2)').html();
+
+			// Get the device features
+			getSpecificData(mac);
 
 			// Stop the pulling
 			clearInterval(timeVar);
@@ -168,7 +181,6 @@
 			// Get the data from the webserver.
 			mac = row_selected.find('td:eq(2)').html();
 
-			
 			// fill the page
 			fill_complete_map();
 		}	
@@ -304,12 +316,18 @@
 			$('#Map').html('');
 			$('#Map').hide();
 
+			$('#info').show();
+			$('#alarms').show();
+
 			// Stop the animation
 			$('#header').css('top','0px');
 			$(window).unbind('scroll');
 
 
-			$('#interaction').removeAttr('style');
+			//$('#interaction').removeAttr('style');
+			$('#interaction').show();
+
+			$('#interaction').css('border-style','dotted');
 
 			// Stop the pulling
 			clearInterval(timeVar);
@@ -338,7 +356,7 @@
 
 
 		function fillAlarms(mac){
-			//$('#notes').html('')
+			$('#notes').show();
 			$('#alarms').html("<div id='AlarmsDiv'> Device Alarms </div>")
 
 			// Call a json with the notes...
@@ -354,7 +372,7 @@
 
 
 		function fillNotes(mac){
-			//$('#notes').html('')
+			$('#notes').show();
 			$('#notes').html("<div id='NotesDiv'> Device Notes </div>")
 
 			// Call a json with the notes...
@@ -372,6 +390,8 @@
 
 
 		function fillInteraction() {
+			$('#interaction').show();
+
 			// Set the alarm
 			var html = [], h = -1;
 			html[++h] = '<h4>Set a voice alarm when seen</h4>';
