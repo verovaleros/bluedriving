@@ -209,7 +209,8 @@
 
 				var iconSize = new OpenLayers.Size(21, 25);
 				var iconOffset = new OpenLayers.Pixel(-(iconSize.w / 2), -iconSize.h);
-				var icon = new OpenLayers.Icon("http://www.openstreetmap.org/openlayers/img/marker.png",
+				//var icon = new OpenLayers.Icon("http://www.openstreetmap.org/openlayers/img/marker.png",
+				var icon = new OpenLayers.Icon("img/marker.png",
 					   iconSize, iconOffset);
 				var zoom, center, currentPopup, map, lyrMarkers;
 				var popupClass = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
