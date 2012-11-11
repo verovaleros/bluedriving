@@ -615,13 +615,15 @@ def device_alert(device_id,device_name,database_name):
 		data = result.fetchall()
 		
 		for alarm in data:
-			if 'sound' in alarm:
+			if 'Sound' in alarm:
 				pygame.mixer.music.load('alarm.ogg')
 				pygame.mixer.music.play()
 				break
-			if 'festival' in alarm:
+			if 'Festival' in alarm:
 				os.system("echo "+device_name+"|festival --tts")
 				break
+			if 'Mail' in alarm:
+				pass
 		connection.commit()
 		connection.close()
 
