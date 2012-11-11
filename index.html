@@ -142,7 +142,9 @@
     <body>
 
 	<script>
-		
+
+		var positions = null;
+
 		// Function to show the complete map of points for one device	
 		function show_complete_map(){
 			// Hide the table
@@ -150,10 +152,11 @@
 			//Del the previous stuff
 			$('#interaction').html('');
 			$('#interaction').css('border-style','none');
-			$('#info').html('');
+			//$('#info').html('');
 			$('#notes').html('');
 			$('#alarms').html('');
 			$('#map').html('');
+			$('#Map').html('');
 
 			// Stop the animation
 			$('#header').css('top','0px');
@@ -165,76 +168,32 @@
 			// Get the data from the webserver.
 			mac = row_selected.find('td:eq(2)').html();
 
-			// Get the data for the complete map
-			getCompleteData('1');
 			
 			// fill the page
 			fill_complete_map();
 		}	
 
-
 		// Get the complete data 
-		function getCompleteData(nbr) {
-			$.getJSON("http://localhost:8000/map?amount="+nbr, {}, function(data) { 
-			for ( i = 0; i < data.Map.length ; i++ ) {
-				//alert(data.Map[i].MAC);	
-				//alert(data.Map[i].pos);	
-			};
-			
-			});
+		function getCompleteData(mac) {
 
+			$.ajax({
+				url: "http://localhost:8000/map?mac="+mac,
+				datatype: 'json',
+				async: false,
+				data: {},
+				success: function(data) {
+					var obj = jQuery.parseJSON(data);
+					window.positions = obj.Pos;
+				}
+			});
 		}
+
 
 		// Fill the map with info
 		function fill_complete_map() {
-			/*	
-			var script = document.createElement('script');
-			script.src = 'http://www.openlayers.org/api/OpenLayers.js';
-			document.body.appendChild(script);
-			*/
+
 			$.getScript('http://www.openlayers.org/api/OpenLayers.js',function(data){
 				eval(data);
-
-				map = new OpenLayers.Map("Map", options);
-				map.addControl(new OpenLayers.Control.DragPan());
-				var lyrOsm = new OpenLayers.Layer.OSM();
-				map.addLayer(lyrOsm);
-				lyrMarkers = new OpenLayers.Layer.Markers("Markers");
-				map.addLayer(lyrMarkers);
-				 //add marker on given coordinates
-				addMarker(121.06573, 14.65194, '<b>University of the Philippines</b><br/>Philippines');
-				addMarker(121.04931, 14.65105, '<b>Quezon Memorial Circle</b><br/>Philippines');
-				center = bounds.getCenterLonLat();
-				map.setCenter(center, map.getZoomForExtent(bounds) - 1);
-				zoom = map.getZoom();
-
-				initMap()
-				/*
-
-				var lat            = 47.35387;
-				var lon            = 8.43609;
-				var zoom           = 18;
-				var lat2            = 47.36387;
-				var lon2            = 8.44609;
-				var zoom           = 18;
-
-				var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
-				var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
-				var position       = new OpenLayers.LonLat(lon, lat).transform( fromProjection, toProjection);
-				var position2       = new OpenLayers.LonLat(lon2, lat2).transform( fromProjection, toProjection);
-
-				map = new OpenLayers.Map("Map");
-				var mapnik         = new OpenLayers.Layer.OSM();
-				map.addLayer(mapnik);
-
-				var markers = new OpenLayers.Layer.Markers( "Markers" );
-				map.addLayer(markers);
-				markers.addMarker(new OpenLayers.Marker(position));
-				markers.addMarker(new OpenLayers.Marker(position2));
-
-				map.setCenter(position, zoom);
-				*/
-
 
 				var iconSize = new OpenLayers.Size(21, 25);
 				var iconOffset = new OpenLayers.Pixel(-(iconSize.w / 2), -iconSize.h);
@@ -248,6 +207,8 @@
 				"keepInMap": true
 				});
 				var bounds = new OpenLayers.Bounds();
+
+				initMap()
 
 
 				function addMarker(lng, lat, info) {
@@ -280,16 +241,37 @@
 				}
 
 				function initMap() {
-				var options = {
-				    projection: new OpenLayers.Projection("EPSG:900913"),
-				    displayProjection: new OpenLayers.Projection("EPSG:4326"),
-				    units: "m",
-				    numZoomLevels: 19,
-				    maxResolution: 156543.0339,
-				    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
-				};
+					var options = {
+					    projection: new OpenLayers.Projection("EPSG:900913"),
+					    displayProjection: new OpenLayers.Projection("EPSG:4326"),
+					    units: "m",
+					    numZoomLevels: 19,
+					    maxResolution: 156543.0339,
+					    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
+					};
+					map = new OpenLayers.Map("Map", options);
+					map.addControl(new OpenLayers.Control.DragPan());
+					var lyrOsm = new OpenLayers.Layer.OSM();
+					map.addLayer(lyrOsm);
+					lyrMarkers = new OpenLayers.Layer.Markers("Markers");
+					map.addLayer(lyrMarkers);
+					//add marker on given coordinates
 
 
+					// Get the data for the complete map
+					getCompleteData(mac);
+					for ( i = 0; i < window.positions.length ; i++ ) {
+						lon = window.positions[i].split(',')[0].replace("'","");
+						lat = window.positions[i].split(',')[1].replace("'","");
+						addMarker(lat, lon, '<b>Device</b><br/>Mac');
+					}
+
+
+
+
+					center = bounds.getCenterLonLat();
+					map.setCenter(center, map.getZoomForExtent(bounds) - 1);
+					zoom = map.getZoom();
 				}
 
 			});
@@ -319,6 +301,8 @@
 
 			//Del the previous stuff
 			$('#info').html('');
+			$('#Map').html('');
+			$('#Map').hide();
 
 			// Stop the animation
 			$('#header').css('top','0px');
@@ -456,7 +440,7 @@
 			biggerlongitude = parseFloat(longitude) + 0.01 + '';
 	
 			var html = [], h = -1;
-			html[++h] = "<center>";
+			html[++h] = "<center><h3>Last Position Map</h3>";
 			html[++h] = "<iframe id='mapiframe' width='425' height='350' frameborder='0' scrolling='no' marginheight='0' marginwidth='0' src='http://www.openstreetmap.org/export/embed.html?bbox="+smallerlongitude+","+latitude+","+biggerlongitude+","+latitude+"&amp;layer=mapnik&amp;marker="+latitude+","+longitude+"' style='border: 1px solid black'></iframe>";
 			html[++h] = "</center>";
 			$('#map').html(html.join(''));
@@ -546,8 +530,8 @@
 			<div id='header'>
 			    <ul>
 				<li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
-				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Devices</a></li>
-				<li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Map</a></li>
+				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Device Info</a></li>
+				<li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Device Map</a></li>
 				
 			    </ul>
 			</div>
