@@ -234,7 +234,16 @@ li {
 #map {
 	padding: 10px;
 	clear:both;
-	display: block:
+	display: block;
+}
+
+#Map {
+	height: 500px;
+	width: 1000px;
+	padding: 10px;
+	clear:both;
+	display: block;
+	margin: 0 auto!important;
 }
 
 #notes, #alarms {

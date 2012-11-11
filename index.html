@@ -177,8 +177,8 @@
 		function getCompleteData(nbr) {
 			$.getJSON("http://localhost:8000/map?amount="+nbr, {}, function(data) { 
 			for ( i = 0; i < data.Map.length ; i++ ) {
-				alert(data.Map[i].MAC);	
-				alert(data.Map[i].pos);	
+				//alert(data.Map[i].MAC);	
+				//alert(data.Map[i].pos);	
 			};
 			
 			});
@@ -187,20 +187,132 @@
 
 		// Fill the map with info
 		function fill_complete_map() {
-			$.getScript("OpenLayers.js", function(){
+			/*	
+			var script = document.createElement('script');
+			script.src = 'http://www.openlayers.org/api/OpenLayers.js';
+			document.body.appendChild(script);
+			*/
+			$.getScript('http://www.openlayers.org/api/OpenLayers.js',function(data){
+				eval(data);
+
+				map = new OpenLayers.Map("Map", options);
+				map.addControl(new OpenLayers.Control.DragPan());
+				var lyrOsm = new OpenLayers.Layer.OSM();
+				map.addLayer(lyrOsm);
+				lyrMarkers = new OpenLayers.Layer.Markers("Markers");
+				map.addLayer(lyrMarkers);
+				 //add marker on given coordinates
+				addMarker(121.06573, 14.65194, '<b>University of the Philippines</b><br/>Philippines');
+				addMarker(121.04931, 14.65105, '<b>Quezon Memorial Circle</b><br/>Philippines');
+				center = bounds.getCenterLonLat();
+				map.setCenter(center, map.getZoomForExtent(bounds) - 1);
+				zoom = map.getZoom();
+
+				initMap()
+				/*
+
+				var lat            = 47.35387;
+				var lon            = 8.43609;
+				var zoom           = 18;
+				var lat2            = 47.36387;
+				var lon2            = 8.44609;
+				var zoom           = 18;
+
+				var fromProjection = new OpenLayers.Projection("EPSG:4326");   // Transform from WGS 1984
+				var toProjection   = new OpenLayers.Projection("EPSG:900913"); // to Spherical Mercator Projection
+				var position       = new OpenLayers.LonLat(lon, lat).transform( fromProjection, toProjection);
+				var position2       = new OpenLayers.LonLat(lon2, lat2).transform( fromProjection, toProjection);
+
+				map = new OpenLayers.Map("Map");
+				var mapnik         = new OpenLayers.Layer.OSM();
+				map.addLayer(mapnik);
+
+				var markers = new OpenLayers.Layer.Markers( "Markers" );
+				map.addLayer(markers);
+				markers.addMarker(new OpenLayers.Marker(position));
+				markers.addMarker(new OpenLayers.Marker(position2));
+
+				map.setCenter(position, zoom);
+				*/
 
 
+				var iconSize = new OpenLayers.Size(21, 25);
+				var iconOffset = new OpenLayers.Pixel(-(iconSize.w / 2), -iconSize.h);
+				var icon = new OpenLayers.Icon("http://www.openstreetmap.org/openlayers/img/marker.png",
+					   iconSize, iconOffset);
+				var zoom, center, currentPopup, map, lyrMarkers;
+				var popupClass = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
+				"autoSize": true,
+				"minSize": new OpenLayers.Size(300, 50),
+				"maxSize": new OpenLayers.Size(500, 300),
+				"keepInMap": true
+				});
+				var bounds = new OpenLayers.Bounds();
 
-			// <div id="map" class="map"> </div>
+
+				function addMarker(lng, lat, info) {
+					var pt = new OpenLayers.LonLat(lng, lat)
+							       .transform(new OpenLayers.Projection("EPSG:4326"), 
+							       map.getProjectionObject());
+					bounds.extend(pt);
+					var feature = new OpenLayers.Feature(lyrMarkers, pt);
+					feature.closeBox = true;
+					feature.popupClass = popupClass;
+					feature.data.popupContentHTML = info;
+					feature.data.overflow = "auto";
+					var marker = new OpenLayers.Marker(pt, icon.clone());
+					var markerClick = function(evt) {
+					    if (currentPopup != null && currentPopup.visible()) {
+						currentPopup.hide();
+					    }
+					    if (this.popup == null) {
+						this.popup = this.createPopup(this.closeBox);
+						map.addPopup(this.popup);
+						this.popup.show();
+					    } else {
+						this.popup.toggle();
+					    }
+					    currentPopup = this.popup;
+					    OpenLayers.Event.stop(evt);
+					};
+					marker.events.register("mousedown", feature, markerClick);
+					lyrMarkers.addMarker(marker);
+				}
+
+				function initMap() {
+				var options = {
+				    projection: new OpenLayers.Projection("EPSG:900913"),
+				    displayProjection: new OpenLayers.Projection("EPSG:4326"),
+				    units: "m",
+				    numZoomLevels: 19,
+				    maxResolution: 156543.0339,
+				    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
+				};
+
+
+				}
+
 			});
+			
+
 		};
 
 
+		function require(script) {
+		    $.ajax({
+			url: script,
+			dataType: "script",
+			async: false,           // <-- this is the key
+			success: function () {
+			    // all good...
+			},
+			error: function () {
+			    throw new Error("Could not load script " + script);
+			}
+		    });
+		}
 
 
-
-
-		
 		// Funtion to execute when the device button is pressed.
 		function show_info() {
 			// Script to control de Device Info button in the header
@@ -452,7 +564,7 @@
 				<div id="clear" style="clear:both;"></div>
 			</div>
 			<div id="map" class="map"> </div>
-			<div id="largemap" class="map"> </div>
+			<div id="Map" class="map"> </div>
 
 		</div>
 	</div>

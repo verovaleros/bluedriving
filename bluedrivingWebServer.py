@@ -870,6 +870,10 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 
 				try:
 					extension = self.path.split('.')[-1]
+					if len(extension.split('?')) >= 2:
+					        extension = self.path.split('.')[-1].split('?')[0]
+                                                self.path = self.path.split('?')[0]
+
 				except:
 					# Does not have . on it...
 					self.send_response(200)
