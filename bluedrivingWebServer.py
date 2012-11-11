@@ -307,7 +307,7 @@ def get_n_positions(mac):
 				#print '  >> Gps: {0}'.format(gps)
 
 			# Add the other string for no gps
-			if 'not available' not in gps and 'NO' not in gps and 'Not using' not in gps and gps != '' and 'False' not in gps :
+			if 'not available' not in gps and 'NO' not in gps and 'Not' not in gps and gps != '' and 'False' not in gps :
 				no_gps_at_all = False
 				#gps_data['gps'] = gps
 				pos_vect.append(gps)
