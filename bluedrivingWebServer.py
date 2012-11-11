@@ -218,23 +218,35 @@ def get_info_from_mac(temp_mac):
 		exit(-1)
 
 
-def get_n_positions(n):
-	""" Get the n last positions of every MAC in the database """
+def get_n_positions(mac):
+	""" Get every position of a given MAC in the database """
 	global debug
 
 	try:
 		conn = sqlite3.connect('bluedriving.db')
 		cursor = conn.cursor()
 
-
 		# Get all the macs into an array
-		id_macs = {}
-		for row in cursor.execute('SELECT Mac,Id FROM devices ORDER BY MAC'):
-			print row
-			id_macs[str(row[1])] = str(row[0])
+		askmac = ('%'+mac+'%',)
 
-		if debug:
-			print ' >> Unique macs: {0}'.format(id_macs)
+		#id_macs = {}
+		#for row in cursor.execute('SELECT Mac,Id FROM devices ORDER BY MAC'):
+		#id_mac = cursor.execute('SELECT Id FROM devices where mac = ?',(mac,)):
+			#id_macs[str(row[1])] = str(row[0])
+
+		row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
+
+		# Check the results, Does this mac exists?
+		res = row.fetchall()
+		if len(res) != 0:
+			(id,) = res[0]
+		else:
+			if debug:
+				print ' >> This mac does not exist: {0}'.format(mac)
+			return ''
+
+		#if debug:
+			#print ' >> Unique macs: {0}'.format(id_macs)
 
 
 		# Encoder
@@ -256,56 +268,59 @@ def get_n_positions(n):
 		top = {}
 
 		# Map is the vector of name 'Map'
-		map = []
+		#map = []
+
+		pos_vect=[]
+		#data['pos'] = pos_vect
 
 		# Link the map vector with the name 'Map'
-		top['Map'] = map
+		#top['Map'] = map
+		top['Pos'] = pos_vect
 
 		# For each mac, obtain the last n positions
-		for id in id_macs:
+		#for id in id_macs:
 
-			cursor2 = conn.cursor()
+		cursor2 = conn.cursor()
 
-			mac = id_macs[id]
-			if debug:
-				print ' >> Asking for mac: {0}'.format(mac)
+		#mac = id_macs[id]
+		if debug:
+			print ' >> Asking for mac: {0}'.format(mac)
 
-			# Data holds information for each mac with all its positions
-			data = {}
-			data['MAC'] = mac
+		# Data holds information for each mac with all its positions
+		#data = {}
+		#data['MAC'] = mac
 
-			pos_vect=[]
-			data['pos'] = pos_vect
 
-			# gps_data holds all the gps info for a given mac
-			gps_data = {}
+		# gps_data holds all the gps info for a given mac
+		#gps_data = {}
 
-			#askid = ('%'+id+'%',n)
-			askid = (id,n)
+		#askid = ('%'+id+'%',n)
+		#askid = (id,n)
+		askid = (id,)
 
-			# Flag to know if this mac has at least one position and avoid returning an empty position vector.
-			no_gps_at_all = True
-			for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
-				gps = row[2]
-				#if debug:
-					#print '  >> Gps: {0}'.format(gps)
+		# Flag to know if this mac has at least one position and avoid returning an empty position vector.
+		no_gps_at_all = True
+		#for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
+		for row in cursor2.execute("SELECT * FROM Locations WHERE Macid = ?",askid):
+			gps = row[2]
+			#if debug:
+				#print '  >> Gps: {0}'.format(gps)
 
-				# Add the other string for no gps
-				if 'not available' not in gps and 'Not using' not in gps and gps != '' and 'False' not in gps :
-					no_gps_at_all = False
-					gps_data['gps'] = gps
-					pos_vect.append(gps)
-					if debug:
-						print '\t >> MAC {0} has position: {1}'.format(mac,gps)
-
-			if no_gps_at_all:
+			# Add the other string for no gps
+			if 'not available' not in gps and 'NO' not in gps and 'Not using' not in gps and gps != '' and 'False' not in gps :
+				no_gps_at_all = False
+				#gps_data['gps'] = gps
+				pos_vect.append(gps)
 				if debug:
-					print ' >> MAC {0} has no gps position at all.'.format(mac)
-				# This avoids adding an empty data to the map results.
-				continue
+					print '\t >> MAC {0} has position: {1}'.format(mac,gps)
 
-			# Store the info of all the positions of one mac
-			map.append(data)
+		if no_gps_at_all:
+			if debug:
+				print ' >> MAC {0} has no gps position at all.'.format(mac)
+			# This avoids adding an empty data to the map results.
+
+		# Store the info of all the positions of one mac
+		#map.append(pos_vect)
 
 		return je.encode(top)
 
@@ -315,8 +330,7 @@ def get_n_positions(n):
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly
-		x, y = inst          # __getitem__ allows args to be unpacked directly
-		print 'x =', x
+		x, y = inst          # __getitem__ allows args to be unpacked directly print 'x =', x
 		print 'y =', y
 		exit(-1)
 
@@ -832,13 +846,13 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 				self.wfile.write(json_to_send)
 
 			# Get an X amount and return for every MAC the last X positions.
-			elif self.path.rfind('/map?amount=') == 0:
+			elif self.path.rfind('/map?mac=') == 0:
 				if debug:
 					print ' >> Get /map'
 
-				n = self.path.split('amount=')[1]
+				mac = self.path.split('mac=')[1]
 
-				json_to_send = get_n_positions(int(n))
+				json_to_send = get_n_positions(mac)
 
 				self.send_response(200)
 				self.send_header('Content-Type',        'text/html')
