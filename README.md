@@ -1,9 +1,33 @@
-README
-------
+Bluedriving
+-----------
 
-./bluedriving.py Version 0.1 @COPYLEFT                    
+What
+----
+Bluedriving is a bluetooth wardriving utility. It can capture bluetooth devices, lookup their services, get GPS and present everything in a nice webpage.
+
 Authors: verovaleros, eldraco, nanojaus                               
-Bluedriver is a bluetooth wardriving utility.                        
+
+Mail Features
+-------------
+- Scan bluetooth devices.
+- Lookup services.
+- Use threads.
+- Stores everything in a sqlite database.
+- Has a stand-alone web server with an API. It can be also started within the bluedriving.py tool.
+- Implement alarms for the bluetooth devices that you want: Play a sound, Read the bluetooth name with festival, send an email with the information.
+- You can manually specify the GPS coordinates, so you can have the map functionality without having a GPS.
+- You can interact with the program through these keys and pressing Enter:
+ -- a (set or unset alarms)
+ -- s (set or unset sounds)
+ -- l (set or unset lookup devices)
+ -- d (set or unset debugging)
+- Has a beautiful web page, that lets you:
+ -- See all the bluetooth devices ordered by last seen position.
+ -- See each device information, including a map with the position you are inspecting.
+ -- see the history of all the positions of the selected device in a large map.
+
+
+
 
 
 Usage: ./bluedriving.py <options>
