@@ -136,10 +136,10 @@ def get_unread_registers():
 
 		# First select all the locations
 		# This can be VERY HEAVY with a huge database...
-		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 100'):
+		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 1000'):
 
-			#if debug:
-				#print ' >> Read locations {0}'.format(row)
+			if debug:
+				print ' >> Read locations {0}'.format(row)
 			dev_id = (row[1],)
 
 			# Update location id
@@ -148,8 +148,8 @@ def get_unread_registers():
 
 			# add the limit!
 			for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',dev_id):
-				if debug:
-					print '  >> New row:{0}'.format(newrow)
+				#if debug:
+					#print '  >> New row:{0}'.format(newrow)
 				dict = {}
 				# ID
 				# GPS
