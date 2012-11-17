@@ -48,8 +48,8 @@ import copy
 
 # Debug
 debug=0
-vernum="0.1"
-#location_id = 0
+vernum="0.1.1"
+database = 'bluedriving.db'
 ####################
 
 
@@ -88,6 +88,7 @@ def usage():
   print "  -v, --verbose        Be verbose"
   print "  -D, --debug        Debug"
   print "  -p, --port        Web server tcp port to use"
+  print "  -d, --database        If you wish to analyze another database, just give the file name here."
 
 
 def createWebServer(port):
@@ -116,11 +117,11 @@ def createWebServer(port):
 def get_unread_registers():
 	""" Get unread registers from the database since the last read and return a json with all the data"""
 	try:
-
-		#global location_id
 		global debug
+	        global database
 
-		conn = sqlite3.connect('bluedriving.db')
+		#conn = sqlite3.connect('bluedriving.db')
+		conn = sqlite3.connect(database)
 		cursor = conn.cursor()
 
 		# Encoder
@@ -135,10 +136,10 @@ def get_unread_registers():
 
 		# First select all the locations
 		# This can be VERY HEAVY with a huge database...
-		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 100'):
+		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 1000'):
 
-			#if debug:
-				#print ' >> Read locations {0}'.format(row)
+			if debug:
+				print ' >> Read locations {0}'.format(row)
 			dev_id = (row[1],)
 
 			# Update location id
@@ -147,8 +148,8 @@ def get_unread_registers():
 
 			# add the limit!
 			for newrow in newcursor.execute('SELECT * FROM Devices WHERE Id = ?',dev_id):
-				if debug:
-					print '  >> New row:{0}'.format(newrow)
+				#if debug:
+					#print '  >> New row:{0}'.format(newrow)
 				dict = {}
 				# ID
 				# GPS
@@ -184,9 +185,10 @@ def get_unread_registers():
 def get_info_from_mac(temp_mac):
 	""" Get info from one mac """
 	global debug
+	global database
 
 	try:
-		conn = sqlite3.connect('bluedriving.db')
+		conn = sqlite3.connect(database)
 		cursor = conn.cursor()
 		mac = (temp_mac,)
 
@@ -221,9 +223,10 @@ def get_info_from_mac(temp_mac):
 def get_n_positions(mac):
 	""" Get every position of a given MAC in the database """
 	global debug
+	global database
 
 	try:
-		conn = sqlite3.connect('bluedriving.db')
+		conn = sqlite3.connect(database)
 		cursor = conn.cursor()
 
 		# Get all the macs into an array
@@ -307,7 +310,7 @@ def get_n_positions(mac):
 				#print '  >> Gps: {0}'.format(gps)
 
 			# Add the other string for no gps
-			if 'not available' not in gps and 'NO' not in gps and 'Not using' not in gps and gps != '' and 'False' not in gps :
+			if 'not available' not in gps and 'NO' not in gps and 'Not' not in gps and gps != '' and 'False' not in gps :
 				no_gps_at_all = False
 				#gps_data['gps'] = gps
 				pos_vect.append(gps)
@@ -339,6 +342,7 @@ def note_to(typeof_call, mac,note):
 	""" Get a MAC and a note and add the note to the database """
 	import re
 	global debug
+	global database
 
 	try:
 
@@ -399,7 +403,7 @@ def note_to(typeof_call, mac,note):
 
 		if typeof_call == 'add':
 			# Search fot that mac on the database first...
-			conn = sqlite3.connect('bluedriving.db')
+			conn = sqlite3.connect(database)
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
@@ -438,7 +442,7 @@ def note_to(typeof_call, mac,note):
 
 		elif typeof_call == 'del':
 			# Search fot that mac on the database first...
-			conn = sqlite3.connect('bluedriving.db')
+			conn = sqlite3.connect(database)
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
@@ -480,7 +484,7 @@ def note_to(typeof_call, mac,note):
 
 		elif typeof_call == 'get':
 			# Search fot that mac on the database first...
-			conn = sqlite3.connect('bluedriving.db')
+			conn = sqlite3.connect(database)
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
@@ -543,6 +547,7 @@ def note_to(typeof_call, mac,note):
 def alarm_to(type_ofcall, mac, alarm_type):
 	""" Get a MAC and add, get or remove an alarm """
 	global debug
+	global database
 	import re
 
 	try:
@@ -588,7 +593,7 @@ def alarm_to(type_ofcall, mac, alarm_type):
 		if type_ofcall == 'add':
 
 			# Search fot that mac on the database first...
-			conn = sqlite3.connect('bluedriving.db')
+			conn = sqlite3.connect(database)
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
@@ -629,7 +634,7 @@ def alarm_to(type_ofcall, mac, alarm_type):
 		elif type_ofcall == 'del':
 
 			# Search fot that mac on the database first...
-			conn = sqlite3.connect('bluedriving.db')
+			conn = sqlite3.connect(database)
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
@@ -670,7 +675,7 @@ def alarm_to(type_ofcall, mac, alarm_type):
 		elif type_ofcall == 'get':
 
 			# Search fot that mac on the database first...
-			conn = sqlite3.connect('bluedriving.db')
+			conn = sqlite3.connect(database)
 			cursor = conn.cursor()
 			askmac = ('%'+mac+'%',)
 
@@ -696,7 +701,6 @@ def alarm_to(type_ofcall, mac, alarm_type):
 			try:
 				row2 = cursor.execute("SELECT Alarm from Alarms where Id like ?",(id,))
                                 for row in row2:
-					print row
                                         alarms.append(row)
 
 				conn.commit()
@@ -953,10 +957,11 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 def main():
 	try:
 		global debug
+		global database
 		# Default port to use
 		port = 8000
 
-		opts, args = getopt.getopt(sys.argv[1:], "VvDh", ["help","version","verbose","debug","port"])
+		opts, args = getopt.getopt(sys.argv[1:], "VvDhd:", ["help","version","verbose","debug","port","database="])
 	except getopt.GetoptError: usage()
 
 	for opt, arg in opts:
@@ -965,12 +970,12 @@ def main():
 	    if opt in ("-v", "--verbose"): verbose=True
 	    if opt in ("-D", "--debug"): debug=1
 	    if opt in ("-p", "--port"): port=int(arg)
+	    if opt in ("-d", "--database"): database=str(arg)
 	try:
 
 		try:
 			if True:
 				createWebServer(port)
-				
 
 			else:
 				usage()
