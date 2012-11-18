@@ -172,11 +172,16 @@
 
 			mac = row_selected.find('td:eq(2)').html();
 
-			// Get the device features
-			getSpecificData(mac);
-
 			// Stop the pulling
-			clearInterval(timeVar);
+            clearInterval(timeVar);
+
+			// Get the device features
+            getSpecificData(mac);
+
+            // FIX, after deleting or hiding the element does not redraw.... the alert force the redraw...
+            //alert('a');
+            //$('#table2').hide();
+
 
 			// Get the data from the webserver.
 			mac = row_selected.find('td:eq(2)').html();

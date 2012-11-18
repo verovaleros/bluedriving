@@ -207,6 +207,8 @@ li {
 	margin-left: 1%;
 	padding: 1%;*/
 	font-size: smaller;
+    display: block;
+	clear:both;
 
 }
 
@@ -217,7 +219,10 @@ li {
 	padding: 1%;*/
 	background: none repeat scroll 0 0 snow;
 	font-size: smaller;
-	margin: 10px
+	margin: 10px;
+    display: block;
+	clear:both;
+    /*display: none;*/
 }
 
 #interaction {
