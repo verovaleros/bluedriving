@@ -40,6 +40,8 @@ flag_internet = True
 flag_gps = True
 flag_lookup_services = True
 flag_alarm = True
+flag_alarm_mail = False
+flag_fake_gps = False
 list_devices = {}
 queue_devices = ""
 mail_username = ""
@@ -168,27 +170,41 @@ def get_address_from_gps(location_gps):
 	global address_cache
 	global flag_internet
 	global threadbreak
+	global flag_fake_gps
+	global global_location
 	
 	coordinates = ""
 	address = ""
 	try:
+		if debug:
+			print 'In get_address_from_gps(location_gps) function'
 		if location_gps:
 			if debug:
 				print 'Coordinates: {}'.format(location_gps)
 			try:
 				# If the location is already stored, we get it.
-				address = address_cache[location_gps]
+				if location_gps:
+					address = address_cache[location_gps]
 			except:
 				if flag_internet:
 					[coordinates,address] = getCoordinatesFromAddress.getCoordinates(location_gps)
-					address = address.encode('utf-8')
 					if debug:
 						print 'Coordinates: {} Address: {}'.format(coordinates,address)
+					if coordinates == "" and address == "":
+						if debug:
+							print 'Returning empty coordinates and address'
+						return [location_gps,address]
+
+					if flag_fake_gps and coordinates and coordinates != global_location:
+						global_location = coordinates
+						location_gps = coordinates
+					address = address.encode('utf-8')
 					
-					address_cache[location_gps] = address
+					if coordinates and address:
+						address_cache[coordinates] = address
 				else:
 					address = "Internet deactivated"
-		return address
+		return [location_gps,address]
 
 	except KeyboardInterrupt:
 		print 'Exiting. It may take a few seconds.'
@@ -240,10 +256,9 @@ def bluetooth_discovering():
 						process_device_information_thread.setDaemon(True)
 						process_device_information_thread.start()
 					else: 
-						print '  -'
+						print '  No devices found'
 				except:
-					if debug:
-						print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+					print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
 					continue
 			except KeyboardInterrupt:
 				print 'Exiting. It may take a few seconds.'
@@ -286,8 +301,9 @@ def process_devices(device_list):
 	global global_location
 	global list_devices
 	global queue_devices
+	global flag_fake_gps
 
-	location_gps = "NO GPS DATA"
+	location_gps = "NO GPS INFORMATION"
 	location_address = "NO ADDRESS RETRIEVED"
 	ftime = ""
 	flag_new_device = False
@@ -308,9 +324,24 @@ def process_devices(device_list):
 
 				# We get location's related information
 				if flag_gps:
-					location_gps = global_location
 					if flag_internet:
-						location_address = get_address_from_gps(location_gps)
+						[location_gps,location_address] = get_address_from_gps(global_location)
+						if flag_fake_gps and location_gps == "":
+							try:
+								float(global_location.split(',')[1])
+								float(global_location.split(',')[2])
+								location_gps = global_location
+							except ValueError:
+								location_gps = 'GPS NOT ACTIVE'
+								location_address = global_location
+					elif flag_fake_gps:
+						try:
+							float(global_location.split(',')[1])
+							float(global_location.split(',')[2])
+							location_gps = global_location
+						except ValueError:
+							location_gps = 'GPS NOT ACTIVE'
+							location_address = global_location
 
 				# We try to lookup more information about the device
 				device_services = []
@@ -321,11 +352,13 @@ def process_devices(device_list):
 							device_services.append(i[2])
 
 				if len(device_services) > 1:
+					print
 					print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(ftime,d[0],d[1],location_gps,location_address.split(',')[0],device_services[0])
 					for service in device_services[1:]:
 						print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format('','','','','',service)
 						#print '\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t{:<30}'.format(service)
 				else:
+					print
 					print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(ftime,d[0],d[1],location_gps,location_address.split(',')[0],device_services)
 					
 				if flag_sound:
@@ -615,6 +648,7 @@ def device_alert(device_id,device_name,database_name,location_gps,location_addre
 	global mail_username
 	global mail_password
 	global flag_internet
+	global flag_alert_mail
 
 	try:
 		connection = db_get_database_connection(database_name)
@@ -630,15 +664,18 @@ def device_alert(device_id,device_name,database_name,location_gps,location_addre
 				os.system("echo "+device_name+"|festival --tts")
 				break
 			if 'Mail' in alarm:
-				if flag_internet:
-					fromaddr = mail_username+'@gmail.com'
-					toaddrs = mail_username+'@gmail.com'
-					msg = 'Device '+device_name+'\nLocation '+location_gps+'\nAddress '+location_address+'\nLast seen '+last_seen
-					server = smtplib.SMTP('smtp.gmail.com:587')
-					server.starttls()
-					server.login(mail_username,mail_password)
-					server.sendmail(fromaddr, toaddrs, msg)
-					server.quit()
+				if flag_internet and flag_alert_mail:
+					try:
+						fromaddr = mail_username+'+bluedriving@gmail.com'
+						toaddrs = mail_username+'@gmail.com'
+						msg = 'Device '+device_name+'\nLocation '+location_gps+'\nAddress '+location_address+'\nLast seen '+last_seen
+						server = smtplib.SMTP('smtp.gmail.com:587')
+						server.starttls()
+						server.login(mail_username,mail_password)
+						server.sendmail(fromaddr, toaddrs, msg)
+						server.quit()
+					except:
+						print 'Error sending email alert in device_alert() function'
 				break
 		connection.commit()
 		connection.close()
@@ -757,9 +794,13 @@ def main():
 	global global_location
 	global mail_username
 	global mail_password
+	global flag_alert_mail
+	global flag_fake_gps
+
 
 	database_name = "bluedriving.db"
 	flag_run_webserver = False
+	flag_alert_mail = False
 	fake_gps = ''
 	mail_username = ""
 	mail_password = ""
@@ -780,8 +821,18 @@ def main():
                 if opt in ("-i", "--not-internet"): flag_internet = False
                 if opt in ("-l", "--not-lookup-services"): flag_lookup_services = False
                 if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
-                if opt in ("-f", "--fake-gps"): fake_gps = arg
-		if opt in ("-m", "--mail-user"): mail_username = arg; print 'Provide your gmail password for given user: ',; mail_password = getpass.getpass()
+		if opt in ("-f", "--fake-gps"): fake_gps = arg; flag_fake_gps = True
+		if opt in ("-m", "--mail-user"): 
+			mail_username = arg
+			if mail_username:
+				print 'Provide your gmail password for given user: ',
+				try:
+					mail_password = getpass.getpass();
+					flag_alert_mail = True
+				except:
+					print '\nError receiving password from user!'
+					print 'Avoiding e-mail alerts'
+					print
         try:
 		
 		version()
