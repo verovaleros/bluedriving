@@ -583,10 +583,13 @@ def db_update_location(connection,device_id,location_gps,first_seen):
 
 	try:
 		try:
-			connection.execute("UPDATE Locations SET LastSeen=? WHERE Id=? AND GPS=?", (repr(first_seen), repr(device_id), repr(location_gps)))
+			connection.execute("UPDATE Locations SET LastSeen=? WHERE MacId=? AND GPS=?",(repr(first_seen), int(device_id), repr(location_gps)))
 			connection.commit()
 			if debug:
 				print 'Location updated'
+				print 'Device ID: {}'.format(device_id)
+				print 'GPS Location: {}'.format(location_gps)
+				print 'Last seen: {}'.format(first_seen)
 		except:
 			if debug:
 				print 'Location not updated'
@@ -720,7 +723,7 @@ def store_device_information(database_name):
 
 						# If the location has not changed, result will be False. We update the last seen field into locations.
 						if not result:
-							result = db_update_location(connection,device_id,location_gps,first_seen)
+							result = db_update_location(connection,device_id,location_gps,last_seen)
 
 					#print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format(temp[0],temp[1],temp[2],temp[3],temp[4],temp[5])
 			time.sleep(2)

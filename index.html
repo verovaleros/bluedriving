@@ -158,7 +158,9 @@
 
 			$('#alarms').hide('');
 
-			$('#map').html('');
+			//$('#map').html('');
+
+            $('#map').html("<center><h3>Positions Map</h3>");
 
 			$('#Map').html('');
 			$('#Map').show();
@@ -207,7 +209,8 @@
 
 
 		// Fill the map with info
-		function fill_complete_map() {
+        function fill_complete_map() {
+
 
 			$.getScript('http://www.openlayers.org/api/OpenLayers.js',function(data){
 				eval(data);
@@ -557,7 +560,6 @@
 				<li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
 				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Device Info</a></li>
 				<li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Device Map</a></li>
-				
 			    </ul>
 			</div>
 			<div id="contentbox" class="content">
@@ -573,7 +575,7 @@
 				<div id="clear" style="clear:both;"></div>
 			</div>
 			<div id="map" class="map"> </div>
-			<div id="Map" class="map"> </div>
+			<div id="Map"> </div>
 
 		</div>
 	</div>
