@@ -248,9 +248,21 @@ def get_n_positions(mac):
 				print ' >> This mac does not exist: {0}'.format(mac)
 			return ''
 
+        # Get the name of the device
+		cursor2 = conn.cursor()
+		row2 = cursor2.execute("SELECT Name FROM Locations WHERE MacId = ?",(id,))
+		res = row2.fetchall()
+		if len(res) != 0:
+			(name,) = res[0]
+		else:
+			if debug:
+				print ' >> Some problem getting the name of the device: {0}'.format(mac)
+			return ''
+
+
+
 		#if debug:
 			#print ' >> Unique macs: {0}'.format(id_macs)
-
 
 		# Encoder
 		je = json.JSONEncoder()
@@ -278,6 +290,8 @@ def get_n_positions(mac):
 
 		# Link the map vector with the name 'Map'
 		#top['Map'] = map
+		top['Name'] = name
+		top['Mac'] = mac
 		top['Pos'] = pos_vect
 
 		# For each mac, obtain the last n positions

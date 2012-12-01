@@ -180,11 +180,6 @@
 			// Get the device features
             getSpecificData(mac);
 
-            // FIX, after deleting or hiding the element does not redraw.... the alert force the redraw...
-            //alert('a');
-            //$('#table2').hide();
-
-
 			// Get the data from the webserver.
 			mac = row_selected.find('td:eq(2)').html();
 
@@ -203,6 +198,8 @@
 				success: function(data) {
 					var obj = jQuery.parseJSON(data);
 					window.positions = obj.Pos;
+					window.mac_positions = obj.Mac;
+					window.name_positions = obj.Name;
 				}
 			});
 		}
@@ -283,7 +280,7 @@
 					for ( i = 0; i < window.positions.length ; i++ ) {
 						lon = window.positions[i].split(',')[0].replace("'","");
 						lat = window.positions[i].split(',')[1].replace("'","");
-						addMarker(lat, lon, '<b>Device</b><br/>Mac');
+                        addMarker(lat, lon, '<b>Device</b><br/>' + window.name_positions + '<br/>' + window.mac_positions);
 					}
 
 
