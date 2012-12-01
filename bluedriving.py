@@ -105,6 +105,7 @@ def get_coordinates_from_gps():
         global debug
         global global_location
 	global threadbreak
+	global flag_sound
 
 	counter = 0
 	gps_session = ""
@@ -118,8 +119,9 @@ def get_coordinates_from_gps():
 							gpsdata = gps_session.next()
 							global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
 							if global_location and not gps_flag:
-								pygame.mixer.music.load('gps.ogg')
-								pygame.mixer.music.play()
+								if flag_sound:
+									pygame.mixer.music.load('gps.ogg')
+									pygame.mixer.music.play()
 								gps_flag = True
 						except Exception, e:
 							try:
@@ -233,6 +235,9 @@ def bluetooth_discovering():
 	global verbose
 	global threadbreak
 
+	
+
+	counter = 0
 	try:
 		if debug:
 			print '[+] In bluetooth_discovering() function'
@@ -256,10 +261,15 @@ def bluetooth_discovering():
 						process_device_information_thread.setDaemon(True)
 						process_device_information_thread.start()
 					else: 
-						print '  No devices found'
+						print '\n  No devices found'
 				except:
+					counter = counter + 1
 					print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
-					continue
+					if counter > int(50): 
+						print '\nToo many exceptions while discovering devices. Device may be down.'
+						print 'Exiting!'
+						threadbreak = True
+						sys.exit(1)
 			except KeyboardInterrupt:
 				print 'Exiting. It may take a few seconds.'
 				threadbreak = True
@@ -649,6 +659,7 @@ def device_alert(device_id,device_name,database_name,location_gps,location_addre
 	global mail_password
 	global flag_internet
 	global flag_alert_mail
+	global flag_sound
 
 	try:
 		connection = db_get_database_connection(database_name)
@@ -657,11 +668,13 @@ def device_alert(device_id,device_name,database_name,location_gps,location_addre
 		
 		for alarm in data:
 			if 'Sound' in alarm:
-				pygame.mixer.music.load('alarm.ogg')
-				pygame.mixer.music.play()
+				if flag_sound:
+					pygame.mixer.music.load('alarm.ogg')
+					pygame.mixer.music.play()
 				break
 			if 'Festival' in alarm:
-				os.system("echo "+device_name+"|festival --tts")
+				if flag_sound:
+					os.system("echo "+device_name+"|festival --tts")
 				break
 			if 'Mail' in alarm:
 				if flag_internet and flag_alert_mail:
