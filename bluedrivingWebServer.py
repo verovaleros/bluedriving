@@ -842,19 +842,14 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                 if debug:
                     print ' >> Get /map'
 
-                info = self.path.split('info=')[1]
+			# Get an X amount and return for every MAC the last X positions.
+			elif self.path.rfind('/map?mac=') == 0:
+				if debug:
+					print ' >> Get /map'
 
-                # Is info a mac (nearly)
-                if len(info.split(':')) == 6 and len(info) == 17:
-                    mac = self.path.split('info=')[1]
-                    json_to_send = get_n_positions(mac)
-                elif type(info) == int and info > 0:
-                    json_to_send = get_all_positions(info)
+				mac = self.path.split('mac=')[1]
 
-                self.send_response(200)
-                self.send_header('Content-Type',        'text/html')
-                self.end_headers()
-                self.wfile.write(json_to_send)
+				json_to_send = get_n_positions(mac)
 
             elif self.path == "/":
                 if debug:

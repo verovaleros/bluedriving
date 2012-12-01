@@ -143,7 +143,159 @@
 
 	<script>
 
-		var positions = null;
+        var positions = null;
+
+
+		// Function to show the complete map of the points for all the devices
+        function show_all_devices_map(){
+			// Hide the table
+			$('#contentbox').hide();
+			//Del the previous stuff
+			$('#interaction').hide('');
+			$('#interaction').css('border-style','none');
+
+			$('#notes').hide('');
+
+			$('#alarms').hide('');
+
+			//$('#map').html('');
+
+            $('#map').html("<center><h3>Positions Map</h3>");
+
+			$('#Map').html('');
+			$('#Map').show();
+
+			$('#info').html('');
+
+
+			// Stop the animation
+			$('#header').css('top','0px');
+			$(window).unbind('scroll');
+
+			// Stop the pulling
+            clearInterval(timeVar);
+
+			// Get the device features
+            //getSpecificData(mac);
+
+			// Get the data from the webserver.
+			//mac = row_selected.find('td:eq(2)').html();
+
+			// fill the page
+			fill_all_devices_map();
+		}	
+
+		// Get the complete data 
+		function getCompleteData(mac) {
+
+			$.ajax({
+				url: "http://localhost:8000/allmap",
+				datatype: 'json',
+				async: false,
+				data: {},
+				success: function(data) {
+					var obj = jQuery.parseJSON(data);
+					window.mac_positions = obj.Mac;
+					window.name_positions = obj.Data.Name;
+					window.positions = obj.Pos;
+                    window.name_positions = obj.Name;
+                    // Example: { "Mac":"11:22:33:44:55:66", "Data":{"Name":"test", "Pos":["1","2"] }, "Mac":"aa:bb:cc:dd:ee:ff", "Data":{"Name":"jorge", "Pos":["3","4"] } }
+				}
+			});
+		}
+
+
+		// Fill the map with info
+        function fill_complete_map() {
+
+
+			$.getScript('http://www.openlayers.org/api/OpenLayers.js',function(data){
+				eval(data);
+
+				var iconSize = new OpenLayers.Size(21, 25);
+				var iconOffset = new OpenLayers.Pixel(-(iconSize.w / 2), -iconSize.h);
+				var icon = new OpenLayers.Icon("http://www.openstreetmap.org/openlayers/img/marker.png",
+					   iconSize, iconOffset);
+				var zoom, center, currentPopup, map, lyrMarkers;
+				var popupClass = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
+				"autoSize": true,
+				"minSize": new OpenLayers.Size(300, 50),
+				"maxSize": new OpenLayers.Size(500, 300),
+				"keepInMap": true
+				});
+				var bounds = new OpenLayers.Bounds();
+
+				initMap()
+
+
+				function addMarker(lng, lat, info) {
+					var pt = new OpenLayers.LonLat(lng, lat)
+							       .transform(new OpenLayers.Projection("EPSG:4326"), 
+							       map.getProjectionObject());
+					bounds.extend(pt);
+					var feature = new OpenLayers.Feature(lyrMarkers, pt);
+					feature.closeBox = true;
+					feature.popupClass = popupClass;
+					feature.data.popupContentHTML = info;
+					feature.data.overflow = "auto";
+					var marker = new OpenLayers.Marker(pt, icon.clone());
+					var markerClick = function(evt) {
+					    if (currentPopup != null && currentPopup.visible()) {
+						currentPopup.hide();
+					    }
+					    if (this.popup == null) {
+						this.popup = this.createPopup(this.closeBox);
+						map.addPopup(this.popup);
+						this.popup.show();
+					    } else {
+						this.popup.toggle();
+					    }
+					    currentPopup = this.popup;
+					    OpenLayers.Event.stop(evt);
+					};
+					marker.events.register("mousedown", feature, markerClick);
+					lyrMarkers.addMarker(marker);
+				}
+
+				function initMap() {
+					var options = {
+					    projection: new OpenLayers.Projection("EPSG:900913"),
+					    displayProjection: new OpenLayers.Projection("EPSG:4326"),
+					    units: "m",
+					    numZoomLevels: 19,
+					    maxResolution: 156543.0339,
+					    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
+					};
+					map = new OpenLayers.Map("Map", options);
+					map.addControl(new OpenLayers.Control.DragPan());
+					var lyrOsm = new OpenLayers.Layer.OSM();
+					map.addLayer(lyrOsm);
+					lyrMarkers = new OpenLayers.Layer.Markers("Markers");
+					map.addLayer(lyrMarkers);
+					//add marker on given coordinates
+
+
+					// Get the data for the complete map
+					get_All_devicess_Data();
+					for ( i = 0; i < window.positions.length ; i++ ) {
+						lon = window.positions[i].split(',')[0].replace("'","");
+						lat = window.positions[i].split(',')[1].replace("'","");
+                        addMarker(lat, lon, '<b>Device</b><br/>' + window.name_positions + '<br/>' + window.mac_positions);
+					}
+
+					center = bounds.getCenterLonLat();
+					map.setCenter(center, map.getZoomForExtent(bounds) - 1);
+					zoom = map.getZoom();
+				}
+
+			});
+			
+
+		};
+
+
+
+
 
 		// Function to show the complete map of points for one device	
 		function show_complete_map(){
@@ -180,18 +332,16 @@
 			// Get the device features
             getSpecificData(mac);
 
-			// Get the data from the webserver.
-			mac = row_selected.find('td:eq(2)').html();
-
 			// fill the page
 			fill_complete_map();
 		}	
+
 
 		// Get the complete data 
 		function getCompleteData(mac) {
 
 			$.ajax({
-				url: "http://localhost:8000/map?mac="+mac,
+				url: "http://localhost:8000/map?info="+mac,
 				datatype: 'json',
 				async: false,
 				data: {},
@@ -557,6 +707,7 @@
 				<li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
 				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Device Info</a></li>
 				<li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Device Map</a></li>
+				<li><a href="javascript:show_all_devices_map()"><img src="img/all-devices-map.png"></br>All devices Map</a></li>
 			    </ul>
 			</div>
 			<div id="contentbox" class="content">
