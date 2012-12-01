@@ -250,7 +250,7 @@ def bluetooth_discovering():
 					if debug:
 						print 'Discovering devices...'
 					# Discovering devices
-					data = bluetooth.bluez.discover_devices(duration=3,lookup_names=True)
+					data = bluetooth.bluez.discover_devices(duration=5,lookup_names=True)
 					#data = bluetooth.discover_devices(duration=3,lookup_names=True)
 					if debug:
 						print data
@@ -264,12 +264,11 @@ def bluetooth_discovering():
 						print '\n  No devices found'
 				except:
 					counter = counter + 1
-					print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+					if debug:
+						print 'Exception in bluetooth.discover_devices(duration=5,lookup_names=True) function.'
 					if counter > int(50): 
-						print '\nToo many exceptions while discovering devices. Device may be down.'
-						print 'Exiting!'
-						threadbreak = True
-						sys.exit(1)
+						counter = 0
+						print '\n  Too many exceptions while discovering devices. Device is up?'
 			except KeyboardInterrupt:
 				print 'Exiting. It may take a few seconds.'
 				threadbreak = True
