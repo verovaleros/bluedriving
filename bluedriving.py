@@ -217,6 +217,8 @@ def bluetooth_discovering():
     global debug
     global verbose
     global threadbreak
+    global flag_sound
+    global global_location
 
     try:
         if debug:
@@ -241,7 +243,17 @@ def bluetooth_discovering():
                         process_device_information_thread.setDaemon(True)
                         process_device_information_thread.start()
                     else: 
+                        # No devices
                         print '  -'
+                        if flag_sound:
+                            if global_location:
+                                # If we have gps, play a sound
+                                pygame.mixer.music.load('nodevice-withgps.ogg')
+                                pygame.mixer.music.play()
+                            else:
+                                # If we do not have gps, play a sound
+                                pygame.mixer.music.load('nodevice-withoutgps.ogg')
+                                pygame.mixer.music.play()
                 except:
                     if debug:
                         print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
