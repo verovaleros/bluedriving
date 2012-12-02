@@ -36,7 +36,8 @@
 				fillTable( data.UnReadData );	
 				changeColors();
 				addClicks();
-				timeVar = setTimeout(getLiveData,3000);
+				//timeVar = setTimeout(getLiveData,3000);
+				timeVar = setInterval(getLiveData,3000);
                 }).error(function() { $('#running').html('System Down'); $('#running').attr('style','color: red;') });
 			};
 
