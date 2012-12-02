@@ -763,7 +763,7 @@ def alarm_to(type_ofcall, mac, alarm_type):
                 print 'y =', y
                 return ''
 
-                response = je.encode(alarmsdict)
+            response = je.encode(alarmsdict)
             return response
 
 
