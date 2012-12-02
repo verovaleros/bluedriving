@@ -46,6 +46,8 @@ Main Features
  -- Set/unset a permanent alarm on the device, stored on the database.
  -- See all the history of positions for the selected device in a large map.
  -- See the positions of the last N devices together in a map, so you can see all at the same time.
+- It shows the amount of different locations and devices in the table.
+- It can update the system state in the web page automatically. When it is down and when it comes back.
 
 Poor man GPS solution
 ---------------------
