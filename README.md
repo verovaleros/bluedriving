@@ -123,7 +123,6 @@ TODO
 - Add more types of alarms.
 - Avoid congesting the inbox
 - Add the map to the mail?
-- Fix the last seen displayed on the screen and stored on the database.
 - Send the mail to multiples recipients.
-- When multiple exceptions are found, exit with a sound.
-- Play a sound when no device is found.
+- Update the address of the gps coordinates manually. (right click?)
+- Delete devices and locations from the database.
