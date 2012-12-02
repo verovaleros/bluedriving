@@ -18,15 +18,20 @@ Main Features
 - Lookup services on each device.
 - Use threads to speed up the process.
 - Stores everything in a sqlite database.
-- Has a stand-alone python web server that implements an API. It can be started from the bludriving.py tool or using the bluedrivingWebServer.py tool. 
+- Has a stand-alone python web server that implements an API. It can be started by the bludriving.py tool or by using the bluedrivingWebServer.py tool. 
 - Has sounds for:
  -- GPS signal activation.
  -- New device found.
  -- Old device found.
+ -- System Running and no GPS.
+ -- System Running and GPS.
  -- Sound for devices with the sound alarm setted.
-- Implement alarm notifications for the bluetooth devices that you want: Play a sound, Read the bluetooth name with festival or send an email with the device information.
-- You can manually specify the GPS coordinates, so you can have the map functionality without having a GPS.
-- Interactive keys (key+Enter) to :
+- Implements alarm notifications for the bluetooth devices that you want: 
+ -- Play a sound
+ -- Read the bluetooth name with festival
+ -- Send an Email with the device information.
+- You can manually specify the GPS coordinates, so you can have the GPS and location functionality without having a GPS. This is very usefull is you are not moving but want to record the position.
+- Interactive keys while running (key+Enter) to :
  -- a (activate or deactivate alarms)
  -- s (activate or deactivate sounds)
  -- l (activate or deactivate lookup devices)
@@ -39,7 +44,8 @@ Main Features
  -- See each device information, including a map with the position you are inspecting.
  -- Set/unset a permanent note on the device, stored on the database.
  -- Set/unset a permanent alarm on the device, stored on the database.
- -- See all the history of positions of the selected device in a large map.
+ -- See all the history of positions for the selected device in a large map.
+ -- See the positions of the last N devices together in a map, so you can see all at the same time.
 
 Poor man GPS solution
 ---------------------
