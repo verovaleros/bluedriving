@@ -67,7 +67,7 @@ def version():
         print RED
         print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
         print "   Authors: verovaleros, eldraco, nanojaus                               "
-        print "   Bluedriver is a bluetooth wardriving utility.                        "
+        print "   Bluedriving is a bluetooth wardriving utility.                        "
         print 
         print END
  
@@ -82,7 +82,7 @@ def usage():
         print
 	print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
         print "   Authors: verovaleros, eldraco, nanojaus                               "
-        print "   Bluedriver is a bluetooth wardriving utility.                        "
+        print "   Bluedriving is a bluetooth wardriving utility.                        "
         print 
         print "\n   Usage: %s <options>" % sys.argv[0]
         print "   Options:"
