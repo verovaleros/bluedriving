@@ -158,8 +158,6 @@
 
 			$('#alarms').hide('');
 
-			//$('#map').html('');
-
             $('#map').html("<center><h3>Positions Map</h3>");
 
 			$('#Map').html('');
@@ -175,39 +173,40 @@
 			// Stop the pulling
             clearInterval(timeVar);
 
-			// Get the device features
-            //getSpecificData(mac);
-
-			// Get the data from the webserver.
-			//mac = row_selected.find('td:eq(2)').html();
-
 			// fill the page
-			fill_all_devices_map();
+			fill_complete_map_all_devices();
 		}	
 
 		// Get the complete data 
-		function getCompleteData(mac) {
+		function get_all_devices_data(amount) {
 
 			$.ajax({
-				url: "http://localhost:8000/allmap",
+				url: "http://localhost:8000/map?info=" + amount,
 				datatype: 'json',
 				async: false,
 				data: {},
 				success: function(data) {
-					var obj = jQuery.parseJSON(data);
+                    var obj = jQuery.parseJSON(data);
+                    // [{"Mac": "D4:88:90:52:B3:F2", "Data": {"LastSeen": "'2012-12-01 09:17:54'", "Pos": ["'-37.336402,-59.121405'", "'-37.976835,-57.571433333'", "'-37.977048333,-57.571196667'", "'-37.977223333,-57.571255'", "'-37.977321667,-57.571283333'", "'-37.977336667,-57.571275'", "'-37.977441667,-57.571253333'", "'-37.977445,-57.57125'", "'-37.977555,-57.571346667'"], "FirstSeen": "'2012-11-10 21:32:48'", "Name": "'nakingarethel'"}}]
+
 					window.mac_positions = obj.Mac;
 					window.name_positions = obj.Data.Name;
 					window.positions = obj.Pos;
                     window.name_positions = obj.Name;
-                    // Example: { "Mac":"11:22:33:44:55:66", "Data":{"Name":"test", "Pos":["1","2"] }, "Mac":"aa:bb:cc:dd:ee:ff", "Data":{"Name":"jorge", "Pos":["3","4"] } }
+
+                    //for (var i=0;i<obj.length;i++)
+                    //{
+                        //alert(obj[i].Mac);
+                    //}
 				}
 			});
 		}
 
 
-		// Fill the map with info
-        function fill_complete_map() {
 
+
+		// Fill the map with info
+        function fill_complete_map_all_devices() {
 
 			$.getScript('http://www.openlayers.org/api/OpenLayers.js',function(data){
 				eval(data);
@@ -274,9 +273,8 @@
 					map.addLayer(lyrMarkers);
 					//add marker on given coordinates
 
-
 					// Get the data for the complete map
-					get_All_devicess_Data();
+					get_all_devicess_data(10);
 					for ( i = 0; i < window.positions.length ; i++ ) {
 						lon = window.positions[i].split(',')[0].replace("'","");
 						lat = window.positions[i].split(',')[1].replace("'","");
@@ -292,6 +290,8 @@
 			
 
 		};
+
+
 
 
 
@@ -345,8 +345,8 @@
 				datatype: 'json',
 				async: false,
 				data: {},
-				success: function(data) {
-					var obj = jQuery.parseJSON(data);
+                success: function(data) {
+                    var obj = jQuery.parseJSON(data);
 					window.positions = obj.Pos;
 					window.mac_positions = obj.Mac;
 					window.name_positions = obj.Name;

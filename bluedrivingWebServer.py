@@ -117,7 +117,7 @@ def get_unread_registers():
     """ Get unread registers from the database since the last read and return a json with all the data"""
     try:
         global debug
-            global database
+        global database
 
         conn = sqlite3.connect(database)
         cursor = conn.cursor()
@@ -212,7 +212,7 @@ def get_info_from_mac(temp_mac):
         exit(-1)
 
 
-def get_all_devices_positions():
+def get_all_devices_positions(amount):
     """ Get every position of all devices """
     global debug
     global database
@@ -220,8 +220,62 @@ def get_all_devices_positions():
     try:
         conn = sqlite3.connect(database)
         cursor = conn.cursor()
+        askamount = (amount,)
 
-        row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
+        row = cursor.execute("SELECT MacId FROM Locations order by id desc limit 0,?",askamount)
+        res = row.fetchall()
+
+        if len(res) != 0:
+
+            # Encoder
+            je = json.JSONEncoder()
+
+            # Top stores everythin
+            top = []
+
+            for macid in res:
+                mac_dict = {}
+                # Get the mac
+                cursor3 = conn.cursor()
+                row = cursor3.execute("SELECT mac FROM devices where id = ?",askamount)
+                res = row.fetchall()
+                (mac,) = res[0]
+
+                mac_dict['Mac'] = mac
+                mac_data_dict = {}
+                mac_dict['Data'] = mac_data_dict
+                mac_pos = []
+                mac_data_dict['Pos'] = mac_pos
+                # Example: { "Mac":"11:22:33:44:55:66", "Data":{"Name":"test", "Pos":["1","2"] }, "Mac":"aa:bb:cc:dd:ee:ff", "Data":{"Name":"jorge", "Pos":["3","4"] } }
+
+                # For each id, get the data
+                cursor2 = conn.cursor()
+                # Flag to know if this mac has at least one position and avoid returning an empty position vector.
+                no_gps_at_all = True
+                for row in cursor2.execute("SELECT * FROM Locations WHERE Macid = ?",macid):
+                    
+                    # firstseen and name do not change with more positions. We store them every time...
+                    firstseen = row[3]
+                    name = row[6]
+                    mac_data_dict['Name'] = name
+                    mac_data_dict['FirstSeen'] = firstseen
+
+                    # lastseen changes with more positions. So only the last one will remain.
+                    lastseen = row[4]
+                    mac_data_dict['LastSeen'] = lastseen
+
+                    gps = row[2]
+                    # Add the other string for no gps
+                    if 'not available' not in gps and 'NO' not in gps and 'Not' not in gps and gps != '' and 'False' not in gps :
+                        no_gps_at_all = False
+                        mac_pos.append(gps)
+                    
+                    if debug:
+                        print ' > Name: {0}, FirstSeen: {1}, LastSeen: {2}, Gps: {3}, Mac: {4}'.format(name, firstseen, lastseen, gps, mac)
+                top.append(mac_dict)
+
+            return je.encode(top)
+
 
 
     except Exception as inst:
@@ -841,15 +895,19 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
             elif self.path.rfind('/map?info=') == 0:
                 if debug:
                     print ' >> Get /map'
+                info = self.path.split('info=')[1]
 
-			# Get an X amount and return for every MAC the last X positions.
-			elif self.path.rfind('/map?mac=') == 0:
-				if debug:
-					print ' >> Get /map'
+                # It is a mac
+                if len(info.split(':')) == 6 and len(info) == 17:
+                    mac = self.path.split('info=')[1]
+                    json_to_send = get_n_positions(mac)
+                elif type(info) == str and int(info) > 0:
+                    json_to_send = get_all_devices_positions(int(info))
 
-				mac = self.path.split('mac=')[1]
-
-				json_to_send = get_n_positions(mac)
+                self.send_response(200)
+                self.send_header('Content-Type',        'text/html')
+                self.end_headers()
+                self.wfile.write(json_to_send)
 
             elif self.path == "/":
                 if debug:
