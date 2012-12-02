@@ -576,7 +576,7 @@ def note_to(typeof_call, mac,note):
                 print 'x =', x
                 print 'y =', y
                 return ''
-                response = je.encode(notesdict)
+            response = je.encode(notesdict)
             return response
         else:
             return ''

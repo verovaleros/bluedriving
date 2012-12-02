@@ -151,8 +151,12 @@
 			// Hide the table
 			$('#contentbox').hide();
 			//Del the previous stuff
-			$('#interaction').hide('');
-			$('#interaction').css('border-style','none');
+            $('#interaction').html('');
+			// Set the notes
+            $('#interaction').html('<center>Amount of devices: <input type="text" id="amountOfDevices" maxlength="10" size="10"/> <button type="button" onclick="set_amount()">Generate</button></center>');
+            $('#interaction').show();
+
+			//$('#interaction').css('border-style','none');
 
 			$('#notes').hide('');
 
@@ -160,8 +164,6 @@
 
             $('#map').html("<center><h3>Positions Map</h3>");
 
-			$('#Map').html('');
-			$('#Map').show();
 
 			$('#info').html('');
 
@@ -173,31 +175,28 @@
 			// Stop the pulling
             clearInterval(timeVar);
 
-			// fill the page
+        }	
+
+        function set_amount(){
+            window.amount = $('#amountOfDevices').val()
+            // fill the page
+			$('#Map').html('');
+			$('#Map').show();
 			fill_complete_map_all_devices();
-		}	
+        }
 
 		// Get the complete data 
-		function get_all_devices_data(amount) {
-
+		function get_all_devices_data() {
 			$.ajax({
-				url: "http://localhost:8000/map?info=" + amount,
+				url: "http://localhost:8000/map?info=" + window.amount,
 				datatype: 'json',
 				async: false,
 				data: {},
 				success: function(data) {
                     var obj = jQuery.parseJSON(data);
-                    // [{"Mac": "D4:88:90:52:B3:F2", "Data": {"LastSeen": "'2012-12-01 09:17:54'", "Pos": ["'-37.336402,-59.121405'", "'-37.976835,-57.571433333'", "'-37.977048333,-57.571196667'", "'-37.977223333,-57.571255'", "'-37.977321667,-57.571283333'", "'-37.977336667,-57.571275'", "'-37.977441667,-57.571253333'", "'-37.977445,-57.57125'", "'-37.977555,-57.571346667'"], "FirstSeen": "'2012-11-10 21:32:48'", "Name": "'nakingarethel'"}}]
+                    // Example: [{"Mac": "D4:88:90:52:B3:F2", "Data": {"LastSeen": "'2012-12-01 09:17:54'", "Pos": ["'-37.336402,-59.121405'", "'-37.976835,-57.571433333'", "'-37.977048333,-57.571196667'", "'-37.977223333,-57.571255'", "'-37.977321667,-57.571283333'", "'-37.977336667,-57.571275'", "'-37.977441667,-57.571253333'", "'-37.977445,-57.57125'", "'-37.977555,-57.571346667'"], "FirstSeen": "'2012-11-10 21:32:48'", "Name": "'nakingarethel'"}}]
 
-					window.mac_positions = obj.Mac;
-					window.name_positions = obj.Data.Name;
-					window.positions = obj.Pos;
-                    window.name_positions = obj.Name;
-
-                    //for (var i=0;i<obj.length;i++)
-                    //{
-                        //alert(obj[i].Mac);
-                    //}
+                    window.all_positions = obj;
 				}
 			});
 		}
@@ -213,7 +212,7 @@
 
 				var iconSize = new OpenLayers.Size(21, 25);
 				var iconOffset = new OpenLayers.Pixel(-(iconSize.w / 2), -iconSize.h);
-				var icon = new OpenLayers.Icon("http://www.openstreetmap.org/openlayers/img/marker.png",
+				var icon = new OpenLayers.Icon("img/marker-green.png",
 					   iconSize, iconOffset);
 				var zoom, center, currentPopup, map, lyrMarkers;
 				var popupClass = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
@@ -273,12 +272,21 @@
 					map.addLayer(lyrMarkers);
 					//add marker on given coordinates
 
-					// Get the data for the complete map
-					get_all_devicess_data(10);
-					for ( i = 0; i < window.positions.length ; i++ ) {
-						lon = window.positions[i].split(',')[0].replace("'","");
-						lat = window.positions[i].split(',')[1].replace("'","");
-                        addMarker(lat, lon, '<b>Device</b><br/>' + window.name_positions + '<br/>' + window.mac_positions);
+                    // Get the data for the complete map
+					get_all_devices_data();
+                    for ( var i = 0; i < window.all_positions.length ; i++ ) {
+                        mac = all_positions[i].Mac;
+                        data = all_positions[i].Data;
+                        name = data.Name;
+                        lastseen = data.LastSeen;
+                        firstseen = data.FirstSeen;
+                        pos_dict = data.Pos;
+                        for ( var j = 0; j < pos_dict.length ; j++ ) {
+                            l_pos = pos_dict[j];
+                            lon = l_pos.split(',')[0].replace("'","");
+                            lat = l_pos.split(',')[1].replace("'","");
+                            addMarker(lat, lon, '<b>Device</b><br/>' + name + '<br/>' + mac + '<br/> First Seen:' + firstseen + '<br/> Last Seen:' + lastseen);
+                        }
 					}
 
 					center = bounds.getCenterLonLat();
@@ -555,7 +563,7 @@
 			html[++h] = '<option class="alarmmenu">Festival</option>';
 			html[++h] = '<option class="alarmmenu">Mail</option>';
 			html[++h] = '</select>';
-		        $('#interAlarm').html(html.join(''));
+		    $('#interAlarm').html(html.join(''));
 
 			/*var html = [], h = -1;
 			html[++h] = '<h4>Set a voice alarm when seen</h4>';
@@ -567,7 +575,7 @@
 			html[++h] = '</li>';
 			html[++h] = '</ul>';
 			html[++h] = '<p class="clear_all"></p>';
-		        $('#interAlarm').append(html.join(''));
+		    $('#interAlarm').append(html.join(''));
 			*/	
 			$('#interAlarm').append('<button type="button" onclick="setAlarm()">Set Alarm</button>');
 			$('#interAlarm').append('<button type="button" onclick="delAlarm()">Delete Alarm</button>');
@@ -633,7 +641,7 @@
 			html[++h] = '<th scope="col">Device Features</th>';
 			html[++h] = '</tr>';
 			html[++h] = '</thead>';
-		        $('#infotable').append(html.join(''));
+            $('#infotable').append(html.join(''));
 
 			for ( var i = 0; i < information.split('[')[1].split(']')[0].split(',').length; i++ ) {
 				var html = [], h = -1;
