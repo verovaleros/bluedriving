@@ -231,19 +231,16 @@ li {
 
 }
 
-#map {
-	padding: 10px;
-	clear:both;
-	display: block;
-}
+/*
+ * Image replacement
+ */
 
-#Map {
-	height: 500px;
-	width: 1000px;
-	padding: 10px;
-	clear:both;
-	display: block;
-	margin: 0 auto!important;
+.ir {
+    background-color: transparent;
+    border: 0;
+    overflow: hidden;
+    /* IE 6/7 fallback */
+    *text-indent: -9999px;
 }
 
 #notes, #alarms {

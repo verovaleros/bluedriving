@@ -136,10 +136,15 @@ def get_unread_registers():
 
 		# First select all the locations
 		# This can be VERY HEAVY with a huge database...
-		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 1000'):
+		#for row in cursor.execute('SELECT * FROM Locations where id > ? order by Lastseen DESC limit 100',location_id_tuple):
+		#for row in cursor.execute('SELECT * FROM Locations order by Lastseen DESC limit 100',location_id_tuple):
+		#for row in cursor.execute('SELECT * FROM Locations order by Id DESC limit 100',location_id_tuple):
+		#for row in cursor.execute('SELECT * FROM Locations order by Id DESC limit 100'):
+		for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 100'):
 
-			if debug:
-				print ' >> Read locations {0}'.format(row)
+			#if debug:
+				#print ' >> Read locations {0}'.format(row)
+			#id = (row[0],)
 			dev_id = (row[1],)
 
 			# Update location id
@@ -230,7 +235,9 @@ def get_n_positions(mac):
 		cursor = conn.cursor()
 
 		# Get all the macs into an array
-		askmac = ('%'+mac+'%',)
+		id_macs = {}
+		for row in cursor.execute('SELECT Mac,Id FROM devices ORDER BY MAC'):
+			id_macs[str(row[1])] = str(row[0])
 
 		#id_macs = {}
 		#for row in cursor.execute('SELECT Mac,Id FROM devices ORDER BY MAC'):
@@ -301,19 +308,22 @@ def get_n_positions(mac):
 		#askid = (id,n)
 		askid = (id,)
 
-		# Flag to know if this mac has at least one position and avoid returning an empty position vector.
-		no_gps_at_all = True
-		#for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
-		for row in cursor2.execute("SELECT * FROM Locations WHERE Macid = ?",askid):
-			gps = row[2]
-			#if debug:
-				#print '  >> Gps: {0}'.format(gps)
+			# Flag to know if this mac has at least one position and avoid returning an empty position vector.
+			no_gps_at_all = True
+			for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
+				gps = row[1]
+				#if debug:
+					#print '  >> Gps: {0}'.format(gps)
 
-			# Add the other string for no gps
-			if 'not available' not in gps and 'NO' not in gps and 'Not' not in gps and gps != '' and 'False' not in gps :
-				no_gps_at_all = False
-				#gps_data['gps'] = gps
-				pos_vect.append(gps)
+				# Add the other string for no gps
+				if 'not available' not in gps and 'Not using' not in gps and gps != '':
+					no_gps_at_all = False
+					gps_data['gps'] = gps
+					pos_vect.append(gps)
+					if debug:
+						print '\t >> MAC {0} has position: {1}'.format(mac,gps)
+
+			if no_gps_at_all:
 				if debug:
 					print '\t >> MAC {0} has position: {1}'.format(mac,gps)
 
@@ -481,250 +491,12 @@ def note_to(typeof_call, mac,note):
 				return ''
 
 			return 'Deleted'
-
-		elif typeof_call == 'get':
-			# Search fot that mac on the database first...
-			conn = sqlite3.connect(database)
-			cursor = conn.cursor()
-			askmac = ('%'+mac+'%',)
-
-		        je = json.JSONEncoder()
-
-			row = cursor.execute("SELECT Id FROM devices WHERE Mac like ? limit 0,1",askmac)
-
-			# Check the results, Does this mac exists?
-			res = row.fetchall()
-			if len(res) != 0:
-				(id,) = res[0]
-			else:
-				if debug:
-					print ' >> This mac does not exist: {0}'.format(mac)
-				return ''
-			# The mac does exist. Let's delete it.
-			cursor2 = conn.cursor()
-
-			notesdict = {}
-                        notes = []
-			notesdict['Notes'] = notes
-
-			# Try to get the values
-			try:
-				row2 = cursor2.execute("SELECT Note from notes where Id like ? ",(id,))
-				#row2 = cursor2.execute("SELECT Note from notes")
-				for row in row2:
-					notes.append(str(row[0]))
-
-				conn.commit()
-				if debug:
-					print ' >> Getting values. Id: {0}, Note:{1}'.format(id,note)
-				conn.close()
-			except Exception as inst:
-				if debug:
-					print ' >> Some problem getting the notes in the funcion note_to()'
-				print type(inst)     # the exception instance
-				print inst.args      # arguments stored in .args
-				print inst           # __str__ allows args to printed directly
-				x, y = inst          # __getitem__ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-				return ''
-		        response = je.encode(notesdict)
-			return response
 		else:
 			return ''
 
 	except Exception as inst:
 		if debug:
 			print '\tProblem in note_to()'
-		print type(inst)     # the exception instance
-		print inst.args      # arguments stored in .args
-		print inst           # __str__ allows args to printed directly
-		x, y = inst          # __getitem__ allows args to be unpacked directly
-		print 'x =', x
-		print 'y =', y
-		exit(-1)
-
-def alarm_to(type_ofcall, mac, alarm_type):
-	""" Get a MAC and add, get or remove an alarm """
-	global debug
-	global database
-	import re
-
-	try:
-		# verify the data types
-		try:
-			# Are they strings?
-			if type(mac) != str or type(alarm_type) != str:
-				if debug:
-					print ' >> Some strange attempt to hack the server:1'
-				return ''
-		        # Is the format ok?
-			if len(mac.split(':')) != 6 or len(mac) != 17:
-				if debug:
-					print ' >> Some strange attempt to hack the server:2'
-				return ''
-		        # Is the len of the noteok?
-			if len(alarm_type) > 253:
-				if debug:
-					print ' >> Some strange attempt to hack the server:4'
-				return ''
-			# Characters fot the mac
-			if not re.match('^[a-fA-F0-9:]+$',mac):
-				if debug:
-					print ' >> Some strange attempt to hack the server:4'
-				return ''
-			# Characters fot the note
-			if alarm_type and not re.match('^[a-zA-Z0-9 .,?]+$',alarm_type):
-				if debug:
-					print ' >> Some strange attempt to hack the server:5'
-				return ''
-		except Exception as inst:
-			if debug:
-				print ' >> Some strange attempt to hack the server.6'
-			print type(inst)     # the exception instance
-			print inst.args      # arguments stored in .args
-			print inst           # __str__ allows args to printed directly
-			x, y = inst          # __getitem__ allows args to be unpacked directly
-			print 'x =', x
-			print 'y =', y
-			return ''
-
-
-		if type_ofcall == 'add':
-
-			# Search fot that mac on the database first...
-			conn = sqlite3.connect(database)
-			cursor = conn.cursor()
-			askmac = ('%'+mac+'%',)
-
-			row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
-
-			# Check the results, Does this mac exists?
-			res = row.fetchall()
-			if len(res) != 0:
-				(id,) = res[0]
-			else:
-				if debug:
-					print ' >> This mac does not exist: {0}'.format(mac)
-				return ''
-				
-			cursor = conn.cursor()
-
-
-			# Try to insert
-			try:
-				cursor.execute("INSERT INTO Alarms (Id,Alarm) values (?,?) ",(id,alarm_type))
-				conn.commit()
-				if debug:
-					print ' >> Inserted values. Id: {0}, Alarm:{1}, Mac:{2}'.format(id, alarm_type, mac)
-				conn.close()
-			except Exception as inst:
-				if debug:
-					print ' >> Some problem inserting in the database in the funcion alarm_to()'
-				print type(inst)     # the exception instance
-				print inst.args      # arguments stored in .args
-				print inst           # __str__ allows args to printed directly
-				x, y = inst          # __getitem__ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-				return ''
-
-			return "{'Result':'Added'}"
-
-		elif type_ofcall == 'del':
-
-			# Search fot that mac on the database first...
-			conn = sqlite3.connect(database)
-			cursor = conn.cursor()
-			askmac = ('%'+mac+'%',)
-
-			row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
-
-			# Check the results, Does this mac exists?
-			res = row.fetchall()
-			if len(res) != 0:
-				(id,) = res[0]
-			else:
-				if debug:
-					print ' >> This mac does not exist: {0}'.format(mac)
-				return ''
-				
-			cursor = conn.cursor()
-
-
-			# Try to insert
-			try:
-				cursor.execute("DELETE From Alarms where Id like ? and Alarm like ?",(id,alarm_type))
-				conn.commit()
-				if debug:
-					print ' >> Deleted values. Id: {0}, Alarm:{1}, Mac:{2}'.format(id, alarm_type, mac)
-				conn.close()
-			except Exception as inst:
-				if debug:
-					print ' >> Some problem deleting in the database in the funcion alarm_to()'
-				print type(inst)     # the exception instance
-				print inst.args      # arguments stored in .args
-				print inst           # __str__ allows args to printed directly
-				x, y = inst          # __getitem__ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-				return ''
-
-			return "{'Result':'Deleted'}"
-
-		elif type_ofcall == 'get':
-
-			# Search fot that mac on the database first...
-			conn = sqlite3.connect(database)
-			cursor = conn.cursor()
-			askmac = ('%'+mac+'%',)
-
-		        je = json.JSONEncoder()
-
-			row = cursor.execute("SELECT Id FROM Devices WHERE Mac like ? limit 0,1",askmac)
-
-			# Check the results, Does this mac exists?
-			res = row.fetchall()
-			if len(res) != 0:
-				(id,) = res[0]
-			else:
-				if debug:
-					print ' >> This mac does not exist: {0}'.format(mac)
-				return ''
-				
-			cursor = conn.cursor()
-
-                        alarmsdict = {}
-                        alarms = []
-			alarmsdict['Alarms'] = alarms
-			# Try to insert
-			try:
-				row2 = cursor.execute("SELECT Alarm from Alarms where Id like ?",(id,))
-                                for row in row2:
-                                        alarms.append(row)
-
-				conn.commit()
-				if debug:
-					print ' >> Get values. Id: {0}, Alarm:{1}, Mac:{2}'.format(id, alarm_type, mac)
-				conn.close()
-			except Exception as inst:
-				if debug:
-					print ' >> Some problem getting from the database in the funcion alarm_to()'
-				print type(inst)     # the exception instance
-				print inst.args      # arguments stored in .args
-				print inst           # __str__ allows args to printed directly
-				x, y = inst          # __getitem__ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-				return ''
-
-		        response = je.encode(alarmsdict)
-			return response
-
-
-	except Exception as inst:
-		if debug:
-			print '\tProblem in alarm_to()'
 		print type(inst)     # the exception instance
 		print inst.args      # arguments stored in .args
 		print inst           # __str__ allows args to printed directly
@@ -887,11 +659,7 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 					print ' >> Get generic file'
 
 				try:
-					extension = self.path.split('.')[-1]
-					if len(extension.split('?')) >= 2:
-					        extension = self.path.split('.')[-1].split('?')[0]
-                                                self.path = self.path.split('?')[0]
-
+					extension = self.path.split('.')[1]
 				except:
 					# Does not have . on it...
 					self.send_response(200)
