@@ -308,24 +308,24 @@ def get_n_positions(mac):
 		#askid = (id,n)
 		askid = (id,)
 
-			# Flag to know if this mac has at least one position and avoid returning an empty position vector.
-			no_gps_at_all = True
-			for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
-				gps = row[1]
-				#if debug:
-					#print '  >> Gps: {0}'.format(gps)
+		# Flag to know if this mac has at least one position and avoid returning an empty position vector.
+		no_gps_at_all = True
+		for row in cursor2.execute("SELECT * FROM Locations WHERE Id = ? ORDER BY LastSeen DESC limit 0,?",askid):
+			gps = row[1]
+			#if debug:
+				#print '  >> Gps: {0}'.format(gps)
 
-				# Add the other string for no gps
-				if 'not available' not in gps and 'Not using' not in gps and gps != '':
-					no_gps_at_all = False
-					gps_data['gps'] = gps
-					pos_vect.append(gps)
-					if debug:
-						print '\t >> MAC {0} has position: {1}'.format(mac,gps)
-
-			if no_gps_at_all:
+			# Add the other string for no gps
+			if 'not available' not in gps and 'Not using' not in gps and gps != '':
+				no_gps_at_all = False
+				gps_data['gps'] = gps
+				pos_vect.append(gps)
 				if debug:
 					print '\t >> MAC {0} has position: {1}'.format(mac,gps)
+
+		if no_gps_at_all:
+			if debug:
+				print '\t >> MAC {0} has position: {1}'.format(mac,gps)
 
 		if no_gps_at_all:
 			if debug:

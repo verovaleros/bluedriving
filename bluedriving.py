@@ -818,7 +818,7 @@ def main():
 	mail_username = ""
 	mail_password = ""
 	gps_session = ""
-    connection = ""
+    	connection = ""
 
 	try:
         
@@ -836,18 +836,18 @@ def main():
                 if opt in ("-i", "--not-internet"): flag_internet = False
                 if opt in ("-l", "--not-lookup-services"): flag_lookup_services = False
                 if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
-				if opt in ("-f", "--fake-gps"): fake_gps = arg; flag_fake_gps = True
-				if opt in ("-m", "--mail-user"): 
-					mail_username = arg
-					if mail_username:
-						print 'Provide your gmail password for given user: ',
-						try:
-							mail_password = getpass.getpass();
-							flag_alert_mail = True
-						except:
-							print '\nError receiving password from user!'
-							print 'Avoiding e-mail alerts'
-							print
+		if opt in ("-f", "--fake-gps"): fake_gps = arg; flag_fake_gps = True
+		if opt in ("-m", "--mail-user"): 
+			mail_username = arg
+			if mail_username:
+				print 'Provide your gmail password for given user: ',
+				try:
+					mail_password = getpass.getpass();
+					flag_alert_mail = True
+				except:
+					print '\nError receiving password from user!'
+					print 'Avoiding e-mail alerts'
+					print
         try:
 		
 		version()
