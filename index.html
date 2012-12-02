@@ -30,14 +30,14 @@
 
 		// Get the data with json
 		function getLiveData() {
-			$.getJSON("http://localhost:8000/data", {}, function(data) {
+        $.getJSON("http://localhost:8000/data", {}, function(data) {
+                $('#running').html('System Running');
+                $('#running').attr('style','color: white;');
 				fillTable( data.UnReadData );	
 				changeColors();
 				addClicks();
 				timeVar = setTimeout(getLiveData,3000);
-				//alert(row_selected.html('class'));
-				//alert(row_selected.data('td'));
-				});
+                }).error(function() { $('#running').html('System Down'); $('#running').attr('style','color: red;') });
 			};
 
 		// Decode utf8
@@ -108,9 +108,16 @@
 			$('#hor-zebra').empty();
 			$('#hor-zebra').append(html.join(''));
 
+            update_the_amount_of_devices();
 
 			};
 
+
+        // Update the amount of devices in the header
+        function update_the_amount_of_devices() {
+            var rowCount = $('#hor-zebra tr').length -1 ;
+            $('#amount').html('Amount of unique devices locations: '+rowCount);
+        };
 
 
 		// Change the colors of the table
@@ -710,13 +717,17 @@
 
 	<div id='frame'>
 		<div id='page'>
-			<div id='header'>
-			    <ul>
-				<li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
-				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Device Info</a></li>
-				<li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Device Map</a></li>
-				<li><a href="javascript:show_all_devices_map()"><img src="img/all-devices-map.png"></br>All devices Map</a></li>
-			    </ul>
+            <div id='header'>
+                <div id='systemLeftData'><div id='sysname'> Bluedriving . The bluetooth-GPS capture utility.</div><div id='running'>System Running</div><div id='amount'>Amount of devices: </div></div>
+                <div id='icons'>
+                    <ul>
+                    <li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
+                    <li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Device Info</a></li>
+                    <li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Device Map</a></li>
+                    <li><a href="javascript:show_all_devices_map()"><img src="img/all-devices-map.png"></br>All devices Map</a></li>
+                    </ul>
+                </div>
+                <div id='systemRightData'></div>
 			</div>
 			<div id="contentbox" class="content">
 				<table id="hor-zebra" summary=""> </table>
