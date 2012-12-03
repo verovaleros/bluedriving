@@ -158,11 +158,6 @@
         function show_all_devices_map(){
 			// Hide the table
 			$('#contentbox').hide();
-			//Del the previous stuff
-            $('#interaction').html('');
-			// Set the notes
-            $('#interaction').html('<center>Amount of devices: <input type="text" id="amountOfDevices" maxlength="10" size="10"/> <button type="button" onclick="set_amount()">Generate</button></center>');
-            $('#interaction').show();
 
 			//$('#interaction').css('border-style','none');
 
@@ -174,7 +169,12 @@
 
 			$('#Map').html('');
 
-			$('#info').html('');
+            $('#info').html('');
+
+			//Del the previous stuff
+            $('#interaction').html('');
+            $('#interaction').html('<center>Amount of devices: <input type="text" id="amountOfDevices" maxlength="10" size="10"/> <button type="button" onclick="set_amount()">Generate</button></center>');
+            $('#interaction').show();
 
 			// Stop the animation
 			$('#header').css('top','0px');
