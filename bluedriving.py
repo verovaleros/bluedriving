@@ -785,7 +785,6 @@ def main():
     mail_password = ""
 
     try:
-        # By default we crawl a max of 5000 distinct URLs
         opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps","fake-gps=","mail-user="])
 
 
