@@ -36,8 +36,11 @@
 				fillTable( data.UnReadData );	
 				changeColors();
 				addClicks();
-				//timeVar = setTimeout(getLiveData,3000);
-				timeVar = setInterval(getLiveData,3000);
+                timeVar = setTimeout(getLiveData,3000);
+                // setInterval was problematic because it keeps calling the json even when we are not looking at the table and we are in another view...
+				//timeVar = setInterval(getLiveData,3000);
+                //});
+                // This line is consumming 100% on the browser!!
                 }).error(function() { $('#running').html('System Down'); $('#running').attr('style','color: red;') });
 			};
 
@@ -57,7 +60,8 @@
 
 		// Fill the table with data
 		function fillTable( devices ) {
-			$('#interaction').attr('style','display: none;')
+			//$('#interaction').attr('style','display: none;')
+			$('#interaction').hide('')
 
 			previousselectedmac = "";
 			if (typeof row_selected!="undefined") {
@@ -109,7 +113,7 @@
 			$('#hor-zebra').empty();
 			$('#hor-zebra').append(html.join(''));
 
-            update_the_amount_of_devices();
+            //update_the_amount_of_devices();
 
 			};
 
@@ -159,7 +163,7 @@
 			// Hide the table
 			$('#contentbox').hide();
 
-			//$('#interaction').css('border-style','none');
+			$('#interaction').css('border-style','none');
 
 			$('#notes').hide('');
 
@@ -174,6 +178,7 @@
 			//Del the previous stuff
             $('#interaction').html('');
             $('#interaction').html('<center>Amount of devices: <input type="text" id="amountOfDevices" maxlength="10" size="10"/> <button type="button" onclick="set_amount()">Generate</button></center>');
+            $('#interaction').show();
             $('#interaction').show();
 
 			// Stop the animation
@@ -320,7 +325,7 @@
 			$('#contentbox').hide();
 			//Del the previous stuff
 			$('#interaction').hide('');
-			$('#interaction').css('border-style','none');
+			//$('#interaction').css('border-style','none');
 
 			$('#notes').hide('');
 
@@ -495,9 +500,8 @@
 			$(window).unbind('scroll');
 
 
-			//$('#interaction').removeAttr('style');
+            //$('#interaction').removeAttr('style');
 			$('#interaction').show();
-
 			$('#interaction').css('border-style','dotted');
 
 			// Stop the pulling
