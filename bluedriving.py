@@ -87,13 +87,13 @@ def usage():
     print "  \t-h, --help                           Show this help message and exit."
     print "  \t-D, --debug                          Debug mode ON. Prints debug information on the screen."
     print "  \t-d, --database-name                  Name of the database to store the data."
-    print "  \t-w, --webserver                      It runs a local webserver to visualize and interact with the collected information."
+    print "  \t-w, --webserver                      It runs a local webserver to visualize and interact with the collected information. Defaults to port 8000."
     print "  \t-s, --not-sound                      Do not play the beautiful discovering sounds. Are you sure you wanna miss this?"
     print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting coordinates and addresses from the web."
     print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. It make the discovering a little faster."
-    print "  \t-g, --not-gps                       Use this option when you want to run the bluedriving withouth a gpsd connection."
-    print "  \t-f, --fake-gps                     Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
-    print "  \t-m, --mail-user                     Gmail user to send mails from and to when a mail alarm is found. The password is entered later."
+    print "  \t-g, --not-gps                        Use this option when you want to run the bluedriving withouth a gpsd connection."
+    print "  \t-f, --fake-gps                       Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
+    print "  \t-m, --mail-user                      Gmail user to send mails from and to when a mail alarm is found. The password is entered later."
     print 
     print END
  
@@ -786,14 +786,10 @@ def main():
 
     try:
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps","fake-gps=","mail-user="])
-
-	try:
-                # By default we crawl a max of 5000 distinct URLs
-		opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","-not-gps","fake-gps=","mail-user="])
->>>>>>> Temporary merge branch 2
-
-    except getopt.GetoptError: usage()
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","not-gps","fake-gps=","mail-user="])
+    except: 
+        usage()
+        exit(-1)
 
     for opt, arg in opts:
         if opt in ("-h", "--help"): usage(); sys.exit()

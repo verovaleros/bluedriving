@@ -287,14 +287,14 @@
 
                     // Get the data for the complete map
 					get_all_devices_data();
-                    for ( var i = 0; i < window.all_positions.length ; i++ ) {
+                    for ( var i = 1; i < window.all_positions.length ; i++ ) {
                         mac = all_positions[i].Mac;
                         data = all_positions[i].Data;
                         name = data.Name;
                         lastseen = data.LastSeen;
                         firstseen = data.FirstSeen;
                         pos_dict = data.Pos;
-                        for ( var j = 0; j < pos_dict.length ; j++ ) {
+                        for ( var j = 1; j < pos_dict.length ; j++ ) {
                             l_pos = pos_dict[j];
                             lon = l_pos.split(',')[0].replace("'","");
                             lat = l_pos.split(',')[1].replace("'","");
@@ -448,7 +448,7 @@
 
 					// Get the data for the complete map
 					getCompleteData(mac);
-					for ( i = 0; i < window.positions.length ; i++ ) {
+					for ( i = 1; i < window.positions.length ; i++ ) {
 						lon = window.positions[i].split(',')[0].replace("'","");
 						lat = window.positions[i].split(',')[1].replace("'","");
                         addMarker(lat, lon, '<b>Device</b><br/>' + window.name_positions + '<br/>' + window.mac_positions);

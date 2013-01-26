@@ -83,12 +83,12 @@ def usage():
   print "+----------------------------------------------------------------------+"
   print "\nusage: %s <options>" % sys.argv[0]
   print "options:"
-  print "  -h, --help             Show this help message and exit"
+  print "  -h, --help           Show this help message and exit"
   print "  -V, --version        Show the version"
   print "  -v, --verbose        Be verbose"
-  print "  -D, --debug        Debug"
-  print "  -p, --port        Web server tcp port to use"
-  print "  -d, --database        If you wish to analyze another database, just give the file name here."
+  print "  -D, --debug          Debug"
+  print "  -p, --port           Web server tcp port to use. Defaults to 8000"
+  print "  -d, --database       If you wish to analyze another database, just give the file name here."
 
 
 def createWebServer(port):
@@ -637,23 +637,6 @@ def alarm_to(type_ofcall, mac, alarm_type):
             print 'y =', y
             return ''
 
-			# Try to insert
-			try:
-				cursor.execute("INSERT INTO Alarms (Id,Alarm) values (?,?) ",(id,alarm_type))
-				conn.commit()
-				if debug:
-					print ' >> Inserted values. Id: {0}, Alarm:{1}, Mac:{2}'.format(id, alarm_type, mac)
-				conn.close()
-			except Exception as inst:
-				if debug:
-					print ' >> Some problem inserting in the database in the funcion alarm_to()'
-				print type(inst)     # the exception instance
-				print inst.args      # arguments stored in .args
-				print inst           # __str__ allows args to printed directly
-				x, y = inst          # __getitem__ allows args to be unpacked directly
-				print 'x =', x
-				print 'y =', y
-				return ''
 
         if type_ofcall == 'add':
 
