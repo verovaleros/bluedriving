@@ -8,7 +8,7 @@ What
 Bluedriving is a bluetooth wardriving utility. It can capture bluetooth devices, lookup their services, get GPS information and present everything in a nice web page. It can search for and show a lot of information about the device, the GPS address and the historic location of devices on a map.
 The main motivation of this tool is to research about the targeted surveillance of people by means of its cellular phone or car.
 With this tool you can capture information about bluetooth devices and show, on a map, the points where you have seen the same device in the past.
-For the momento it only runs on linux.
+For the moment it only runs on linux.
 
 Authors: verovaleros, eldraco, nanojaus
 
