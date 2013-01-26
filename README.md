@@ -8,7 +8,7 @@ What
 Bluedriving is a bluetooth wardriving utility. It can capture bluetooth devices, lookup their services, get GPS information and present everything in a nice web page. It can search for and show a lot of information about the device, the GPS address and the historic location of devices on a map.
 The main motivation of this tool is to research about the targeted surveillance of people by means of its cellular phone or car.
 With this tool you can capture information about bluetooth devices and show, on a map, the points where you have seen the same device in the past.
-For the momento it only runs on linux.
+For the moment it only runs on linux.
 
 Authors: verovaleros, eldraco, nanojaus
 
@@ -18,15 +18,20 @@ Main Features
 - Lookup services on each device.
 - Use threads to speed up the process.
 - Stores everything in a sqlite database.
-- Has a stand-alone python web server that implements an API. It can be started from the bludriving.py tool or using the bluedrivingWebServer.py tool. 
+- Has a stand-alone python web server that implements an API. It can be started by the bludriving.py tool or by using the bluedrivingWebServer.py tool. 
 - Has sounds for:
  -- GPS signal activation.
  -- New device found.
  -- Old device found.
+ -- System Running and no GPS.
+ -- System Running and GPS.
  -- Sound for devices with the sound alarm setted.
-- Implement alarm notifications for the bluetooth devices that you want: Play a sound, Read the bluetooth name with festival or send an email with the device information.
-- You can manually specify the GPS coordinates, so you can have the map functionality without having a GPS.
-- Interactive keys (key+Enter) to :
+- Implements alarm notifications for the bluetooth devices that you want: 
+ -- Play a sound
+ -- Read the bluetooth name with festival
+ -- Send an Email with the device information.
+- You can manually specify the GPS coordinates, so you can have the GPS and location functionality without having a GPS. This is very usefull is you are not moving but want to record the position.
+- Interactive keys while running (key+Enter) to :
  -- a (activate or deactivate alarms)
  -- s (activate or deactivate sounds)
  -- l (activate or deactivate lookup devices)
@@ -39,7 +44,10 @@ Main Features
  -- See each device information, including a map with the position you are inspecting.
  -- Set/unset a permanent note on the device, stored on the database.
  -- Set/unset a permanent alarm on the device, stored on the database.
- -- See all the history of positions of the selected device in a large map.
+ -- See all the history of positions for the selected device in a large map.
+ -- See the positions of the last N devices together in a map, so you can see all at the same time.
+- It shows the amount of different locations and devices in the table.
+- It can update the system state in the web page automatically. When it is down and when it comes back.
 
 Poor man GPS solution
 ---------------------
@@ -123,7 +131,6 @@ TODO
 - Add more types of alarms.
 - Avoid congesting the inbox
 - Add the map to the mail?
-- Fix the last seen displayed on the screen and stored on the database.
 - Send the mail to multiples recipients.
-- When multiple exceptions are found, exit with a sound.
-- Play a sound when no device is found.
+- Update the address of the gps coordinates manually. (right click?)
+- Delete devices and locations from the database.

@@ -154,16 +154,53 @@ textarea {
 	background: #f8edff;
 }
 
+#sysname {
+    font-size: 14px;
+    font-weight: normal;
+}
+
+#amount {
+    font-size: 14px;
+    font-weight: normal;
+}
+
+#running  {
+    font-size: 14px;
+    font-weight: normal;
+}
+
+#systemRightData {
+    font-size: 14px;
+    font-weight: normal;
+    float: right;
+    color: snow;
+    width: 33%;
+}
+
+#systemLeftData {
+    font-size: 14px;
+    font-weight: normal;
+    float: left;
+    color: snow;
+    width: 33%;
+}
+
+#icons {
+    font-size: 14px;
+    font-weight: normal;
+    float: left;
+    width: 33%;
+}
+
 
 ul {
-/*    float:left;*/
-/*    width:100%;*/
-    width:360px;
+    width:480px;
     padding:0px;
     margin:auto;
     list-style-type:none;
     height: 100px;
 }
+
 
 a {
     float:left;
@@ -171,8 +208,6 @@ a {
     height: 95px;
     text-decoration:none;
     color:white;
-/*    padding:0.2em 0.6em;*/
-/*    border-right:1px solid white; */
     text-align: center;
     vertical-align: center;
 }
@@ -207,6 +242,8 @@ li {
 	margin-left: 1%;
 	padding: 1%;*/
 	font-size: smaller;
+    display: block;
+	clear:both;
 
 }
 
@@ -217,7 +254,10 @@ li {
 	padding: 1%;*/
 	background: none repeat scroll 0 0 snow;
 	font-size: smaller;
-	margin: 10px
+	margin: 10px;
+    display: block;
+	clear:both;
+    /*display: none;*/
 }
 
 #interaction {
@@ -231,16 +271,19 @@ li {
 
 }
 
-/*
- * Image replacement
- */
+#map {
+	padding: 10px;
+	clear:both;
+	display: block;
+}
 
-.ir {
-    background-color: transparent;
-    border: 0;
-    overflow: hidden;
-    /* IE 6/7 fallback */
-    *text-indent: -9999px;
+#Map {
+	height: 500px;
+	width: 1000px;
+	padding: 10px;
+	clear:both;
+	display: block;
+	margin: 0 auto!important;
 }
 
 #notes, #alarms {
@@ -261,39 +304,3 @@ li {
 	margin-left: 10px;
 }
 
-
-
-/* Dropdown menu 
-#drop-down-menu{margin-left:20px}
-
-ul .alarmmenu{
-	font-weight:bold;color:#ffffff;
-	margin:0;
-	padding:0;
-	list-style:none}
-ul li .alarmmenu{
-	display:block;
-	position:relative;
-	float:left}
-li ul .alarmmenu{display:none}
-ul li a .alarmmenu{
-	display:block;
-	margin-left:1px;
-	text-decoration:none;
-	color:#ffffff;
-	border-top:1px solid #B75963;
-	padding: 5px 15px 5px 15px;
-	background:#6E5463;
-	white-space:nowrap}
-ul li a:hover .alarmmenu{background:#985963;color:inherit}
-li:hover ul .alarmmenu{ 
-	display:block; 
-	position:absolute}
-li:hover li .alarmmenu{ 
-	font-size:70%;
-	clear:left; 
-	width:12em}
-li:hover a .alarmmenu{ background:#985963;color:inherit}
-li:hover li a:hover .alarmmenu{background:#B75963;color:inherit}
-.clear_all{clear:both;height:0.5em;}
-*/

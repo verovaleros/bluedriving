@@ -10,7 +10,8 @@
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width">
         <link rel="stylesheet" href="style.css">
-	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script> 
+	<!--<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script> -->
+	<script type="text/javascript" src="jquery-1.8.2.min.js"></script> 
 
 	<!-- This is to add the basic information in the main web page. -->
 	<script type="text/javascript">
@@ -29,14 +30,18 @@
 
 		// Get the data with json
 		function getLiveData() {
-			$.getJSON("http://localhost:8000/data", {}, function(data) {
+        $.getJSON("http://localhost:8000/data", {}, function(data) {
+                $('#running').html('System Running');
+                $('#running').attr('style','color: white;');
 				fillTable( data.UnReadData );	
 				changeColors();
 				addClicks();
-				timeVar = setTimeout(getLiveData,3000);
-				//alert(row_selected.html('class'));
-				//alert(row_selected.data('td'));
-				});
+                timeVar = setTimeout(getLiveData,3000);
+                // setInterval was problematic because it keeps calling the json even when we are not looking at the table and we are in another view...
+				//timeVar = setInterval(getLiveData,3000);
+                //});
+                // This line is consumming 100% on the browser!!
+                }).error(function() { $('#running').html('System Down'); $('#running').attr('style','color: red;') });
 			};
 
 		// Decode utf8
@@ -55,7 +60,8 @@
 
 		// Fill the table with data
 		function fillTable( devices ) {
-			$('#interaction').attr('style','display: none;')
+			//$('#interaction').attr('style','display: none;')
+			$('#interaction').hide('')
 
 			previousselectedmac = "";
 			if (typeof row_selected!="undefined") {
@@ -107,9 +113,16 @@
 			$('#hor-zebra').empty();
 			$('#hor-zebra').append(html.join(''));
 
+            //update_the_amount_of_devices();
 
 			};
 
+
+        // Update the amount of devices in the header
+        function update_the_amount_of_devices() {
+            var rowCount = $('#hor-zebra tr').length -1 ;
+            $('#amount').html('Amount of unique devices locations: '+rowCount);
+        };
 
 
 		// Change the colors of the table
@@ -141,14 +154,355 @@
     <body>
 
 	<script>
+
+        var positions = null;
+
+
+		// Function to show the complete map of the points for all the devices
+        function show_all_devices_map(){
+			// Hide the table
+			$('#contentbox').hide();
+
+			$('#interaction').css('border-style','none');
+
+			$('#notes').hide('');
+
+			$('#alarms').hide('');
+
+            $('#map').html("<center><h3>Positions Map</h3>");
+
+			$('#Map').html('');
+
+            $('#info').html('');
+
+			//Del the previous stuff
+            $('#interaction').html('');
+            $('#interaction').html('<center>Amount of devices: <input type="text" id="amountOfDevices" maxlength="10" size="10"/> <button type="button" onclick="set_amount()">Generate</button></center>');
+            $('#interaction').show();
+            $('#interaction').show();
+
+			// Stop the animation
+			$('#header').css('top','0px');
+			$(window).unbind('scroll');
+
+			// Stop the pulling
+            clearInterval(timeVar);
+
+        }	
+
+        function set_amount(){
+            window.amount = $('#amountOfDevices').val()
+            // fill the page
+			$('#Map').html('');
+			$('#Map').show();
+			fill_complete_map_all_devices();
+        }
+
+		// Get the complete data 
+		function get_all_devices_data() {
+			$.ajax({
+				url: "http://localhost:8000/map?info=" + window.amount,
+				datatype: 'json',
+				async: false,
+				data: {},
+				success: function(data) {
+                    var obj = jQuery.parseJSON(data);
+                    // Example: [{"Mac": "D4:88:90:52:B3:F2", "Data": {"LastSeen": "'2012-12-01 09:17:54'", "Pos": ["'-37.336402,-59.121405'", "'-37.976835,-57.571433333'", "'-37.977048333,-57.571196667'", "'-37.977223333,-57.571255'", "'-37.977321667,-57.571283333'", "'-37.977336667,-57.571275'", "'-37.977441667,-57.571253333'", "'-37.977445,-57.57125'", "'-37.977555,-57.571346667'"], "FirstSeen": "'2012-11-10 21:32:48'", "Name": "'nakingarethel'"}}]
+
+                    window.all_positions = obj;
+				}
+			});
+		}
+
+
+
+
+		// Fill the map with info
+        function fill_complete_map_all_devices() {
+
+			$.getScript('http://www.openlayers.org/api/OpenLayers.js',function(data){
+				eval(data);
+
+				var iconSize = new OpenLayers.Size(21, 25);
+				var iconOffset = new OpenLayers.Pixel(-(iconSize.w / 2), -iconSize.h);
+				var icon = new OpenLayers.Icon("img/marker-green.png",
+					   iconSize, iconOffset);
+				var zoom, center, currentPopup, map, lyrMarkers;
+				var popupClass = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
+				"autoSize": true,
+				"minSize": new OpenLayers.Size(300, 50),
+				"maxSize": new OpenLayers.Size(500, 300),
+				"keepInMap": true
+				});
+				var bounds = new OpenLayers.Bounds();
+
+				initMap()
+
+
+				function addMarker(lng, lat, info) {
+					var pt = new OpenLayers.LonLat(lng, lat)
+							       .transform(new OpenLayers.Projection("EPSG:4326"), 
+							       map.getProjectionObject());
+					bounds.extend(pt);
+					var feature = new OpenLayers.Feature(lyrMarkers, pt);
+					feature.closeBox = true;
+					feature.popupClass = popupClass;
+					feature.data.popupContentHTML = info;
+					feature.data.overflow = "auto";
+					var marker = new OpenLayers.Marker(pt, icon.clone());
+					var markerClick = function(evt) {
+					    if (currentPopup != null && currentPopup.visible()) {
+						currentPopup.hide();
+					    }
+					    if (this.popup == null) {
+						this.popup = this.createPopup(this.closeBox);
+						map.addPopup(this.popup);
+						this.popup.show();
+					    } else {
+						this.popup.toggle();
+					    }
+					    currentPopup = this.popup;
+					    OpenLayers.Event.stop(evt);
+					};
+					marker.events.register("mousedown", feature, markerClick);
+					lyrMarkers.addMarker(marker);
+				}
+
+				function initMap() {
+					var options = {
+					    projection: new OpenLayers.Projection("EPSG:900913"),
+					    displayProjection: new OpenLayers.Projection("EPSG:4326"),
+					    units: "m",
+					    numZoomLevels: 19,
+					    maxResolution: 156543.0339,
+					    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
+					};
+					map = new OpenLayers.Map("Map", options);
+					map.addControl(new OpenLayers.Control.DragPan());
+					var lyrOsm = new OpenLayers.Layer.OSM();
+					map.addLayer(lyrOsm);
+					lyrMarkers = new OpenLayers.Layer.Markers("Markers");
+					map.addLayer(lyrMarkers);
+					//add marker on given coordinates
+
+                    // Get the data for the complete map
+					get_all_devices_data();
+                    for ( var i = 0; i < window.all_positions.length ; i++ ) {
+                        mac = all_positions[i].Mac;
+                        data = all_positions[i].Data;
+                        name = data.Name;
+                        lastseen = data.LastSeen;
+                        firstseen = data.FirstSeen;
+                        pos_dict = data.Pos;
+                        for ( var j = 0; j < pos_dict.length ; j++ ) {
+                            l_pos = pos_dict[j];
+                            lon = l_pos.split(',')[0].replace("'","");
+                            lat = l_pos.split(',')[1].replace("'","");
+                            addMarker(lat, lon, '<b>Device</b><br/>' + name + '<br/>' + mac + '<br/> First Seen:' + firstseen + '<br/> Last Seen:' + lastseen);
+                        }
+					}
+
+					center = bounds.getCenterLonLat();
+					map.setCenter(center, map.getZoomForExtent(bounds) - 1);
+					zoom = map.getZoom();
+				}
+
+			});
+			
+
+		};
+
+
+
+
+
+
+
+		// Function to show the complete map of points for one device	
+		function show_complete_map(){
+
+			// Hide the table
+			$('#contentbox').hide();
+			//Del the previous stuff
+			$('#interaction').hide('');
+			//$('#interaction').css('border-style','none');
+
+			$('#notes').hide('');
+
+			$('#alarms').hide('');
+
+			//$('#map').html('');
+
+            $('#map').html("<center><h3>Positions Map</h3>");
+
+			$('#Map').html('');
+			$('#Map').show();
+
+			$('#info').html('');
+
+
+			// Stop the animation
+			$('#header').css('top','0px');
+			$(window).unbind('scroll');
+
+			mac = row_selected.find('td:eq(2)').html();
+
+			// Stop the pulling
+            clearInterval(timeVar);
+
+			// Get the device features
+            getSpecificData(mac);
+
+			// fill the page
+			fill_complete_map();
+		}	
+
+
+		// Get the complete data 
+		function getCompleteData(mac) {
+
+			$.ajax({
+				url: "http://localhost:8000/map?info="+mac,
+				datatype: 'json',
+				async: false,
+				data: {},
+                success: function(data) {
+                    var obj = jQuery.parseJSON(data);
+					window.positions = obj.Pos;
+					window.mac_positions = obj.Mac;
+					window.name_positions = obj.Name;
+				}
+			});
+		}
+
+
+		// Fill the map with info
+        function fill_complete_map() {
+
+
+			$.getScript('http://www.openlayers.org/api/OpenLayers.js',function(data){
+				eval(data);
+
+				var iconSize = new OpenLayers.Size(21, 25);
+				var iconOffset = new OpenLayers.Pixel(-(iconSize.w / 2), -iconSize.h);
+				var icon = new OpenLayers.Icon("http://www.openstreetmap.org/openlayers/img/marker.png",
+					   iconSize, iconOffset);
+				var zoom, center, currentPopup, map, lyrMarkers;
+				var popupClass = OpenLayers.Class(OpenLayers.Popup.FramedCloud, {
+				"autoSize": true,
+				"minSize": new OpenLayers.Size(300, 50),
+				"maxSize": new OpenLayers.Size(500, 300),
+				"keepInMap": true
+				});
+				var bounds = new OpenLayers.Bounds();
+
+				initMap()
+
+
+				function addMarker(lng, lat, info) {
+					var pt = new OpenLayers.LonLat(lng, lat)
+							       .transform(new OpenLayers.Projection("EPSG:4326"), 
+							       map.getProjectionObject());
+					bounds.extend(pt);
+					var feature = new OpenLayers.Feature(lyrMarkers, pt);
+					feature.closeBox = true;
+					feature.popupClass = popupClass;
+					feature.data.popupContentHTML = info;
+					feature.data.overflow = "auto";
+					var marker = new OpenLayers.Marker(pt, icon.clone());
+					var markerClick = function(evt) {
+					    if (currentPopup != null && currentPopup.visible()) {
+						currentPopup.hide();
+					    }
+					    if (this.popup == null) {
+						this.popup = this.createPopup(this.closeBox);
+						map.addPopup(this.popup);
+						this.popup.show();
+					    } else {
+						this.popup.toggle();
+					    }
+					    currentPopup = this.popup;
+					    OpenLayers.Event.stop(evt);
+					};
+					marker.events.register("mousedown", feature, markerClick);
+					lyrMarkers.addMarker(marker);
+				}
+
+				function initMap() {
+					var options = {
+					    projection: new OpenLayers.Projection("EPSG:900913"),
+					    displayProjection: new OpenLayers.Projection("EPSG:4326"),
+					    units: "m",
+					    numZoomLevels: 19,
+					    maxResolution: 156543.0339,
+					    maxExtent: new OpenLayers.Bounds(-20037508.34, -20037508.34, 20037508.34, 20037508.34)
+					};
+					map = new OpenLayers.Map("Map", options);
+					map.addControl(new OpenLayers.Control.DragPan());
+					var lyrOsm = new OpenLayers.Layer.OSM();
+					map.addLayer(lyrOsm);
+					lyrMarkers = new OpenLayers.Layer.Markers("Markers");
+					map.addLayer(lyrMarkers);
+					//add marker on given coordinates
+
+
+					// Get the data for the complete map
+					getCompleteData(mac);
+					for ( i = 0; i < window.positions.length ; i++ ) {
+						lon = window.positions[i].split(',')[0].replace("'","");
+						lat = window.positions[i].split(',')[1].replace("'","");
+                        addMarker(lat, lon, '<b>Device</b><br/>' + window.name_positions + '<br/>' + window.mac_positions);
+					}
+
+
+
+
+					center = bounds.getCenterLonLat();
+					map.setCenter(center, map.getZoomForExtent(bounds) - 1);
+					zoom = map.getZoom();
+				}
+
+			});
+			
+
+		};
+
+
+		function require(script) {
+		    $.ajax({
+			url: script,
+			dataType: "script",
+			async: false,           // <-- this is the key
+			success: function () {
+			    // all good...
+			},
+			error: function () {
+			    throw new Error("Could not load script " + script);
+			}
+		    });
+		}
+
+
 		// Funtion to execute when the device button is pressed.
 		function show_info() {
 			// Script to control de Device Info button in the header
 
+			//Del the previous stuff
+			$('#info').html('');
+			$('#Map').html('');
+			$('#Map').hide();
+
+			$('#info').show();
+			$('#alarms').show();
+
 			// Stop the animation
-			$(window).scroll(function () {
-			    $('#header').animate({top:'0px'},{duration:500,queue:false});
-			});
+			$('#header').css('top','0px');
+			$(window).unbind('scroll');
+
+
+            //$('#interaction').removeAttr('style');
+			$('#interaction').show();
+			$('#interaction').css('border-style','dotted');
 
 			// Stop the pulling
 			clearInterval(timeVar);
@@ -175,7 +529,11 @@
 
 		}
 
-		function fillNotes(){
+
+		function fillAlarms(mac){
+			$('#notes').show();
+			$('#alarms').html("<div id='AlarmsDiv'> Device Alarms </div>")
+
 			// Call a json with the notes...
 			$.getJSON("http://localhost:8000/getalarm?mac="+mac.substr(0,17), {}, function(data) {
 				for ( i = 0; i < data.Alarms.length ; i++ ) {
@@ -186,6 +544,25 @@
 
 				});
 		};
+
+
+		function fillNotes(mac){
+			$('#notes').show();
+			$('#notes').html("<div id='NotesDiv'> Device Notes </div>")
+
+			// Call a json with the notes...
+			$.getJSON("http://localhost:8000/getnote?mac="+mac.substr(0,17), {}, function(data) {
+				for ( i = 0; i < data.Notes.length ; i++ ) {
+					var html = [], h = -1;
+					html[++h] = "<div class='nota'>" + data.Notes[i] + "</div>"
+					$('#notes').append(html.join(''));
+				}
+
+				});
+		};
+
+
+
 
 		function fillInteraction() {
 			$('#interaction').show();
@@ -198,7 +575,7 @@
 			html[++h] = '<option class="alarmmenu">Festival</option>';
 			html[++h] = '<option class="alarmmenu">Mail</option>';
 			html[++h] = '</select>';
-		        $('#interAlarm').html(html.join(''));
+		    $('#interAlarm').html(html.join(''));
 
 			/*var html = [], h = -1;
 			html[++h] = '<h4>Set a voice alarm when seen</h4>';
@@ -210,7 +587,7 @@
 			html[++h] = '</li>';
 			html[++h] = '</ul>';
 			html[++h] = '<p class="clear_all"></p>';
-		        $('#interAlarm').append(html.join(''));
+		    $('#interAlarm').append(html.join(''));
 			*/	
 			$('#interAlarm').append('<button type="button" onclick="setAlarm()">Set Alarm</button>');
 			$('#interAlarm').append('<button type="button" onclick="delAlarm()">Delete Alarm</button>');
@@ -276,7 +653,7 @@
 			html[++h] = '<th scope="col">Device Features</th>';
 			html[++h] = '</tr>';
 			html[++h] = '</thead>';
-		        $('#infotable').append(html.join(''));
+            $('#infotable').append(html.join(''));
 
 			for ( var i = 0; i < information.split('[')[1].split(']')[0].split(',').length; i++ ) {
 				var html = [], h = -1;
@@ -345,13 +722,17 @@
 
 	<div id='frame'>
 		<div id='page'>
-			<div id='header'>
-			    <ul>
-				<li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
-				<li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Devices</a></li>
-				<li><a href="#"><img src="img/icon-map.png"></br>Map</a></li>
-				
-			    </ul>
+            <div id='header'>
+                <div id='systemLeftData'><div id='sysname'> Bluedriving . The bluetooth-GPS capture utility.</div><div id='running'>System Running</div><div id='amount'>Amount of devices: </div></div>
+                <div id='icons'>
+                    <ul>
+                    <li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
+                    <li><a href="javascript:show_info()"><img src="img/icon-devices.png"></br>Device Info</a></li>
+                    <li><a href="javascript:show_complete_map()"><img src="img/icon-map.png"></br>Device Map</a></li>
+                    <li><a href="javascript:show_all_devices_map()"><img src="img/all-devices-map.png"></br>All devices Map</a></li>
+                    </ul>
+                </div>
+                <div id='systemRightData'></div>
 			</div>
 			<div id="contentbox" class="content">
 				<table id="hor-zebra" summary=""> </table>
@@ -366,7 +747,7 @@
 				<div id="clear" style="clear:both;"></div>
 			</div>
 			<div id="map" class="map"> </div>
-			<div id="Map" class="map"> </div>
+			<div id="Map"> </div>
 
 		</div>
 	</div>
