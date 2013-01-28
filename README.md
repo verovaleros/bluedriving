@@ -70,6 +70,9 @@ Alarms and notes are stored in the database. Every time a device is seen, the al
 Alarms are meant to tell you when a certain device was seen again. For example, you can set an alarm on your friend device to know if he enters the same bar as you later!
 Notes are meant to add your own information to any device. Perhaps you know the exact name of the person using that device.
 
+Improve speed
+-------------
+To improve the speed while detecting new devices, we recommend to switch on the "Not Internet" parameter (press the i letter while running or -i) to switch on the "Not look up services" (press the l letter while running or -l)
 
 Usage 
 -----
