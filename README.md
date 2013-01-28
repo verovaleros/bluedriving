@@ -72,7 +72,7 @@ Notes are meant to add your own information to any device. Perhaps you know the 
 
 Improve speed
 -------------
-To improve the speed while detecting new devices, we recommend to switch on the "Not Internet" parameter (press the i letter while running or -i) to switch on the "Not look up services" (press the l letter while running or -l)
+To improve the speed while detecting new devices, we recommend to switch on the "Not Internet" parameter (press the i letter while running or -i) and to switch on the "Not look up services" (press the l letter while running or -l)
 
 Usage 
 -----
