@@ -76,7 +76,9 @@ To improve the speed while detecting new devices, we recommend to switch on the 
 
 Dependencies
 ------------
-python-bluez and python-lightblue
+python-bluez
+python-lightblue
+python-pygame
 
 Usage 
 -----
