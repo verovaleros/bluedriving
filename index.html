@@ -236,7 +236,7 @@
 				});
 				var bounds = new OpenLayers.Bounds();
 
-				initMap()
+				initLargeMap()
 
 
 				function addMarker(lng, lat, info) {
@@ -268,7 +268,7 @@
 					lyrMarkers.addMarker(marker);
 				}
 
-				function initMap() {
+				function initLargeMap() {
 					var options = {
 					    projection: new OpenLayers.Projection("EPSG:900913"),
 					    displayProjection: new OpenLayers.Projection("EPSG:4326"),

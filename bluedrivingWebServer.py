@@ -266,7 +266,7 @@ def get_all_devices_positions(amount):
 
                     gps = row[2]
                     # Add the other string for no gps
-                    if 'not available' not in gps and 'NO' not in gps and 'Not' not in gps and gps != '' and 'False' not in gps :
+                    if gps and "''" not in gps and 'not available' not in gps and 'NO' not in gps and 'Not' not in gps and 'False' not in gps :
                         no_gps_at_all = False
                         mac_pos.append(gps)
                     
