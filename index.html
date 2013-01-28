@@ -294,7 +294,7 @@
                         lastseen = data.LastSeen;
                         firstseen = data.FirstSeen;
                         pos_dict = data.Pos;
-                        for ( var j = 1; j < pos_dict.length ; j++ ) {
+                        for ( var j = 0; j < pos_dict.length ; j++ ) {
                             l_pos = pos_dict[j];
                             lon = l_pos.split(',')[0].replace("'","");
                             lat = l_pos.split(',')[1].replace("'","");
@@ -448,7 +448,7 @@
 
 					// Get the data for the complete map
 					getCompleteData(mac);
-					for ( i = 1; i < window.positions.length ; i++ ) {
+					for ( i = 0; i < window.positions.length ; i++ ) {
 						lon = window.positions[i].split(',')[0].replace("'","");
 						lat = window.positions[i].split(',')[1].replace("'","");
                         addMarker(lat, lon, '<b>Device</b><br/>' + window.name_positions + '<br/>' + window.mac_positions);
@@ -723,7 +723,7 @@
 	<div id='frame'>
 		<div id='page'>
             <div id='header'>
-                <div id='systemLeftData'><div id='sysname'> Bluedriving . The bluetooth-GPS capture utility.</div><div id='running'>System Running</div><div id='amount'>Amount of devices: </div></div>
+                <div id='systemLeftData'><div id='sysname'> Bluedriving . The bluetooth-GPS capture utility.</div><div id='running'>System Running</div><div id='amount'>Touch one row to use the buttons</div></div>
                 <div id='icons'>
                     <ul>
                     <li><a href="/"><img src="img/icon-list.png"></br>Results</a></li>
