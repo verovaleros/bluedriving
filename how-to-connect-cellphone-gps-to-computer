@@ -10,7 +10,7 @@ hcitool scan
 3.2 On the device, select pair with computer device and when it ask for the key enter 0000
 
 4. Bind with the device from the computer
-rfcomm bind 0 00:11:22:33:44:55
+rfcomm bind 0 00:11:22:33:44:55 28
 
 5. Start gpsd
 gpsd /dev/rfcomm0
