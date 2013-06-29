@@ -48,7 +48,7 @@ import copy
 
 # Debug
 debug=0
-vernum="0.1.1"
+vernum="0.1.2"
 database = 'bluedriving.db'
 ####################
 
@@ -87,15 +87,16 @@ def usage():
   print "  -V, --version        Show the version"
   print "  -v, --verbose        Be verbose"
   print "  -D, --debug          Debug"
-  print "  -p, --port           Web server tcp port to use. Defaults to 8000"
+  print "  -p, --webserver-port           Web server tcp port to use. Defaults to 8000"
+  print "  -I, --webserver-ip           Web server ip to bind to. Defaults to 127.0.0.1"
   print "  -d, --database       If you wish to analyze another database, just give the file name here."
 
 
-def createWebServer(port):
+def createWebServer(port, ip_addresss):
     """ Crate a web server """
     global debug
     # By default bind to localhost
-    server_address = ('127.0.0.1', port)
+    server_address = (ip_addresss, port)
 
     # Create a webserver
     try:
@@ -111,6 +112,10 @@ def createWebServer(port):
     except KeyboardInterrupt:
         print ' Received, shutting down the server.'
         httpd.socket.close()
+    except:
+        print "Probably can not assing that IP address. Are you sure youd device has this IP?"
+        print
+        sys.exit(-1)
 
 
 def get_unread_registers():
@@ -999,27 +1004,25 @@ def main():
         global debug
         global database
         # Default port to use
-        port = 8000
+        webserver_port = 8000
+        webserver_ip = "127.0.0.1"
 
-        opts, args = getopt.getopt(sys.argv[1:], "VvDhd:", ["help","version","verbose","debug","port","database="])
+        opts, args = getopt.getopt(sys.argv[1:], "VvDhp:I:d:", ["help","version","verbose","debug","webserver-port=","database=","webserver-ip="])
     except getopt.GetoptError: usage()
 
     for opt, arg in opts:
         if opt in ("-h", "--help"): usage();exit(-1)
         if opt in ("-V", "--version"): version();exit(-1)
-        if opt in ("-v", "--verbose"): verbose=True
-        if opt in ("-D", "--debug"): debug=1
-        if opt in ("-p", "--port"): port=int(arg)
-        if opt in ("-d", "--database"): database=str(arg)
+        if opt in ("-v", "--verbose"): verbose = True
+        if opt in ("-D", "--debug"): debug = 1
+        if opt in ("-p", "--webserver-port"): webserver_port = int(arg)
+        if opt in ("-I", "--webserver-ip"): webserver_ip = str(arg)
+        if opt in ("-d", "--database"): database = str(arg)
     try:
 
         try:
-            if True:
-                createWebServer(port)
-
-            else:
-                usage()
-                sys.exit(1)
+            # TODO sanitize the input of the ip_addresss and port
+            createWebServer(webserver_port, webserver_ip)
 
         except Exception, e:
             print "misc. exception (runtime error from user callback?):", e
@@ -1031,6 +1034,10 @@ def main():
         # CTRL-C pretty handling.
         print "Keyboard Interruption!. Exiting."
         sys.exit(1)
+
+    except:
+        usage()
+        sys.exit(-1)
 
 
 if __name__ == '__main__':

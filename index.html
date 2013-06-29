@@ -30,7 +30,8 @@
 
 		// Get the data with json
 		function getLiveData() {
-        $.getJSON("http://localhost:8000/data", {}, function(data) {
+        //$.getJSON("http://localhost:8000/data", {}, function(data) {
+        $.getJSON("/data", {}, function(data) {
                 $('#running').html('System Running');
                 $('#running').attr('style','color: white;');
 				fillTable( data.UnReadData );	
@@ -201,7 +202,8 @@
 		// Get the complete data 
 		function get_all_devices_data() {
 			$.ajax({
-				url: "http://localhost:8000/map?info=" + window.amount,
+				//url: "http://localhost:8000/map?info=" + window.amount,
+				url: "/map?info=" + window.amount,
 				datatype: 'json',
 				async: false,
 				data: {},
@@ -362,7 +364,8 @@
 		function getCompleteData(mac) {
 
 			$.ajax({
-				url: "http://localhost:8000/map?info="+mac,
+				//url: "http://localhost:8000/map?info="+mac,
+				url: "/map?info="+mac,
 				datatype: 'json',
 				async: false,
 				data: {},
@@ -535,7 +538,8 @@
 			$('#alarms').html("<div id='AlarmsDiv'> Device Alarms </div>")
 
 			// Call a json with the notes...
-			$.getJSON("http://localhost:8000/getalarm?mac="+mac.substr(0,17), {}, function(data) {
+			// $.getJSON("http://localhost:8000/getalarm?mac="+mac.substr(0,17), {}, function(data) {
+			$.getJSON("/getalarm?mac="+mac.substr(0,17), {}, function(data) {
 				for ( i = 0; i < data.Alarms.length ; i++ ) {
 					var html = [], h = -1;
 					html[++h] = "<div class='alarm'>" + data.Alarms[i] + "</div>"
@@ -551,7 +555,8 @@
 			$('#notes').html("<div id='NotesDiv'> Device Notes </div>")
 
 			// Call a json with the notes...
-			$.getJSON("http://localhost:8000/getnote?mac="+mac.substr(0,17), {}, function(data) {
+			//$.getJSON("http://localhost:8000/getnote?mac="+mac.substr(0,17), {}, function(data) {
+			$.getJSON("/getnote?mac="+mac.substr(0,17), {}, function(data) {
 				for ( i = 0; i < data.Notes.length ; i++ ) {
 					var html = [], h = -1;
 					html[++h] = "<div class='nota'>" + data.Notes[i] + "</div>"
@@ -602,13 +607,15 @@
 
 		function setAlarm() {
 			type_of_alarm = $('#selectalarm').val();
-			$.getJSON("http://localhost:8000/addalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
+			//$.getJSON("http://localhost:8000/addalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
+			$.getJSON("/addalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
 			fillAlarms(mac);
 		};
 
 		function delAlarm() {
 			type_of_alarm = $('#selectalarm').val();
-			$.getJSON("http://localhost:8000/delalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
+			// $.getJSON("http://localhost:8000/delalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
+			$.getJSON("/delalarm?mac="+mac.substr(0,17)+"&type="+type_of_alarm, {}, function(data) { });
 			fillAlarms(mac);
 		};
 
@@ -616,14 +623,16 @@
 
 		function setNote() {
 			noteText = $('#note').val();
-			$.getJSON("http://localhost:8000/addnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
+			//$.getJSON("http://localhost:8000/addnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
+			$.getJSON("/addnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
 				});
 			fillNotes(mac);
 		};
 
 		function delNote() {
 			noteText = $('#note').val();
-			$.getJSON("http://localhost:8000/delnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
+			//$.getJSON("http://localhost:8000/delnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
+			$.getJSON("/delnote?mac="+mac.substr(0,17)+"&note="+noteText, {}, function(data) {
 				});
 			fillNotes(mac);
 		};
@@ -673,7 +682,8 @@
 
 		// Get the data with json
 		function getSpecificData(mac) {
-				$.getJSON("http://localhost:8000/info?mac="+mac, {}, function(data) {
+				//$.getJSON("http://localhost:8000/info?mac="+mac, {}, function(data) {
+				$.getJSON("/info?mac="+mac, {}, function(data) {
 
 				$('#info').append("<div id=table1> <table id='deviceInfoTable'></table>")
 
