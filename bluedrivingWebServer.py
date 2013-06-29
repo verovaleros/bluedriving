@@ -112,6 +112,10 @@ def createWebServer(port, ip_addresss):
     except KeyboardInterrupt:
         print ' Received, shutting down the server.'
         httpd.socket.close()
+    except:
+        print "Probably can not assing that IP address. Are you sure youd device has this IP?"
+        print
+        sys.exit(-1)
 
 
 def get_unread_registers():
