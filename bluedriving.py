@@ -94,6 +94,8 @@ def usage():
     print "  \t-g, --not-gps                        Use this option when you want to run the bluedriving withouth a gpsd connection."
     print "  \t-f, --fake-gps                       Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
     print "  \t-m, --mail-user                      Gmail user to send mails from and to when a mail alarm is found. The password is entered later."
+    print "  \t-p, --webserver-port                 Port where the webserver is going to listen. Defaults to 8000."
+    print "  \t-I, --webserver-ip                   IP address where the webserver binds. Defaults to 127.0.0.1."
     print 
     print END
  
@@ -783,10 +785,12 @@ def main():
     fake_gps = ''
     mail_username = ""
     mail_password = ""
+    webserver_port = 8000
+    webserver_ip = "127.0.0.1"
 
     try:
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","not-gps","fake-gps=","mail-user="])
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:I:p:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","not-gps","fake-gps=","mail-user=","webserver-port=","webserver-ip="])
     except: 
         usage()
         exit(-1)
@@ -802,6 +806,8 @@ def main():
         if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
         if opt in ("-f", "--fake-gps"): fake_gps = arg
         if opt in ("-m", "--mail-user"): mail_username = arg; print 'Provide your gmail password for given user: ',; mail_password = getpass.getpass()
+        if opt in ("-p", "--webserver-port"): webserver_port = int(arg)
+        if opt in ("-I", "--webserver-ip"): webserver_ip = str(arg)
     try:
         
         version()
@@ -825,8 +831,7 @@ def main():
         
         # Here we start the web server
         if flag_run_webserver:
-            port = 8000
-            webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(port,))
+            webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(webserver_port,webserver_ip))
             webserver_thread.setDaemon(True)
             webserver_thread.start()
 
