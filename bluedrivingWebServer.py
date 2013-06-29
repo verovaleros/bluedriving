@@ -48,7 +48,7 @@ import copy
 
 # Debug
 debug=0
-vernum="0.1.1"
+vernum="0.1.2"
 database = 'bluedriving.db'
 ####################
 
@@ -88,14 +88,15 @@ def usage():
   print "  -v, --verbose        Be verbose"
   print "  -D, --debug          Debug"
   print "  -p, --port           Web server tcp port to use. Defaults to 8000"
+  print "  -i, --ip           Web server ip to bind to. Defaults to 127.0.0.1"
   print "  -d, --database       If you wish to analyze another database, just give the file name here."
 
 
-def createWebServer(port):
+def createWebServer(port, ip_addresss):
     """ Crate a web server """
     global debug
     # By default bind to localhost
-    server_address = ('127.0.0.1', port)
+    server_address = (ip_addresss, port)
 
     # Create a webserver
     try:
@@ -1000,26 +1001,24 @@ def main():
         global database
         # Default port to use
         port = 8000
+        ip_addresss = "127.0.0.1"
 
-        opts, args = getopt.getopt(sys.argv[1:], "VvDhd:", ["help","version","verbose","debug","port","database="])
+        opts, args = getopt.getopt(sys.argv[1:], "VvDhp:i:d:", ["help","version","verbose","debug","port","database=","ip"])
     except getopt.GetoptError: usage()
 
     for opt, arg in opts:
         if opt in ("-h", "--help"): usage();exit(-1)
         if opt in ("-V", "--version"): version();exit(-1)
-        if opt in ("-v", "--verbose"): verbose=True
-        if opt in ("-D", "--debug"): debug=1
-        if opt in ("-p", "--port"): port=int(arg)
-        if opt in ("-d", "--database"): database=str(arg)
+        if opt in ("-v", "--verbose"): verbose = True
+        if opt in ("-D", "--debug"): debug = 1
+        if opt in ("-p", "--port"): port = int(arg)
+        if opt in ("-i", "--ip"): ip_addresss = str(arg)
+        if opt in ("-d", "--database"): database = str(arg)
     try:
 
         try:
-            if True:
-                createWebServer(port)
-
-            else:
-                usage()
-                sys.exit(1)
+            # TODO sanitize the input of the ip_addresss and port
+            createWebServer(port, ip_addresss)
 
         except Exception, e:
             print "misc. exception (runtime error from user callback?):", e
