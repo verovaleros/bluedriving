@@ -138,6 +138,10 @@ TroubleShooting
 ---------------
 - If the program stop finding bluetooth devices, try to scan manually with 'hcitool scan'. If it still does not find anything, try to bring the interface down with 'hciconfig hci0 down' and up again with 'hciconfig hci0 up'. That should fix the problems with the devices.
 
+Bugs
+----
+- Sometimes the libraries throw and exception like this "*** glibc detected *** /usr/bin/python: double free or corruption (!prev): 0x01284fe8 ***". We have no idea why. Sorry.
+
 
 TODO
 ----
