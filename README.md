@@ -134,6 +134,11 @@ Start but do not look up devices information. You will not have the extra info, 
 ./bludriving.py -D -w
 Start with the web server and debug mode.
 
+TroubleShooting
+---------------
+- If the program stop finding bluetooth devices, try to scan manually with 'hcitool scan'. If it still does not find anything, try to bring the interface down with 'hciconfig hci0 down' and up again with 'hciconfig hci0 up'. That should fix the problems with the devices.
+
+
 TODO
 ----
 - Add the notes to the mail.
