@@ -1,0 +1,19 @@
+1. Set the machine bluetooth discoverable
+apt-get install bluez
+bluez-test-adapter discoverable on
+
+2. Get the mac address of the cellphone
+hcitool scan
+
+3. Pair with the device
+3.1 On the machine, set up the pairing key: bluetooth-agent 0000 &
+3.2 On the device, select pair with computer device and when it ask for the key enter 0000
+
+4. Bind with the device from the computer
+rfcomm bind 0 00:11:22:33:44:55
+
+5. Start gpsd
+gpsd /dev/rfcomm0
+
+6. Check if the gps is working
+cpgs
