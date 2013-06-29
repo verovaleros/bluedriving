@@ -79,6 +79,8 @@ Dependencies
 python-bluez
 python-lightblue
 python-pygame
+python-gps
+python-simplejson
 
 Usage 
 -----
