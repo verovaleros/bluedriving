@@ -17,3 +17,6 @@ gpsd /dev/rfcomm0
 
 6. Check if the gps is working
 cpgs
+
+
+
