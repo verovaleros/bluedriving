@@ -212,6 +212,7 @@ TroubleShooting
 Bugs
 ----
 - Sometimes the libraries throw and exception like this "*** glibc detected *** /usr/bin/python: double free or corruption (!prev): 0x01284fe8 ***". We have no idea why. Sorry.
+- In the All devices map, if you come from the results, it sometimes delete the iframe of the input.
 
 
 TODO
@@ -225,3 +226,6 @@ TODO
 - Send the mail to multiples recipients.
 - Update the address of the gps coordinates manually. (right click?)
 - Delete devices and locations from the database.
+- Show the total amount of devices
+- At the right of each device it can say how many times we found it.
+- Filter devices by name or MAC
