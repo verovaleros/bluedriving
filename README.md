@@ -137,21 +137,21 @@ Start with the web server and debug mode.
 
 Connecting to a cel phone GPS
 -----------------------------
-1- Activate the bluetooth on your phone
-2- Check that you can use the bluetooth device on the pi without problems.
+- Activate the bluetooth on your phone
+- Check that you can use the bluetooth device on the pi without problems.
     hcitool scan
-3- You need to pair both devices. Once they were paired there is no need to repeat this every time.
-    3.1- Make your pi visible
+- You need to pair both devices. Once they were paired there is no need to repeat this every time.
+    - Make your pi visible
         bluez-test-adapter discoverable on
-    3.2- Put a default pin on the pi
+    - Put a default pin on the pi
         bluetooth-agent 0000 &
-    3.3 From you phone, pair with the pi
+    - From you phone, pair with the pi
 YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bluetooth on both sides until you get it working.
-4- Make your phone discoverable
-5- Find its MAC from the pi
+- Make your phone discoverable
+- Find its MAC from the pi
     hcitool scan
-6- Start the bluenmea app on your phone
-7- Find the serial channel number where the bluenmea app is servicing the serial communication
+- Start the bluenmea app on your phone
+- Find the serial channel number where the bluenmea app is servicing the serial communication
     sdptool browse <MAC of your phone>
     The channel number is on a service called "BlueNMEA" or similar. In the "Protocol Description List" should say "RFCOMM". Like this
         Service Name: BlueNMEA
@@ -164,7 +164,7 @@ YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bl
             Channel: 1
 
     In this case the channel is 20
-8- Create a configuration for the future permanent connection from your pi to your cel phone in the file /etc/bluetooth/rfcomm.conf
+- Create a configuration for the future permanent connection from your pi to your cel phone in the file /etc/bluetooth/rfcomm.conf
     rfcomm0 {
     bind yes;
     device <MAC of your phone>;
@@ -173,24 +173,24 @@ YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bl
     }
 
     You are 
-9- Bind the serial link from  your pi to your phone
+- Bind the serial link from  your pi to your phone
     rfcomm bind 0 <MAC of your phone> <channel>
-10- Verify that the rfcomm connection is working
+- Verify that the rfcomm connection is working
     rfcomm
     
     You should see something like this:
     rfcomm0: 10:a2:B3:c2:92:13 channel 1 clean
-11- Be sure your bluenmea app is working and active.
+- Be sure your bluenmea app is working and active.
 
-12- Start the gpsd like this
+- Start the gpsd like this
     gpsd -n /dev/rfcomm0
 
-13- Access solicitude
+- Access solicitude
     Your phone may recive an access solicitation from you pi to access some files (YES FILES!). Say yes.
-14- Test if you have gps data with 
+- Test if you have gps data with 
     cgps
     or xgps
-15- Make this work permanently after reboot
+- Make this work permanently after reboot
     Put in the file /etc/rc.local these lines
 
         rfcomm bind 0 <phone MAC> <channel>
@@ -201,7 +201,7 @@ YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bl
         cd /home/pi/ro/aplics/bluedriving/bluedriving/
         ./bluedriving.py -i -l
 
-16- That's it!
+- That's it!
 
 
 
