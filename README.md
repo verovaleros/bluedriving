@@ -202,6 +202,31 @@ Connecting to a cel phone GPS
 
 - That's it!
 
+Script to automatically connect your pi to your phone
+-----------------------------------------------------
+- Put the following script some file like /root/blupi.sh
+- Note that you should change your phone's MAC
+    #!/bin/bash
+    FILE="/etc/bluetooth/rfcomm.conf"
+    rm $FILE
+    DEVICE='<your-phone-mac>'
+    CHANNEL=`sdptool browse $DEVICE|grep -iA 8 BlueNMEA|grep -i channel|awk -F": " '{print $2}'`
+    echo $CHANNEL
+    echo "rfcomm0 {" >> $FILE
+    echo "bind yes;" >> $FILE
+    echo "device $DEVICE;" >> $FILE
+    echo "channel $CHANNEL;" >> $FILE
+    echo "comment \"Serial Port\";" >> $FILE
+    echo "}" >> $FILE
+    rfcomm bind 0 $DEVICE $CHANNEL
+    /usr/sbin/gpsd -n /dev/rfcomm0
+    cd <path-to-your-bluedriving-installation>
+    ./bluedriving.py -l -w -I 0.0.0.0
+
+- Give proper permissions: chmod 777 /root/blupi.sh
+- Put this line in /etc/rc.local to execute the script when the pi boots
+    /root/blupi.sh
+
 
 Giving Internet to your raspberry pi via bluetooth at the same time
 -------------------------------------------------------------------
