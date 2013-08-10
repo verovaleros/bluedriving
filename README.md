@@ -146,7 +146,7 @@ Connecting to a cel phone GPS
     - Put a default pin on the pi
         bluetooth-agent 0000 &
     - From you phone, pair with the pi
-YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bluetooth on both sides until you get it working.
+- YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bluetooth on both sides until you get it working.
 - Make your phone discoverable
 - Find its MAC from the pi
     hcitool scan
@@ -172,7 +172,6 @@ YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bl
     comment "Serial Port";
     }
 
-    You are 
 - Bind the serial link from  your pi to your phone
     rfcomm bind 0 <MAC of your phone> <channel>
 - Verify that the rfcomm connection is working
@@ -203,6 +202,14 @@ YOU SHOULD COMPLETE THE PREVIOUS STEPS BEFORE CONTINUING! Turn off and on the bl
 
 - That's it!
 
+
+Giving Internet to your raspberry pi via bluetooth at the same time
+-------------------------------------------------------------------
+- To know with which devices you are paired with
+    bluez-test-device list
+- To connect to your phone and 
+    sudo pand -c C8:BC:C8:E1:E5:C5 --role PANU --persist 30
+    dhclient bnep0
 
 
 TroubleShooting
