@@ -87,9 +87,10 @@ def version():
     global END
 
     print RED
-    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
-    print "   Authors: verovaleros, eldraco, nanojaus                               "
-    print "   Bluedriving is a bluetooth wardriving utility.                        "
+    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT"
+    print "   Authors: Vero Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
+    print "   Contributors: nanojaus"
+    print "   Bluedriving is a bluetooth wardriving utility."
     print 
     print END
  
