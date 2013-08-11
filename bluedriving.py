@@ -1,13 +1,37 @@
 #!/usr/bin/python
-# UPDATES:
+#  Copyright (C) 2009  Veronica Valeros, Juan Manuel Abrigo, Sebastian Garcia
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+#
+# Author:
+# Veronica Valeros vero.valeros@gmail.com
+#
+# Changelog
 #  - Cache the requested coordinates and addresses to save bandwith
 #  - Cache the device information to avoid extra queries to the database
-
+#  - Updated README on the github wiki
+#
 # TODO
+# Check this: Fix crashing when multiple threads try to write in the database
 # Redesign the whole program. 
-# Fix crashing when multiple threads try to write in the database
-# Improve readme of github
-# 
+#
+# KNOWN BUGS
+#
+# Description
+#
 
 # standar imports
 import sys
@@ -65,7 +89,7 @@ def version():
     print RED
     print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
     print "   Authors: verovaleros, eldraco, nanojaus                               "
-    print "   Bluedriver is a bluetooth wardriving utility.                        "
+    print "   Bluedriving is a bluetooth wardriving utility.                        "
     print 
     print END
  
@@ -80,22 +104,27 @@ def usage():
     print
     print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
     print "   Authors: verovaleros, eldraco, nanojaus                               "
-    print "   Bluedriver is a bluetooth wardriving utility.                        "
+    print "   Bluedriving is a bluetooth wardriving utility.                        "
     print 
     print "\n   Usage: %s <options>" % sys.argv[0]
     print "   Options:"
     print "  \t-h, --help                           Show this help message and exit."
     print "  \t-D, --debug                          Debug mode ON. Prints debug information on the screen."
     print "  \t-d, --database-name                  Name of the database to store the data."
-    print "  \t-w, --webserver                      It runs a local webserver to visualize and interact with the collected information. Defaults to port 8000."
-    print "  \t-s, --not-sound                      Do not play the beautiful discovering sounds. Are you sure you wanna miss this?"
-    print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting coordinates and addresses from the web."
-    print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. It make the discovering a little faster."
-    print "  \t-g, --not-gps                        Use this option when you want to run the bluedriving withouth a gpsd connection."
-    print "  \t-f, --fake-gps                       Fake gps position. Useful when you don't have a gps but know your location from google maps. Example: -f '38.897388,-77.036543'"
-    print "  \t-m, --mail-user                      Gmail user to send mails from and to when a mail alarm is found. The password is entered later."
+    print "  \t-w, --webserver                      It runs a local webserver to visualize and interact with "
+    print "                                             the collected information. Defaults to port 8000."
     print "  \t-p, --webserver-port                 Port where the webserver is going to listen. Defaults to 8000."
     print "  \t-I, --webserver-ip                   IP address where the webserver binds. Defaults to 127.0.0.1."
+    print "  \t-s, --not-sound                      Do not play the beautiful discovering sounds. Are you sure you wanna miss this?"
+    print "  \t-i, --not-internet                   If you dont have internet use this option to save time while getting "
+    print "                                             coordinates and addresses from the web."
+    print "  \t-l, --not-lookup-services            Use this option to not lookup for services for each device. "
+    print "                                             This option makes the discovering a little faster."
+    print "  \t-g, --not-gps                        Use this option when you want to run the bluedriving withouth a gpsd connection."
+    print "  \t-f, --fake-gps                       Use a fake gps position. Useful when you don't have a gps but know your location from google maps."
+    print "                                             Example: -f '38.897388,-77.036543'"
+    print "  \t-m, --mail-user                      Gmail user to send mails from and to when a mail alarm is found. The password is entered later."
+    print "                                             Alarms can be set up only from the web interface at the moment."
     print 
     print END
  
