@@ -382,7 +382,7 @@ def main():
     grep_names = False
     rank_devices = False
     ranking=""
-    limit=100
+    limit=0
     quiet=False
 
     try:
