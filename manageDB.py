@@ -72,7 +72,10 @@ def usage():
     print "  \t-l, --limit                          Limits the number of results when querying the database"
     print "  \t--get-devices                        List all the MAC addresses of the devices stored in the DB"
     print "  \t--get-devices-with-names             List all the MAC addresses and the names of the devices stored in the DB"
-
+    print "  \t--device-exists <mac>                Check if a MAC address is present on the database"
+    print "  \t--remove-device <mac>                Remove a device using a MAC address"
+    print "  \t--grep-names <string>                Look names matching the given string"
+    print "  \t--rank-devices                       Shows a top 10 of the most seen devices on the database"
 
 def db_connect(database_name):
     """
