@@ -454,7 +454,9 @@
 					for ( i = 0; i < window.positions.length ; i++ ) {
 						lon = window.positions[i].split(',')[0].replace("'","");
 						lat = window.positions[i].split(',')[1].replace("'","");
+                        // Here we should return also the First Seen and Last Seen dates so we can print them
                         addMarker(lat, lon, '<b>Device</b><br/>' + window.name_positions + '<br/>' + window.mac_positions);
+
 					}
 
 
