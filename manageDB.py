@@ -383,11 +383,12 @@ def main():
     rank_devices = False
     ranking=""
     limit=100
+    quiet=False
 
     try:
 
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices="])
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:q", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet"])
     except:
         usage()
         exit(-1)
@@ -403,20 +404,23 @@ def main():
         if opt in ("-R","--remove-device"): device_mac = arg; remove_device=True
         if opt in ("-g","--grep-names"): string = arg; grep_names=True
         if opt in ("-r","--rank-devices"): limit = arg; rank_devices=True
+        if opt in ("-q","--quiet-devices"): quiet=True
 
 
     try:
-        version()
-        print "[+] Database: {}".format(database)
+        if not quiet:
+            version()
+            print "[+] Database: {}".format(database)
         connection = db_connect(database)
-        if connection:
+        if connection and not quiet:
             print "[+] Connection established"
 
         #List devices
         if get_devices:
             devices = db_list_devices(connection, limit)
             if devices:
-                print "[+] List of devices in the database:"
+                if not quiet:
+                    print "[+] List of devices in the database:"
                 for key in devices:
                     print "\t{}".format(key[0])
 
@@ -454,7 +458,8 @@ def main():
 
         if connection: 
             connection.close()
-            print "[+] Connection closed"
+            if not quiet:
+                print "[+] Connection closed"
 
     except KeyboardInterrupt:
         print 'Exiting. It may take a few seconds.'
