@@ -572,7 +572,6 @@ def main():
         if opt in ("-h", "--help"): usage(); sys.exit()
         if opt in ("-D", "--debug"): debug = True
         if opt in ("-d", "--database"): database = arg
-        if opt in ("-c", "--create-db"): database = arg; create_db=True
         if opt in ("-l", "--limit"): limit = arg
         if opt in ("-e","--get-devices"): get_devices = True
         if opt in ("-n","--get-devices-with-names"): get_devices_with_names = True
@@ -583,6 +582,7 @@ def main():
         if opt in ("-q","--quiet-devices"): quiet=True
         if opt in ("-m","--merge-with"): db_to_merge=arg; merge_db=True
         if opt in ("-C","--count-devices"): db_count=True
+        if opt in ("-c", "--create-db"): database = arg; create_db=True
 
 
     try:
@@ -644,7 +644,7 @@ def main():
             elif merge_db:
                 db_to_merge_connection = db_connect(db_to_merge)
                 db_merge(connection,db_to_merge_connection)
-            elif db_count_devices:
+            elif db_count:
                 number_of_devices = db_count_devices(connection)
                 print '\tNumber of devices on the database: {}'.format(number_of_devices)
             else:
