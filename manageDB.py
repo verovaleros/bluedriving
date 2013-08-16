@@ -22,6 +22,7 @@
 # Changelog
 #
 # TODO
+# - Add a function to list for a given mac the date, position, and name
 #
 # KNOWN BUGS
 #
@@ -76,6 +77,54 @@ def usage():
     print "  \t--remove-device <mac>                Remove a device using a MAC address"
     print "  \t--grep-names <string>                Look names matching the given string"
     print "  \t--rank-devices                       Shows a top 10 of the most seen devices on the database"
+    print "  \t-m, --merge-with <db>                Merge the database (-d) with this database.Ex. bluedriving.py -d blu.db -m netbook.db"
+    print "  \t--get-locations-with-date <mac>      Prints a list of locations and dates in which the mac has been seen."
+
+
+def db_create(database_name):
+    """
+    This function creates a connection to the database and return the connection
+    """
+    global debug
+    global verbose
+
+    connection = ""
+
+    try:
+        # We check if the database exists
+        if not os.path.exists(database_name):
+            if debug:
+                print 'Creating database'
+            # Creating database
+            connection = sqlite3.connect(database_name)
+            # Creating tables
+            connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT, UNIQUE(Mac))")
+            connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
+            connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
+            connection.execute("CREATE TABLE Alarms(Id INTEGER, Alarm TEXT)")
+            connection.commit()
+            connection.close()
+            if debug:
+                print 'Database created'
+            return True
+        else:
+            if debug:
+                print 'Database already exist. Choose a different name.'
+            return False
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_connect(database_name) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
 
 def db_connect(database_name):
     """
@@ -88,7 +137,7 @@ def db_connect(database_name):
 
     try:
         if not os.path.exists(database_name):
-            return false
+            return False
         connection = sqlite3.connect(database_name)
         if debug:
             print 'Database connection retrieved'
@@ -108,6 +157,185 @@ def db_connect(database_name):
         print 'y =', y
         sys.exit(1)
 
+def db_count_devices(connection):
+    """
+    """
+    global debug
+    global verbose
+
+    try:
+        result = connection.execute("SELECT count(*) FROM Devices")
+        if result:
+            result = result.fetchall()
+            return result[0][0]
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_list_devices(connection) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
+def db_locations_and_dates(connection,mac):
+    """
+    """
+    global debug
+    global verbose
+
+    try:
+        macId = db_get_id_from_mac(connection, mac)
+        if macId:
+            result = connection.execute("SELECT GPS, FirstSeen, LastSeen, Name FROM Locations WHERE MacId="+str(macId)+";")
+            if result:
+                result = result.fetchall()
+                return result
+            else:
+                return False
+        else:
+            print 'The device seems not to be in the database. Please check the MAC address.'
+            return False
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_locations_and_dates(connection) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
+def db_get_mac_from_id(connection, MacId):
+    """
+    """
+    global debug
+    global verbose
+
+    try:
+        result = connection.execute("SELECT Mac FROM Devices WHERE Id = "+str(MacId)+";")
+        if result:
+            result = result.fetchall()
+            return result[0][0]
+        else:
+            return False
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_list_devices(connection) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
+def db_get_id_from_mac(connection, Mac):
+    """
+    """
+    global debug
+    global verbose
+
+    try:
+        result = connection.execute("SELECT Id FROM Devices WHERE Mac = \""+str(Mac)+"\";")
+        if result:
+            result = result.fetchall()
+            return result[0][0]
+        else:
+            return False
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_list_devices(connection) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
+def db_merge(db_merged_connection,db_to_merge_connection):
+    """
+    This function creates a connection to the database and return the connection
+    """
+    global debug
+    global verbose
+
+    count_dev = 0
+    count_loc = 0
+    count_ala = 0
+    count_not = 0
+
+    try:
+        # Adding data from devices database
+        result = db_to_merge_connection.execute("SELECT Id, Mac,Info FROM Devices")
+        devices = result.fetchall()
+        for (MacId,Mac,Info) in devices:
+            #result = db_merged_connection.execute("INSERT OR IGNORE INTO Devices (Mac,Info) VALUES(\"11:11:11:11:11:11\",\"[]\");")
+            try:
+                result= db_merged_connection.execute("INSERT OR IGNORE INTO Devices (Mac,Info) VALUES(\""+str(Mac)+"\",\""+str(Info[0])+"\");")
+                count_dev = count_dev+1
+            except:
+                print 'Exception mergin this device: {}, {}'.format(Mac,Info[0])
+
+            db_merged_connection.commit()
+
+            #Adding data from locations table
+            result = db_to_merge_connection.execute("SELECT MacId,GPS,FirstSeen,LastSeen,Address,Name FROM Locations WHERE MacId="+str(MacId)+";")
+            locationinfo = result.fetchall()
+            for (MacIdLoc,GPS,FSeen,LSeen,Address,Name) in locationinfo:
+                    if debug:
+                        print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
+                    newMacId = db_get_id_from_mac(db_merged_connection,Mac)
+                    result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\","+Name+");")
+                    count_loc = count_loc+1
+
+            db_merged_connection.commit()
+
+            #Adding data from notes table
+            result = db_to_merge_connection.execute("SELECT MacId,Note FROM Notes WHERE MacId="+str(MacId)+";")
+            notesinfo = result.fetchall()
+            for (MacId,Note) in notesinfo:
+                newMacId = db_get_id_from_mac(db_merged_connection,Mac)
+                result = db_merged_connection.execute("INSERT OR IGNORE INTO Notes (MacId, Note) VALUES("+str(newMacId)+",\""+str(Note)+"\");")
+                count_not = count_not+1
+
+            #Adding data from alarm table
+
+        db_merged_connection.commit()
+        db_to_merge_connection.close()
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_merge(database_name) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
 
 def db_list_devices(connection, limit):
     """
@@ -124,7 +352,7 @@ def db_list_devices(connection, limit):
             devices = result.fetchall()
             return devices
         except:
-            return false
+            return False
     
     except KeyboardInterrupt:
         print 'Exiting. It may take a few seconds.'
@@ -382,13 +610,18 @@ def main():
     grep_names = False
     rank_devices = False
     ranking=""
-    limit=100
+    limit=999999
     quiet=False
+    merge_db=False
+    db_to_merge=""
+    db_count=False
+    create_db=False
+    locations_and_dates=False
 
     try:
 
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:q", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet"])
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates="])
     except:
         usage()
         exit(-1)
@@ -405,61 +638,89 @@ def main():
         if opt in ("-g","--grep-names"): string = arg; grep_names=True
         if opt in ("-r","--rank-devices"): limit = arg; rank_devices=True
         if opt in ("-q","--quiet-devices"): quiet=True
+        if opt in ("-m","--merge-with"): db_to_merge=arg; merge_db=True
+        if opt in ("-C","--count-devices"): db_count=True
+        if opt in ("-c", "--create-db"): database = arg; create_db=True
+        if opt in ("-L", "--get-locations-with-dates"): mac = arg; locations_and_dates=True
 
 
     try:
-        if not quiet:
-            version()
-            print "[+] Database: {}".format(database)
-        connection = db_connect(database)
-        if connection and not quiet:
-            print "[+] Connection established"
-
-        #List devices
-        if get_devices:
-            devices = db_list_devices(connection, limit)
-            if devices:
-                if not quiet:
-                    print "[+] List of devices in the database:"
-                for key in devices:
-                    print "\t{}".format(key[0])
-
-        # List devices with name
-        elif get_devices_with_names:
-            deviceswnames= db_list_devices_and_names(connection,limit)
-            if deviceswnames:
-                for (mac,name) in deviceswnames:
-                    print "\t{} - {}".format(mac,name)
-        elif device_exists:
-            exists = db_device_exists(connection,device_mac)
-            if exists:
-                print "\tDevice {} exists in the database".format(device_mac)
+        if create_db:
+            result = db_create(database)
+            if result:
+                print '[+] Database created'
             else:
-                print "\tDevice {} is not present in the database".format(device_mac)
-        elif remove_device:
-            db_remove_device(connection,device_mac)
-            exists = db_device_exists(connection,device_mac)
-            if exists:
-                print "\tDevice {} exists in the database".format(device_mac)
-            else:
-                print "\tDevice {} is not present in the database".format(device_mac)
-        elif grep_names:
-            similar_names = db_grep_names(connection,string)
-            if similar_names:
-                for i in similar_names:
-                    print "\t{}".format(i[0])
-        elif rank_devices:
-            ranking = db_rank_devices(connection,limit)
-            if ranking:
-                for i in ranking:
-                    print "\t{} - {}".format(i[2],i[0])
-        else:
-            print "Nothing to do. Please select an option."
+                print '[+] Database not created'
+            sys.exit()
 
-        if connection: 
-            connection.close()
+        if database:
             if not quiet:
-                print "[+] Connection closed"
+                version()
+                print "[+] Database: {}".format(database)
+            connection = db_connect(database)
+
+        if connection:
+            if not quiet:
+                print "[+] Connection established"
+
+            #List devices
+            if get_devices:
+                devices = db_list_devices(connection, limit)
+                if devices:
+                    if not quiet:
+                        print "[+] List of devices in the database:"
+                    for key in devices:
+                        print "\t{}".format(key[0])
+            # List devices with name
+            elif get_devices_with_names:
+                deviceswnames= db_list_devices_and_names(connection,limit)
+                if deviceswnames:
+                    for (mac,name) in deviceswnames:
+                        print "\t{} - {}".format(mac,name)
+            elif device_exists:
+                exists = db_device_exists(connection,device_mac)
+                if exists:
+                    print "\tDevice {} exists in the database".format(device_mac)
+                else:
+                    print "\tDevice {} is not present in the database".format(device_mac)
+            elif remove_device:
+                db_remove_device(connection,device_mac)
+                exists = db_device_exists(connection,device_mac)
+                if exists:
+                    print "\tDevice {} exists in the database".format(device_mac)
+                else:
+                    print "\tDevice {} is not present in the database".format(device_mac)
+            elif grep_names:
+                similar_names = db_grep_names(connection,string)
+                if similar_names:
+                    for i in similar_names:
+                        print "\t{}".format(i[0])
+            elif rank_devices:
+                ranking = db_rank_devices(connection,limit)
+                if ranking:
+                    for i in ranking:
+                        print "\t{} - {}".format(i[2],i[0])
+            elif merge_db:
+                db_to_merge_connection = db_connect(db_to_merge)
+                db_merge(connection,db_to_merge_connection)
+            elif db_count:
+                number_of_devices = db_count_devices(connection)
+                print '\tNumber of devices on the database: {}'.format(number_of_devices)
+            elif locations_and_dates:
+                locations_dates_results = db_locations_and_dates(connection,mac)
+                print "\tMAC Address: {}".format(mac)
+                for i in locations_dates_results:
+                    print "\t\t{}-{}, {} ".format(i[1],i[2],i[0])
+            else:
+                print "Nothing to do. Please select an option."
+
+            if connection: 
+                connection.close()
+                if not quiet:
+                    print "[+] Connection closed"
+
+        else:
+            print "A connection to the database could not be retrieved"
 
     except KeyboardInterrupt:
         print 'Exiting. It may take a few seconds.'
