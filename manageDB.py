@@ -711,12 +711,16 @@ def main():
                 print '\tNumber of devices on the database: {}'.format(number_of_devices)
             elif locations_and_dates:
                 locations_dates_results = db_locations_and_dates(connection,mac)
-                print "\tMAC Address: {}".format(mac)
+                if not quiet:
+                    print "\tMAC Address: {}".format(mac)
                 for (gps,fseen,lseen,name,address) in locations_dates_results:
                     if gps != "False":
                         print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
                     else:
                         print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
+                    addr = getCoordinates("\""+str(gps)+"\"")
+                    print "\""+str(gps)+"\"".strip("\'")
+                    print addr
             else:
                 print "Nothing to do. Please select an option."
 
