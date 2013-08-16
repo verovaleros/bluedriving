@@ -92,40 +92,39 @@ def getCoordinates(address):
 	formattedaddress = ""
 
 	try:
-
-		# We verify the given address
+            # We verify the given address
+            try:
+                # Type
+                if type(address) != str:
+                    return 'Bad format. The given address is not a string. Do you used quotes?'
+                # Format
+                if len(address.split(',')) < 2 or len(address.split(',')) > 4:
+                        return 'Bad address. Remember that the address should be like: \"Street number Street, City, Country\"'
+                # Length of the address
+                if len(address) > 255:
+                    return 'Too long. The address is too long, request ignored.'
+                # Characters accepted
+                if not re.match('^[a-zA-Z0-9, .-]+$',address):
+                    return 'Bad sintax. Unaccepted characters found in address. Try again.'
+            
+                address = address.rstrip(' ').strip(' ').replace(' ','+')
+                query = api_url+address
+                
                 try:
-                        # Type
-                        if type(address) != str:
-				return 'Bad format. The given address is not a string. Do you used quotes?'
-                        # Format
-                        if len(address.split(',')) < 2 or len(address.split(',')) > 4:
-                                return 'Bad address. Remember that the address should be like: \"Street number Street, City, Country\"'
-                        # Length of the address
-                        if len(address) > 255:
-				return 'Too long. The address is too long, request ignored.'
-                        # Characters accepted
-                        if not re.match('^[a-zA-Z0-9, .-]+$',address):
-				return 'Bad sintax. Unaccepted characters found in address. Try again.'
+                    answer = urllib2.urlopen(query)
+                    content = simplejson.load(answer)
+                    lat = content['results'][0]['geometry']['location']['lat']
+                    lng = content['results'][0]['geometry']['location']['lng']
+                
+                    coordinates = str(lat)+','+str(lng)
+                    formattedaddress = content['results'][0]['formatted_address']
+                    return [coordinates,formattedaddress]
+                except:
+                    return [" "," "]
 			
-			address = address.rstrip(' ').strip(' ').replace(' ','+')
-			query = api_url+address
-			
-			try:
-				answer = urllib2.urlopen(query)
-				content = simplejson.load(answer)
-				lat = content['results'][0]['geometry']['location']['lat']
-				lng = content['results'][0]['geometry']['location']['lng']
-			
-				coordinates = str(lat)+','+str(lng)
-				formattedaddress = content['results'][0]['formatted_address']
-				return [coordinates,formattedaddress]
-			except:
-				return [" "," "]
-			
-		except Exception, e:
-			print "misc. exception (runtime error from user callback?):", e
-			return [" "," "]
+            except Exception, e:
+                print "misc. exception (runtime error from user callback?):", e
+                return [" "," "]
 
 	except Exception, e:
 		print "misc. exception (runtime error from user callback?):", e
