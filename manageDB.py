@@ -497,7 +497,7 @@ def db_rank_devices(connection,limit):
     result = ""
     try:
         try:
-            result = connection.execute("SELECT Name, MacId, count(MacId) as amount FROM Locations GROUP BY MacId ORDER BY amount DESC LIMIT 10") 
+            result = connection.execute("SELECT Name, MacId, count(MacId) as amount FROM Locations GROUP BY MacId ORDER BY amount DESC LIMIT "+str(limit)+" ;") 
             result = result.fetchall()
             
             if result:
