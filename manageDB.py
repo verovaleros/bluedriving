@@ -232,6 +232,7 @@ def db_get_id_from_mac(connection, Mac):
         print 'x =', x
         print 'y =', y
         sys.exit(1)
+
 def db_merge(db_merged_connection,db_to_merge_connection):
     """
     This function creates a connection to the database and return the connection
@@ -239,7 +240,10 @@ def db_merge(db_merged_connection,db_to_merge_connection):
     global debug
     global verbose
 
-    connection = ""
+    count_dev = 0
+    count_loc = 0
+    count_ala = 0
+    count_not = 0
 
     try:
         # Adding data from devices database

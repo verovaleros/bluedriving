@@ -137,7 +137,7 @@ def get_unread_registers():
 
         # First select all the locations
         # This can be VERY HEAVY with a huge database...
-        for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 1000'):
+        for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 5000'):
 
             if debug:
                 print ' >> Read locations {0}'.format(row)
