@@ -22,6 +22,7 @@
 # Changelog
 #
 # TODO
+# - Add a function to list for a given mac the date, position, and name
 #
 # KNOWN BUGS
 #
