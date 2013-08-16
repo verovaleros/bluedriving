@@ -715,7 +715,11 @@ def main():
                     print "\tMAC Address: {}".format(mac)
                 for (gps,fseen,lseen,name,address) in locations_dates_results:
                     if gps != "False":
-                        print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
+                        a = gps
+                        addr= getCoordinates(str(a.strip("\'").strip("\'")))
+                        address = addr[1]
+                        address = address.encode('utf-8')
+                        print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address))
                     else:
                         print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
             else:
