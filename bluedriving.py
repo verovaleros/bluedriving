@@ -523,7 +523,7 @@ def db_add_device(connection,bdaddr,device_information):
 
     try:
         try:
-            connection.execute("INSERT INTO Devices (Mac,Info) VALUES (?,?)",(bdaddr,repr(device_information)))
+            connection.execute("INSERT OR IGNORE INTO Devices (Mac,Info) VALUES (?,?)",(bdaddr,repr(device_information)))
             connection.commit()
             if debug:
                 print 'New device added'

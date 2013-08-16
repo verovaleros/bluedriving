@@ -253,6 +253,7 @@ def db_merge(db_merged_connection,db_to_merge_connection):
             #result = db_merged_connection.execute("INSERT OR IGNORE INTO Devices (Mac,Info) VALUES(\"11:11:11:11:11:11\",\"[]\");")
             try:
                 result= db_merged_connection.execute("INSERT OR IGNORE INTO Devices (Mac,Info) VALUES(\""+str(Mac)+"\",\""+str(Info[0])+"\");")
+                count_dev = count_dev+1
             except:
                 print 'Exception mergin this device: {}, {}'.format(Mac,Info[0])
 
@@ -266,6 +267,19 @@ def db_merge(db_merged_connection,db_to_merge_connection):
                         print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
                     newMacId = db_get_id_from_mac(db_merged_connection,Mac)
                     result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\","+Name+");")
+                    count_loc = count_loc+1
+
+            db_merged_connection.commit()
+
+            #Adding data from notes table
+            result = db_to_merge_connection.execute("SELECT MacId,Note FROM Notes WHERE MacId="+str(MacId)";")
+            notesinfo = result.fetchall()
+            for (MacId,Note) in notesinfo:
+                newMacId = db_get_id_from_mac(db_merged_connection,Mac)
+                result = db_merged_connection.execute("INSERT OR IGNORE INTO Notes (MacId, Note) VALUES("+str(newMacId)+",\""+str(Note)+"\");")
+                count_not = count_not+1
+
+            #Adding data from alarm table
 
         db_merged_connection.commit()
         db_to_merge_connection.close()
