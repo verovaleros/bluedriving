@@ -38,6 +38,7 @@ import copy
 import os
 import time
 import sqlite3
+from getCoordinatesFromAddress import getCoordinates
 
 
 # Global variables
@@ -192,7 +193,7 @@ def db_locations_and_dates(connection,mac):
     try:
         macId = db_get_id_from_mac(connection, mac)
         if macId:
-            result = connection.execute("SELECT GPS, FirstSeen, LastSeen, Name FROM Locations WHERE MacId="+str(macId)+";")
+            result = connection.execute("SELECT GPS, FirstSeen, LastSeen, Name, Address FROM Locations WHERE MacId="+str(macId)+" ORDER BY FirstSeen ASC;")
             if result:
                 result = result.fetchall()
                 return result
@@ -461,7 +462,7 @@ def db_grep_names(connection,string):
 
     try:
         try:
-            result = connection.execute("SELECT DISTINCT Name FROM Locations WHERE Name LIKE \"%"+str(string)+"%\"") 
+            result = connection.execute("SELECT DISTINCT Name,MacId FROM Locations WHERE Name LIKE \"%"+str(string)+"%\"") 
             if result:
                 result = result.fetchall()
                 return result
@@ -693,8 +694,9 @@ def main():
             elif grep_names:
                 similar_names = db_grep_names(connection,string)
                 if similar_names:
-                    for i in similar_names:
-                        print "\t{}".format(i[0])
+                    for (name,macId) in similar_names:
+                        mac = db_get_mac_from_id(connection,macId)
+                        print "\t{} ({})".format(name, mac)
             elif rank_devices:
                 ranking = db_rank_devices(connection,limit)
                 if ranking:
@@ -709,8 +711,11 @@ def main():
             elif locations_and_dates:
                 locations_dates_results = db_locations_and_dates(connection,mac)
                 print "\tMAC Address: {}".format(mac)
-                for i in locations_dates_results:
-                    print "\t\t{}-{}, {} ".format(i[1],i[2],i[0])
+                for (gps,fseen,lseen,name,address) in locations_dates_results:
+                    if gps != "False":
+                        print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
+                    else:
+                        print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
             else:
                 print "Nothing to do. Please select an option."
 
