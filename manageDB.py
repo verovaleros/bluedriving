@@ -78,6 +78,7 @@ def usage():
     print "  \t--grep-names <string>                Look names matching the given string"
     print "  \t--rank-devices                       Shows a top 10 of the most seen devices on the database"
     print "  \t-m, --merge-with <db>                Merge the database (-d) with this database.Ex. bluedriving.py -d blu.db -m netbook.db"
+    print "  \t--get-locations-with-date <mac>      Prints a list of locations and dates in which the mac has been seen."
 
 
 def db_create(database_name):
@@ -182,6 +183,39 @@ def db_count_devices(connection):
         print 'y =', y
         sys.exit(1)
 
+def db_locations_and_dates(connection,mac):
+    """
+    """
+    global debug
+    global verbose
+
+    try:
+        macId = db_get_id_from_mac(connection, mac)
+        if macId:
+            result = connection.execute("SELECT GPS, FirstSeen, LastSeen, Name FROM Locations WHERE MacId="+str(macId)+";")
+            if result:
+                result = result.fetchall()
+                return result
+            else:
+                return False
+        else:
+            print 'The device seems not to be in the database. Please check the MAC address.'
+            return False
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_locations_and_dates(connection) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
 def db_get_mac_from_id(connection, MacId):
     """
     """
@@ -193,6 +227,8 @@ def db_get_mac_from_id(connection, MacId):
         if result:
             result = result.fetchall()
             return result[0][0]
+        else:
+            return False
 
     except KeyboardInterrupt:
         print 'Exiting. It may take a few seconds.'
@@ -219,6 +255,8 @@ def db_get_id_from_mac(connection, Mac):
         if result:
             result = result.fetchall()
             return result[0][0]
+        else:
+            return False
 
     except KeyboardInterrupt:
         print 'Exiting. It may take a few seconds.'
@@ -578,11 +616,12 @@ def main():
     db_to_merge=""
     db_count=False
     create_db=False
+    locations_and_dates=False
 
     try:
 
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db="])
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates="])
     except:
         usage()
         exit(-1)
@@ -602,6 +641,7 @@ def main():
         if opt in ("-m","--merge-with"): db_to_merge=arg; merge_db=True
         if opt in ("-C","--count-devices"): db_count=True
         if opt in ("-c", "--create-db"): database = arg; create_db=True
+        if opt in ("-L", "--get-locations-with-dates"): mac = arg; locations_and_dates=True
 
 
     try:
@@ -666,6 +706,11 @@ def main():
             elif db_count:
                 number_of_devices = db_count_devices(connection)
                 print '\tNumber of devices on the database: {}'.format(number_of_devices)
+            elif locations_and_dates:
+                locations_dates_results = db_locations_and_dates(connection,mac)
+                print "\tMAC Address: {}".format(mac)
+                for i in locations_dates_results:
+                    print "\t\t{}-{}, {} ".format(i[1],i[2],i[0])
             else:
                 print "Nothing to do. Please select an option."
 
