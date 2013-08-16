@@ -700,8 +700,9 @@ def main():
             elif rank_devices:
                 ranking = db_rank_devices(connection,limit)
                 if ranking:
-                    for i in ranking:
-                        print "\t{} - {}".format(i[2],i[0])
+                    for (name,macId,count) in ranking:
+                        mac = db_get_mac_from_id(connection,macId)
+                        print "\t{} - {} ({})".format(count, name, mac)
             elif merge_db:
                 db_to_merge_connection = db_connect(db_to_merge)
                 db_merge(connection,db_to_merge_connection)
