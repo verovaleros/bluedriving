@@ -272,7 +272,7 @@ def db_merge(db_merged_connection,db_to_merge_connection):
             db_merged_connection.commit()
 
             #Adding data from notes table
-            result = db_to_merge_connection.execute("SELECT MacId,Note FROM Notes WHERE MacId="+str(MacId)";")
+            result = db_to_merge_connection.execute("SELECT MacId,Note FROM Notes WHERE MacId="+str(MacId)+";")
             notesinfo = result.fetchall()
             for (MacId,Note) in notesinfo:
                 newMacId = db_get_id_from_mac(db_merged_connection,Mac)
