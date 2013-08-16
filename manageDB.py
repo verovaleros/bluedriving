@@ -718,9 +718,6 @@ def main():
                         print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
                     else:
                         print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
-                    addr = getCoordinates("\""+str(gps)+"\"")
-                    print "\""+str(gps)+"\"".strip("\'")
-                    print addr
             else:
                 print "Nothing to do. Please select an option."
 
