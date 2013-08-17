@@ -88,7 +88,7 @@ def usage():
 
 def db_create(database_name):
     """
-    This function creates a connection to the database and return the connection
+    This function creates a new bluedriving database. 
     """
     global debug
     global verbose
@@ -120,7 +120,7 @@ def db_create(database_name):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_connect(database_name) function'
+        print 'Exception in db_create(database_name) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -164,6 +164,7 @@ def db_connect(database_name):
 
 def db_count_devices(connection):
     """
+    This function returns the amount of devices in table Devices
     """
     global debug
     global verbose
@@ -173,12 +174,14 @@ def db_count_devices(connection):
         if result:
             result = result.fetchall()
             return result[0][0]
+        else:
+            return False
 
     except KeyboardInterrupt:
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_list_devices(connection) function'
+        print 'Exception in db_count_devices(connection) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -190,6 +193,7 @@ def db_count_devices(connection):
 
 def db_locations_and_dates(connection,mac):
     """
+    This function returns a set of GPS, FSeen, LSeen, Name and Address, for a given mac.
     """
     global debug
     global verbose
@@ -211,7 +215,7 @@ def db_locations_and_dates(connection,mac):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_locations_and_dates(connection) function'
+        print 'Exception in db_locations_and_dates(connection,mac) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -223,6 +227,7 @@ def db_locations_and_dates(connection,mac):
 
 def db_get_mac_from_id(connection, MacId):
     """
+    Given a MacId this function returns the MAC address of it.
     """
     global debug
     global verbose
@@ -239,7 +244,7 @@ def db_get_mac_from_id(connection, MacId):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_list_devices(connection) function'
+        print 'Exception in db_get_mac_from_id(connection,MacId) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -251,6 +256,7 @@ def db_get_mac_from_id(connection, MacId):
 
 def db_get_id_from_mac(connection, Mac):
     """
+    Given a MAC address this function returns the mac id 
     """
     global debug
     global verbose
@@ -267,7 +273,7 @@ def db_get_id_from_mac(connection, Mac):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_list_devices(connection) function'
+        print 'Exception in db_get_id_from_mac(connection,mac) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -279,7 +285,7 @@ def db_get_id_from_mac(connection, Mac):
 
 def db_merge(db_merged_connection,db_to_merge_connection):
     """
-    This function creates a connection to the database and return the connection
+    This function merges two databases into one
     """
     global debug
     global verbose
@@ -344,7 +350,7 @@ def db_merge(db_merged_connection,db_to_merge_connection):
 
 def db_list_devices(connection, limit):
     """
-    This function creates a connection to the database and return the connection
+    This function returns a list of devices (macs). Variable limit can limit the results
     """
     global debug
     global verbose
