@@ -52,8 +52,9 @@ def version():
     """
 
     print
-    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
-    print "   Authors: verovaleros, eldraco, nanojaus                               "
+    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT"
+    print "   Authors: Vero Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
+    print "   Contributors: nanojaus"
     print "   manageDB is a python tool to manage bluedriving database.            "
     print
 
@@ -62,8 +63,9 @@ def usage():
     This function prints the posible options of this program.
     """
     print
-    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
-    print "   Authors: verovaleros, eldraco, nanojaus                               "
+    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT"
+    print "   Authors: Vero Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
+    print "   Contributors: nanojaus"
     print "   manageDB is a python tool to manage bluedriving database.            "
     print
     print "\n   Usage: %s <options>" % sys.argv[0]
