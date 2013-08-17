@@ -54,15 +54,17 @@ def version():
     print
     print "   "+ sys.argv[0] + " Version "+ vernum 
     print "   Authors: Vero Valeros (vero.valeros@gmail.com)"
-    print "   manageDB.py is a tool to manage the bluetooth wardriving utility DB."
+    print "   manageDB is a python tool to manage bluedriving database.            "
+    print
 
 def usage():
     """
     This function prints the posible options of this program.
     """
     print
-    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
-    print "   Authors: verovaleros, eldraco, nanojaus                               "
+    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT"
+    print "   Authors: Vero Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
+    print "   Contributors: nanojaus"
     print "   manageDB is a python tool to manage bluedriving database.            "
     print
     print "\n   Usage: %s <options>" % sys.argv[0]
@@ -71,19 +73,21 @@ def usage():
     print "  \t-D, --debug                          Debug mode ON. Prints debug information on the screen."
     print "  \t-d, --database-name                  Name of the database to store the data."
     print "  \t-l, --limit                          Limits the number of results when querying the database"
-    print "  \t--get-devices                        List all the MAC addresses of the devices stored in the DB"
-    print "  \t--get-devices-with-names             List all the MAC addresses and the names of the devices stored in the DB"
-    print "  \t--device-exists <mac>                Check if a MAC address is present on the database"
-    print "  \t--remove-device <mac>                Remove a device using a MAC address"
-    print "  \t--grep-names <string>                Look names matching the given string"
-    print "  \t--rank-devices                       Shows a top 10 of the most seen devices on the database"
+    print "  \t-e, --get-devices                    List all the MAC addresses of the devices stored in the DB"
+    print "  \t-n, --get-devices-with-names         List all the MAC addresses and the names of the devices stored in the DB"
+    print "  \t-E, --device-exists <mac>            Check if a MAC address is present on the database"
+    print "  \t-R, --remove-device <mac>            Remove a device using a MAC address"
+    print "  \t-g, --grep-names <string>            Look names matching the given string"
+    print "  \t-r, --rank-devices <limit>           Shows a top 10 of the most seen devices on the database"
     print "  \t-m, --merge-with <db>                Merge the database (-d) with this database.Ex. bluedriving.py -d blu.db -m netbook.db"
-    print "  \t--get-locations-with-date <mac>      Prints a list of locations and dates in which the mac has been seen."
-
+    print "  \t-L, --get-locations-with-date <mac>  Prints a list of locations and dates in which the mac has been seen."
+    print "  \t-q, --quiet-devices                  Print only the results"
+    print "  \t-C, --count-devices                  Count the amount of devices on the database"
+    print "  \t-c, --create-db                      Create an empty database. Useful for merging."
 
 def db_create(database_name):
     """
-    This function creates a connection to the database and return the connection
+    This function creates a new bluedriving database. 
     """
     global debug
     global verbose
@@ -115,7 +119,7 @@ def db_create(database_name):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_connect(database_name) function'
+        print 'Exception in db_create(database_name) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -159,6 +163,7 @@ def db_connect(database_name):
 
 def db_count_devices(connection):
     """
+    This function returns the amount of devices in table Devices
     """
     global debug
     global verbose
@@ -168,12 +173,14 @@ def db_count_devices(connection):
         if result:
             result = result.fetchall()
             return result[0][0]
+        else:
+            return False
 
     except KeyboardInterrupt:
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_list_devices(connection) function'
+        print 'Exception in db_count_devices(connection) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -185,6 +192,7 @@ def db_count_devices(connection):
 
 def db_locations_and_dates(connection,mac):
     """
+    This function returns a set of GPS, FSeen, LSeen, Name and Address, for a given mac.
     """
     global debug
     global verbose
@@ -206,7 +214,7 @@ def db_locations_and_dates(connection,mac):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_locations_and_dates(connection) function'
+        print 'Exception in db_locations_and_dates(connection,mac) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -218,6 +226,7 @@ def db_locations_and_dates(connection,mac):
 
 def db_get_mac_from_id(connection, MacId):
     """
+    Given a MacId this function returns the MAC address of it.
     """
     global debug
     global verbose
@@ -234,7 +243,7 @@ def db_get_mac_from_id(connection, MacId):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_list_devices(connection) function'
+        print 'Exception in db_get_mac_from_id(connection,MacId) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -246,6 +255,7 @@ def db_get_mac_from_id(connection, MacId):
 
 def db_get_id_from_mac(connection, Mac):
     """
+    Given a MAC address this function returns the mac id 
     """
     global debug
     global verbose
@@ -262,7 +272,7 @@ def db_get_id_from_mac(connection, Mac):
         print 'Exiting. It may take a few seconds.'
         sys.exit(1)
     except Exception as inst:
-        print 'Exception in db_list_devices(connection) function'
+        print 'Exception in db_get_id_from_mac(connection,mac) function'
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
         print inst.args # arguments stored in .args
@@ -274,7 +284,7 @@ def db_get_id_from_mac(connection, Mac):
 
 def db_merge(db_merged_connection,db_to_merge_connection):
     """
-    This function creates a connection to the database and return the connection
+    This function merges two databases into one
     """
     global debug
     global verbose
@@ -339,7 +349,7 @@ def db_merge(db_merged_connection,db_to_merge_connection):
 
 def db_list_devices(connection, limit):
     """
-    This function creates a connection to the database and return the connection
+    This function returns a list of devices (macs). Variable limit can limit the results
     """
     global debug
     global verbose
@@ -496,7 +506,7 @@ def db_rank_devices(connection,limit):
     result = ""
     try:
         try:
-            result = connection.execute("SELECT Name, MacId, count(MacId) as amount FROM Locations GROUP BY MacId ORDER BY amount DESC LIMIT 10") 
+            result = connection.execute("SELECT Name, MacId, count(MacId) as amount FROM Locations GROUP BY MacId ORDER BY amount DESC LIMIT "+str(limit)+" ;") 
             result = result.fetchall()
             
             if result:
