@@ -52,10 +52,9 @@ def version():
     """
 
     print
-    print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT                    "
-    print "   Authors: verovaleros, eldraco, nanojaus                               "
-    print "   manageDB is a python tool to manage bluedriving database.            "
-    print
+    print "   "+ sys.argv[0] + " Version "+ vernum 
+    print "   Authors: Vero Valeros (vero.valeros@gmail.com)"
+    print "   manageDB.py is a tool to manage the bluetooth wardriving utility DB."
 
 def usage():
     """
