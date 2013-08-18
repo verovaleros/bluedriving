@@ -20,9 +20,9 @@
 # Veronica Valeros  vero.valeros@gmail.com
 #
 # Changelog
+# - Added a function to list for a given mac the date, position, and name
 #
 # TODO
-# - Add a function to list for a given mac the date, position, and name
 #
 # KNOWN BUGS
 #
@@ -517,11 +517,19 @@ def db_grep_locations(connection,coordinates):
 
     try:
         try:
-            result = connection.execute("SELECT DISTINCT Name,MacId FROM Locations WHERE Name LIKE \"%"+str(string)+"%\"") 
+            if debug:
+                print "On db_grep_locations()"
+                print "Coordinates to search: {}".format(coordinates)
+            result = connection.execute("SELECT Name,MacId,FirstSeen,GPS FROM Locations WHERE GPS LIKE \""+str(coordinates)+"\";") 
             if result:
                 result = result.fetchall()
+                if debug:
+                    print "Result:"
+                    print result
                 return result
             else:  
+                if debug:
+                    print 'Result is empty'
                 return False
             
         except:
@@ -677,11 +685,13 @@ def main():
     db_count=False
     create_db=False
     locations_and_dates=False
+    grep_locations=False
+    coordinates=""
 
     try:
 
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates="])
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:S:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates=","grep-locations="])
     except:
         usage()
         exit(-1)
@@ -702,6 +712,7 @@ def main():
         if opt in ("-C","--count-devices"): db_count=True
         if opt in ("-c", "--create-db"): database = arg; create_db=True
         if opt in ("-L", "--get-locations-with-dates"): mac = arg; locations_and_dates=True
+        if opt in ("-S", "--grep-locations"): coordinates = arg; grep_locations=True
 
 
     try:
@@ -781,6 +792,12 @@ def main():
                             print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address))
                         else:
                             print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
+                elif grep_locations:
+                    locations = db_grep_locations(connection,coordinates)
+                    if locations:
+                        for (name,macid,fseen,gps) in locations:
+                            mac = db_get_mac_from_id(connection,macid)
+                            print '{}::{} {} {}'.format(mac,name,fseen,gps)
                 else:
                     print "Nothing to do. Please select an option."
 
