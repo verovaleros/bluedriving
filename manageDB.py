@@ -84,6 +84,7 @@ def usage():
     print "  \t-q, --quiet-devices                  Print only the results"
     print "  \t-C, --count-devices                  Count the amount of devices on the database"
     print "  \t-c, --create-db                      Create an empty database. Useful for merging."
+    print "  \t-S, --grep-locations                 Find devices near this GPS location. Use % for pattern matching, like '%50.071%,14.402%' "
 
 def db_create(database_name):
     """
