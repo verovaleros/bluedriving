@@ -408,11 +408,15 @@ def process_devices(device_list,loc):
                 # We get location's related information
                 if flag_gps:
                     #location_gps = global_location
-                    location_gps = str(loc.get('lat'))+","+str(loc.get('lon'))
-                    if debug:
-                        print "location_gps: {}".format(location_gps)
-                    if flag_internet:
-                        location_address = get_address_from_gps(location_gps)
+                    if location_gps:
+                        try:
+                            location_gps = str(loc.get('lat'))+","+str(loc.get('lon'))
+                            if debug:
+                                print "location_gps: {}".format(location_gps)
+                            if flag_internet:
+                                location_address = get_address_from_gps(location_gps)
+                        except:
+                            location_address=""
 
                 # We try to lookup more information about the device
                 device_services = []
