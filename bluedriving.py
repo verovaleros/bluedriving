@@ -43,10 +43,11 @@ import time
 import sqlite3
 import bluetooth
 import time
-import gps
+#import gps
 from gps import *;
 import threading
-import getCoordinatesFromAddress
+#import getCoordinatesFromAddress
+from getCoordinatesFromAddress import getCoordinates
 from bluedrivingWebServer import createWebServer
 import lightblue
 import Queue
@@ -131,9 +132,54 @@ def usage():
     print END
  
 
+def getGPS():
+    """
+    """
+    global debug
+    global global_location
+    global threadbreak
+
+    counter = 0
+    gps_session = ""
+    gps_flag = False
+    try:
+        gps_session = gps(mode=WATCH_ENABLE)
+        
+        while not threadbreak:
+            if counter > 10:
+                global_location = ""
+            try:
+                location = gps_session.next()
+                location['lon']
+                location['lat']
+                if global_location == "":
+                    pygame.mixer.music.load('gps.ogg')
+                    pygame.mixer.music.play()
+                global_location = location
+                counter = 0
+                time.sleep(0.5)
+            except:
+                counter = counter + 1
+                pass
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        threadbreak = True
+    except Exception as inst:
+        print 'Exception getGPS()'
+        threadbreak = True
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
+""""
+#FUNCTION DEPRECATED
 def get_coordinates_from_gps():
-    """
-    """
     global debug
     global global_location
     global threadbreak
@@ -195,7 +241,7 @@ def get_coordinates_from_gps():
         print 'x =', x
         print 'y =', y
         sys.exit(1)
-
+"""
 def get_address_from_gps(location_gps):
     global debug
     global verbose
@@ -214,7 +260,9 @@ def get_address_from_gps(location_gps):
                 address = address_cache[location_gps]
             except:
                 if flag_internet:
-                    [coordinates,address] = getCoordinatesFromAddress.getCoordinates(location_gps)
+                    print location_gps
+                    #[coordinates,address] = getCoordinatesFromAddress.getCoordinates(location_gps)
+                    [coordinates,address] = getCoordinates(location_gps)
                     address = address.encode('utf-8')
                     if debug:
                         print 'Coordinates: {} Address: {}'.format(coordinates,address)
@@ -272,7 +320,8 @@ def bluetooth_discovering():
                     
                     if data:
                         # We start a new thread that process the information retrieved 
-                        process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,))
+                        loc = global_location
+                        process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,loc))
                         process_device_information_thread.setDaemon(True)
                         process_device_information_thread.start()
                     else: 
@@ -284,6 +333,8 @@ def bluetooth_discovering():
                                 pygame.mixer.music.load('nodevice-withgps.ogg')
                                 pygame.mixer.music.play()
                             else:
+                                print 'No global location on discover_devices'
+                                print global_location
                                 # If we do not have gps, play a sound
                                 pygame.mixer.music.load('nodevice-withoutgps.ogg')
                                 pygame.mixer.music.play()
@@ -324,14 +375,14 @@ def bluetooth_discovering():
         print 'y =', y
         sys.exit(1)
 
-def process_devices(device_list):
+def process_devices(device_list,loc):
     global debug
     global verbose
     global threadbreak
     global flag_gps
     global flag_internet
     global flag_sound
-    global global_location
+    #global global_location
     global list_devices
     global queue_devices
 
@@ -356,7 +407,10 @@ def process_devices(device_list):
 
                 # We get location's related information
                 if flag_gps:
-                    location_gps = global_location
+                    #location_gps = global_location
+                    location_gps = str(loc.get('lat'))+","+str(loc.get('lon'))
+                    if debug:
+                        print "location_gps: {}".format(location_gps)
                     if flag_internet:
                         location_address = get_address_from_gps(location_gps)
 
@@ -388,7 +442,7 @@ def process_devices(device_list):
 
                 if debug:
                     print 'Data loaded to queue'
-                time.sleep(0.5)
+                #time.sleep(0.5)
         # no devices?
         
     except KeyboardInterrupt:
@@ -851,7 +905,8 @@ def main():
 
         # Here we start the thread to get gps location        
         if flag_gps and not fake_gps:
-            gps_thread = threading.Thread(None,target=get_coordinates_from_gps)
+            #gps_thread = threading.Thread(None,target=get_coordinates_from_gps)
+            gps_thread = threading.Thread(None,target=getGPS)
             gps_thread.setDaemon(True)
             gps_thread.start()
         elif fake_gps:
