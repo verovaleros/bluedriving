@@ -22,13 +22,12 @@
 # Changelog
 # - Added a function to list for a given mac the date, position, and name
 #
-# TODO
-#
-# KNOWN BUGS
-#
 # Description
 # manageDB is a python tool to manage bluedriving database
 #
+# TODO
+# - Given one date, print all the devices found that day, along with the gps and address.
+# - When -L is used, check the address in the DB. If it exists, print it and do not search it again. If not, search for it and store it on the DB.
 
 # standar imports
 import sys
