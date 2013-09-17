@@ -297,7 +297,11 @@ def db_merge(db_merged_connection,db_to_merge_connection):
 
     try:
         # Adding data from devices database
-        result = db_to_merge_connection.execute("SELECT Id, Mac,Info FROM Devices")
+        try:
+            result = db_to_merge_connection.execute("SELECT Id, Mac, Info FROM Devices")
+        except:
+            print "Exception in sql query: \"SELECT Id, Mac,Info FROM Devices\""
+            sys.exit(0)
         devices = result.fetchall()
         for (MacId,Mac,Info) in devices:
             #result = db_merged_connection.execute("INSERT OR IGNORE INTO Devices (Mac,Info) VALUES(\"11:11:11:11:11:11\",\"[]\");")
@@ -306,35 +310,61 @@ def db_merge(db_merged_connection,db_to_merge_connection):
                 count_dev = count_dev+1
             except:
                 print 'Exception mergin this device: {}, {}'.format(Mac,Info[0])
+                sys.exit(0)
 
             db_merged_connection.commit()
 
             #Adding data from locations table
-            result = db_to_merge_connection.execute("SELECT MacId,GPS,FirstSeen,LastSeen,Address,Name FROM Locations WHERE MacId="+str(MacId)+";")
+            try:
+                result = db_to_merge_connection.execute("SELECT MacId,GPS,FirstSeen,LastSeen,Address,Name FROM Locations WHERE MacId="+str(MacId)+";")
+            except:
+                print "Exception in sql query: \"SELECT MacId,GPS,FirstSeen,LastSeen,Address,Name FROM Locations WHERE MacId=\""
+                sys.exit(0)
             locationinfo = result.fetchall()
             for (MacIdLoc,GPS,FSeen,LSeen,Address,Name) in locationinfo:
                     if debug:
                         print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
                     newMacId = db_get_id_from_mac(db_merged_connection,Mac)
-                    result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\","+Name+");")
+                    if debug:
+                        print 'New macId: {}'.format(newMacId)
+                    try:
+                        result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\",\""+str(Name)+"\");")
+                    except:
+                        print "Exception in sql query: \"INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES(\""
+                        sys.exit(0)
                     count_loc = count_loc+1
 
             db_merged_connection.commit()
 
             #Adding data from notes table
-            result = db_to_merge_connection.execute("SELECT MacId,Note FROM Notes WHERE MacId="+str(MacId)+";")
+            try:
+                result = db_to_merge_connection.execute("SELECT Id,Note FROM Notes WHERE Id="+str(MacId)+";")
+            except:
+                print "Exeption in sql query: \"SELECT Id,Note FROM Notes WHERE Id=\""
+                sys.exit(0)
             notesinfo = result.fetchall()
-            for (MacId,Note) in notesinfo:
+            for (Id,Note) in notesinfo:
                 newMacId = db_get_id_from_mac(db_merged_connection,Mac)
-                result = db_merged_connection.execute("INSERT OR IGNORE INTO Notes (MacId, Note) VALUES("+str(newMacId)+",\""+str(Note)+"\");")
+                try:
+                    result = db_merged_connection.execute("INSERT OR IGNORE INTO Notes (Id, Note) VALUES("+str(newMacId)+",\""+str(Note)+"\");")
+                except:
+                    print "Exception in sql query: \"INSERT OR IGNORE INTO Notes (Id, Note) VALUES(\""
+                    sys.exit(0)
                 count_not = count_not+1
 
             #Adding data from alarm table
-            result = db_to_merge_connection.execute("SELECT MacId,Alarm FROM Notes WHERE MacId="+str(MacId)+";")
+            try:
+                result = db_to_merge_connection.execute("SELECT Id,Alarm FROM Alarms WHERE Id="+str(MacId)+";")
+            except:
+                print "Error in sql query: \"SELECT Id,Alarm FROM Alarms WHERE MacId=\""
             notesinfo = result.fetchall()
-            for (MacId,alarm) in notesinfo:
+            for (Id,alarm) in notesinfo:
                 newMacId = db_get_id_from_mac(db_merged_connection,Mac)
-                result = db_merged_connection.execute("INSERT OR IGNORE INTO Alarms (MacId, Alarm) VALUES("+str(newMacId)+",\""+str(alarm)+"\");")
+                try:
+                    result = db_merged_connection.execute("INSERT OR IGNORE INTO Alarms (Id, Alarm) VALUES("+str(newMacId)+",\""+str(alarm)+"\");")
+                except:
+                    print "Exception in sql query: \"INSERT OR IGNORE INTO Alarms (Id, Alarm) VALUES(\""
+                    sys.exit(0)
                 count_ala = count_ala+1
 
             if debug:
