@@ -652,7 +652,7 @@ def db_add_location(connection,device_id,location_gps,first_seen,location_addres
 
     try:
         try:
-            connection.execute("INSERT INTO Locations(MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)",(int(device_id), repr(location_gps),repr(first_seen),repr(first_seen),repr(location_address),repr(device_name)))
+            connection.execute("INSERT INTO Locations(MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)",(int(device_id), repr(location_gps),repr(first_seen),repr(first_seen),repr(location_address),repr(device_name.replace("'","''"))))
             connection.commit()
             if debug:
                 print 'Location added'
