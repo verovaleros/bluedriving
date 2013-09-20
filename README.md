@@ -58,7 +58,7 @@ By default the tool tries to get GPS information from gpsd continually.
 
 Stand-alone web server
 ----------------------
-The web server was separated to help visualize the data without capturing more devices. If you want to analyze a previous database, or analyze the data off line, you can start the webs erver alone.
+The web server was separated to help visualize the data without capturing more devices. If you want to analyze a previous database, or analyze the data off line, you can start the web server alone.
 
 Using multiples bluetooth dongles
 ----------------------------------
@@ -135,7 +135,7 @@ Start but do not look up devices information. You will not have the extra info, 
 Start with the web server and debug mode.
 
 
-Connecting to a cel phone GPS
+Connecting to a cell phone GPS
 -----------------------------
 - Activate the bluetooth on your phone
 - Check that you can use the bluetooth device on the pi without problems.
@@ -164,7 +164,7 @@ Connecting to a cel phone GPS
             Channel: 1
 
     In this case the channel is 20
-- Create a configuration for the future permanent connection from your pi to your cel phone in the file /etc/bluetooth/rfcomm.conf
+- Create a configuration for the future permanent connection from your pi to your cell phone in the file /etc/bluetooth/rfcomm.conf
     rfcomm0 {
     bind yes;
     device <MAC of your phone>;
