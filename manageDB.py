@@ -812,32 +812,81 @@ def main():
                     number_of_devices = db_count_devices(connection)
                     print '\tNumber of devices on the database: {}'.format(number_of_devices)
                 elif locations_and_dates:
+                    if debug:
+                        print '* In get locations and dates from device'
+                    addresslist={}
+                    address=""
+                    address_to_insert=""
                     locations_dates_results = db_locations_and_dates(connection,mac)
                     if not quiet:
                         print "\tMAC Address: {}".format(mac)
                     for (Id,gps,fseen,lseen,name,address) in locations_dates_results:
-                        if gps != "False":
-                            a = gps
-                            addr= getCoordinates(str(a.strip("\'").strip("\'")))
-                            address = addr[1]
-                            address = address.encode('utf-8')
-                            try:
-                                connection.execute("UPDATE Locations SET Address=? WHERE Id=?", (str(address),Id))
-                            except:
-                                print "Exception updating device address"
-                            print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address))
+                        address = address.encode('utf-8')
+                        if debug:
+                            print '* This is the data that is currently being processed:'
+                            print '* Id: {}, GPS: {}, FirstSeen: {}, LastSeen: {}, Name: {}, Address: {}'.format(Id,gps,fseen,lseen,name,address)
+                            print
+                        if 'False' not in gps or gps != "" or "GPS" not in gps:
+                            if debug:
+                                print '* gps: {} is not \'False\' nor empty nor \'GPS\''.format(gps)
+                                print 
+                            if "NO ADDRESS" in address or address == " ":
+                                if debug:
+                                    print '* address: {} is not \'NO ADDRESS\' nor empty'.format(address)
+                                    print
+                                try:
+                                    address_to_insert = addresslist[str(gps)]
+                                    if debug:
+                                        print '* Address to insert: {}'.format(address_to_insert)
+                                        print
+                                    print 'Address cached: {}'.format(address_to_insert)
+                                except KeyboardInterrupt: 
+                                    print 'Exiting'
+                                    sys.exit(1)
+                                    break
+                                except:
+                                    a = gps
+                                    addr= getCoordinates(str(a.strip("\'").strip("\'")))
+                                    address_to_insert = addr[1]
+                                    address_to_insert = address_to_insert.encode('utf-8')
+                                    try:
+                                        addresslist[gps]=address_to_insert 
+                                    except:
+                                        print 'Cannot add new address to cache'
+                                try:
+                                    if debug:
+                                        print '* Updating Locations table, setting address.'
+                                    connection.execute("UPDATE Locations SET Address=\""+str(address_to_insert)+"\" WHERE Id="+str(Id))
+                                    connection.commit()
+                                except KeyboardInterrupt: 
+                                    print 'Exiting'
+                                    sys.exit(1)
+                                    break
+                                except:
+                                    print "Exception updating device address"
+                                    print "{}".format(gps)
+                                    print "{}".format(address)
+                                    print "{}".format(address_to_insert)
+                                print "\t\t*{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
+                            else:
+                                if debug:
+                                    print 'Address already exists'
+                                print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
                         else:
-                            print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
+                            if debug:
+                                print 'There is no GPS.'
+                            print "\t\t#{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
                 elif grep_locations:
                     locations = db_grep_locations(connection,coordinates)
                     if locations:
                         for (name,macid,fseen,gps) in locations:
                             mac = db_get_mac_from_id(connection,macid)
-                            print '{}::{} {} {}'.format(mac,name,fseen,gps)
+                            print ' {}::{} {} {}'.format(mac,name,fseen,gps)
                 else:
                     print "Nothing to do. Please select an option."
 
                 if connection: 
+                    connection.commit()
                     connection.close()
                     if not quiet:
                         print "[+] Connection closed"
