@@ -821,10 +821,10 @@ def main():
                             addr= getCoordinates(str(a.strip("\'").strip("\'")))
                             address = addr[1]
                             address = address.encode('utf-8')
-							try:
-								connection.execute("UPDATE Locations SET Address=? WHERE Id=?", (str(address),Id))
-							except:
-								print "Exception updating device address"
+                            try:
+                                connection.execute("UPDATE Locations SET Address=? WHERE Id=?", (str(address),Id))
+                            except:
+                                print "Exception updating device address"
                             print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address))
                         else:
                             print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
