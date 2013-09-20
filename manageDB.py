@@ -192,7 +192,7 @@ def db_count_devices(connection):
 
 def db_locations_and_dates(connection,mac):
     """
-    This function returns a set of GPS, FSeen, LSeen, Name and Address, for a given mac.
+    This function returns a set of Id, GPS, FSeen, LSeen, Name and Address, for a given mac.
     """
     global debug
     global verbose
@@ -200,7 +200,7 @@ def db_locations_and_dates(connection,mac):
     try:
         macId = db_get_id_from_mac(connection, mac)
         if macId:
-            result = connection.execute("SELECT GPS, FirstSeen, LastSeen, Name, Address FROM Locations WHERE MacId="+str(macId)+" ORDER BY FirstSeen ASC;")
+            result = connection.execute("SELECT Id, GPS, FirstSeen, LastSeen, Name, Address FROM Locations WHERE MacId="+str(macId)+" ORDER BY FirstSeen ASC;")
             if result:
                 result = result.fetchall()
                 return result
@@ -815,12 +815,16 @@ def main():
                     locations_dates_results = db_locations_and_dates(connection,mac)
                     if not quiet:
                         print "\tMAC Address: {}".format(mac)
-                    for (gps,fseen,lseen,name,address) in locations_dates_results:
+                    for (Id,gps,fseen,lseen,name,address) in locations_dates_results:
                         if gps != "False":
                             a = gps
                             addr= getCoordinates(str(a.strip("\'").strip("\'")))
                             address = addr[1]
                             address = address.encode('utf-8')
+							try:
+								connection.execute("UPDATE Locations SET Address=? WHERE Id=?", (str(address),Id))
+							except:
+								print "Exception updating device address"
                             print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address))
                         else:
                             print "\t\t{}: {}-{}, {} ".format(name, fseen, lseen, gps)
