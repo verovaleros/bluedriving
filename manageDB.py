@@ -821,6 +821,7 @@ def main():
                     if not quiet:
                         print "\tMAC Address: {}".format(mac)
                     for (Id,gps,fseen,lseen,name,address) in locations_dates_results:
+			# This part of the code needs a LOT of improvements. Hopefully fixing it soon.
                         address = address.encode('utf-8')
                         if debug:
                             print '* This is the data that is currently being processed:'
@@ -845,6 +846,12 @@ def main():
                                     sys.exit(1)
                                     break
                                 except:
+				    try:
+					str(gps).split(",")[1]
+				    except:
+					print '\t\tNO GPS.'
+                                        print "\t\t\tIgnoring: {}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
+					break
 				    time.sleep(1)
                                     a = gps
                                     addr= getCoordinates(str(a.strip("\'").strip("\'")))
@@ -860,8 +867,10 @@ def main():
 				    if len(address_to_insert) > 5:
 					    connection.execute("UPDATE Locations SET Address=\""+str(address_to_insert)+"\" WHERE Id="+str(Id))
 					    connection.commit()
+                                            print "\t\t*{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
 			            else:
-					    print 'Address content seems incorrect'
+					    print '\t\tAddress content seems incorrect'
+                                            print "\t\t\tNot updating: {}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
                                 except KeyboardInterrupt: 
                                     print 'Exiting'
                                     sys.exit(1)
@@ -871,7 +880,6 @@ def main():
                                     print "{}".format(gps)
                                     print "{}".format(address)
                                     print "{}".format(address_to_insert)
-                                print "\t\t*{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
                             else:
                                 if debug:
                                     print 'Address already exists'
