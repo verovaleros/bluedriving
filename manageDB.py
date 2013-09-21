@@ -830,7 +830,7 @@ def main():
                             if debug:
                                 print '* gps: {} is not \'False\' nor empty nor \'GPS\''.format(gps)
                                 print 
-                            if ('NO ADDRESS' in address) or (address == ' ') or (len(address)<3):
+                            if ('NO ADDRESS' in address) or (len(address)<8):
                                 if debug:
                                     print '* address: {} is not \'NO ADDRESS\' nor empty'.format(address)
                                     print
