@@ -826,7 +826,7 @@ def main():
                             print '* This is the data that is currently being processed:'
                             print '* Id: {}, GPS: {}, FirstSeen: {}, LastSeen: {}, Name: {}, Address: {}'.format(Id,gps,fseen,lseen,name,address)
                             print
-                        if (str(gps) != 'False') or (str(gps) != ' ') or (str(gps) != 'GPS') or ('NO GPS' not in str(gps)):
+                        if (str(gps) != "False") or (str(gps) != ' ') or (str(gps) != 'GPS') or ('NO GPS' not in str(gps)):
                             if debug:
                                 print '* gps: {} is not \'False\' nor empty nor \'GPS\''.format(gps)
                                 print 
@@ -857,8 +857,11 @@ def main():
                                 try:
                                     if debug:
                                         print '* Updating Locations table, setting address.'
-                                    connection.execute("UPDATE Locations SET Address=\""+str(address_to_insert)+"\" WHERE Id="+str(Id))
-                                    connection.commit()
+				    if len(address_to_insert) > 5:
+					    connection.execute("UPDATE Locations SET Address=\""+str(address_to_insert)+"\" WHERE Id="+str(Id))
+					    connection.commit()
+			            else:
+					    print 'Address content seems incorrect'
                                 except KeyboardInterrupt: 
                                     print 'Exiting'
                                     sys.exit(1)

@@ -386,8 +386,8 @@ def process_devices(device_list,loc):
     global list_devices
     global queue_devices
 
-    location_gps = "NO GPS DATA"
-    location_address = "NO ADDRESS RETRIEVED"
+    location_gps = ""
+    location_address = ""
     ftime = ""
     flag_new_device = False
     try:
