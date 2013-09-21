@@ -515,7 +515,7 @@ def db_grep_names(connection,string):
 
     try:
         try:
-            result = connection.execute("SELECT DISTINCT Name,MacId FROM Locations WHERE Name LIKE \"%"+str(string)+"%\"") 
+            result = connection.execute("SELECT DISTINCT MacId,Name FROM Locations WHERE Name LIKE \"%"+str(string)+"%\"") 
             if result:
                 result = result.fetchall()
                 return result
@@ -796,9 +796,9 @@ def main():
                 elif grep_names:
                     similar_names = db_grep_names(connection,string)
                     if similar_names:
-                        for (name,macId) in similar_names:
+                        for (macId,name) in similar_names:
                             mac = db_get_mac_from_id(connection,macId)
-                            print "\t{} ({})".format(name, mac)
+                            print "\t{} | {}".format(mac, name)
                 elif rank_devices:
                     ranking = db_rank_devices(connection,limit)
                     if ranking:
@@ -826,11 +826,11 @@ def main():
                             print '* This is the data that is currently being processed:'
                             print '* Id: {}, GPS: {}, FirstSeen: {}, LastSeen: {}, Name: {}, Address: {}'.format(Id,gps,fseen,lseen,name,address)
                             print
-                        if 'False' not in gps or gps != "" or "GPS" not in gps:
+                        if (str(gps) != 'False') or (str(gps) != ' ') or (str(gps) != 'GPS') or ('NO GPS' not in str(gps)):
                             if debug:
                                 print '* gps: {} is not \'False\' nor empty nor \'GPS\''.format(gps)
                                 print 
-                            if "NO ADDRESS" in address or address == " ":
+                            if ('NO ADDRESS' in address) or (address == ' ') or (len(address)<3):
                                 if debug:
                                     print '* address: {} is not \'NO ADDRESS\' nor empty'.format(address)
                                     print
@@ -845,6 +845,7 @@ def main():
                                     sys.exit(1)
                                     break
                                 except:
+				    time.sleep(1)
                                     a = gps
                                     addr= getCoordinates(str(a.strip("\'").strip("\'")))
                                     address_to_insert = addr[1]
