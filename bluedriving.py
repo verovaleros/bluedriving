@@ -386,8 +386,8 @@ def process_devices(device_list,loc):
     global list_devices
     global queue_devices
 
-    location_gps = "NO GPS DATA"
-    location_address = "NO ADDRESS RETRIEVED"
+    location_gps = ""
+    location_address = ""
     ftime = ""
     flag_new_device = False
     try:
@@ -652,7 +652,7 @@ def db_add_location(connection,device_id,location_gps,first_seen,location_addres
 
     try:
         try:
-            connection.execute("INSERT INTO Locations(MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)",(int(device_id), repr(location_gps),repr(first_seen),repr(first_seen),repr(location_address),repr(device_name)))
+            connection.execute("INSERT INTO Locations(MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES (?, ?, ?, ?, ?, ?)",(int(device_id), repr(location_gps),repr(first_seen),repr(first_seen),repr(location_address),repr(device_name.replace("'","''"))))
             connection.commit()
             if debug:
                 print 'Location added'
