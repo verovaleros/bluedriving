@@ -509,6 +509,66 @@ def db_grep_names(connection,string):
         print 'y =', y
         sys.exit(1)
 
+def db_update_address(connection,mac=False):
+    """
+    
+    """
+    global debug
+    global verbose
+
+    result = ""
+    addr=""
+    MacId=""
+    GPS=""
+    Address=""
+
+    try:
+            if mac:
+                macid = db_get_id_from_mac(connection, mac)
+                result = connection.execute("SELECT MacId,GPS,Address FROM Locations WHERE MacId="+str(macid)+";") 
+            else:
+                result = connection.execute("SELECT MacId,GPS,Address FROM Locations WHERE Address like \"NO ADDRESS RETRIEVED\" OR Address=\"\";") 
+            if result:
+                result = result.fetchall()
+                print
+                for (MacId,GPS,Address) in result:
+                    if GPS != 'False':
+                        if Address in ['NO ADDRESS RETRIEVED','']:
+                            temp= getCoordinates(GPS)
+                            temp= getCoordinates(str(GPS.strip("\'").strip("\'")))
+                            addr = temp[1]
+                            addr = addr.encode('utf-8')
+                            result_update = connection.execute("UPDATE Locations SET Address=? WHERE MacId=? AND GPS=?;",(repr(addr),str(MacId),str(GPS))) 
+                            print 'Updating {}'.format(mac)
+                            print '   {} :: {} :: {}'.format(GPS, Address.encode('utf-8'), addr)
+                        else:
+                            print 'Address of the device already exists: {}'.format(mac)
+                            print '   {} :: {}'.format(GPS, Address.encode('utf-8'))
+
+                    else:
+                        print 'No location stored for device {}'.format(mac)
+                        print '   {} {} {}'.format(MacId, GPS, Address)
+                    time.sleep(1)
+                    print
+            else:  
+                print 'No results found with empty address to update.'
+            connection.commit()
+    
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_update_address(connection,mac=False) function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        x, y = inst # _getitem_ allows args to be unpacked directly
+        print 'x =', x
+        print 'y =', y
+        sys.exit(1)
+
+
 def db_grep_locations(connection,coordinates):
     """
     This function returns a list of mac, name and first seen of devices that are near the given coordinates.
@@ -688,11 +748,12 @@ def main():
     locations_and_dates=False
     grep_locations=False
     coordinates=""
+    update_address=False
 
     try:
 
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:S:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates=","grep-locations="])
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:S:u:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates=","grep-locations=","update-address="])
     except:
         usage()
         exit(-1)
@@ -714,6 +775,7 @@ def main():
         if opt in ("-c", "--create-db"): database = arg; create_db=True
         if opt in ("-L", "--get-locations-with-dates"): mac = arg; locations_and_dates=True
         if opt in ("-S", "--grep-locations"): coordinates = arg; grep_locations=True
+        if opt in ("-u","--update-address"): device_mac = arg; update_address=True
 
 
     try:
@@ -799,6 +861,11 @@ def main():
                         for (name,macid,fseen,gps) in locations:
                             mac = db_get_mac_from_id(connection,macid)
                             print '{}::{} {} {}'.format(mac,name,fseen,gps)
+                elif update_address:
+                    if device_mac:
+                            db_update_address(connection, device_mac)
+                    else:
+                            db_update_address(connection)
                 else:
                     print "Nothing to do. Please select an option."
 
