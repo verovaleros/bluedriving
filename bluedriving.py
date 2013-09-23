@@ -66,7 +66,11 @@ except:
     print 'Library needed. apt-get install python-lightblue'
     exit(-1)
 import Queue
-import pygame
+try:
+    import pygame
+except:
+    print 'Library needed. apt-get install python-pygame'
+    exit(-1)
 import getpass
 import smtplib
 
