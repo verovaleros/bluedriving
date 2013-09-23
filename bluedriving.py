@@ -63,7 +63,7 @@ from bluedrivingWebServer import createWebServer
 try:
     import lightblue
 except:
-    print 'Library needed. apt-get install python-lightblue"
+    print 'Library needed. apt-get install python-lightblue'
     exit(-1)
 import Queue
 import pygame
