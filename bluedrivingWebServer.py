@@ -50,6 +50,7 @@ import copy
 debug=0
 vernum="0.1.2"
 database = 'bluedriving.db'
+verbose=False
 ####################
 
 
@@ -793,6 +794,7 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
 
     def do_GET(self):
         global debug
+        global verbose
         note = ""
         alarm_type = ""
         try:
@@ -818,6 +820,8 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                 mac = str(self.path.split('mac=')[1].split('&')[0])
                 note = str(self.path.split('note=')[1])
                 json_to_send = note_to('add', mac, note)
+                if verbose:
+                    print mac,note
 
                 self.send_response(200)
                 self.send_header('Content-Type',        'text/html')
@@ -865,6 +869,8 @@ class MyHandler (BaseHTTPServer.BaseHTTPRequestHandler):
                     print ' >> Get /addalarm'
                 mac = str(self.path.split('mac=')[1].split('&')[0])
                 alarm_type = str(self.path.split('type=')[1].split('&')[0])
+                if verbose:
+                    print mac,alarm_type
                 json_to_send = alarm_to('add', mac, alarm_type)
 
                 self.send_response(200)
@@ -1003,6 +1009,7 @@ def main():
     try:
         global debug
         global database
+        global verbose
         # Default port to use
         webserver_port = 8000
         webserver_ip = "127.0.0.1"

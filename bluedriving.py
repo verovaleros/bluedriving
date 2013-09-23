@@ -40,18 +40,37 @@ import getopt
 import copy
 import os
 import time
-import sqlite3
-import bluetooth
+try:
+    import sqlite3
+except:
+    print 'Library needed. apt-get install python-sqlite'
+    exit(-1)
+try:
+    import bluetooth
+except:
+    print 'Library needed. apt-get install python-bluez'
+    exit(-1)
 import time
-#import gps
-from gps import *;
+try:
+    from gps import *;
+except:
+    print 'Library needed. apt-get install python-gps . Includes gpsd and gpsd-clients'
+    exit(-1)
 import threading
 #import getCoordinatesFromAddress
 from getCoordinatesFromAddress import getCoordinates
 from bluedrivingWebServer import createWebServer
-import lightblue
+try:
+    import lightblue
+except:
+    print 'Library needed. apt-get install python-lightblue'
+    exit(-1)
 import Queue
-import pygame
+try:
+    import pygame
+except:
+    print 'Library needed. apt-get install python-pygame'
+    exit(-1)
 import getpass
 import smtplib
 
