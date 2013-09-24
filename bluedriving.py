@@ -352,8 +352,9 @@ def bluetooth_discovering():
                                 pygame.mixer.music.load('nodevice-withgps.ogg')
                                 pygame.mixer.music.play()
                             else:
-                                print 'No global location on discover_devices'
-                                print global_location
+                                if debug:
+                                    print 'No global location on discover_devices'
+                                    print global_location
                                 # If we do not have gps, play a sound
                                 pygame.mixer.music.load('nodevice-withoutgps.ogg')
                                 pygame.mixer.music.play()
