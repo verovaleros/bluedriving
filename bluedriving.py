@@ -308,7 +308,7 @@ def get_address_from_gps(location_gps):
         print 'x =', x
         print 'y =', y
         sys.exit(1)
-
+"""
 # Discovering function
 def bluetooth_discovering():
     """
