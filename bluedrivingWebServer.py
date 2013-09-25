@@ -114,7 +114,7 @@ def createWebServer(port, ip_addresss):
         print ' Received, shutting down the server.'
         httpd.socket.close()
     except:
-        print "Probably can not assing that IP address. Are you sure youd device has this IP?"
+        print "Probably can not assing that IP address. Are you sure your device has this IP?"
         print
         sys.exit(-1)
 
