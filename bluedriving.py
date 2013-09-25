@@ -258,6 +258,7 @@ def bluetooth_discovering():
     global flag_sound
     global global_location
 
+    counter=0
     try:
         if debug:
             print '# In bluetooth_discovering() function'
@@ -272,65 +273,72 @@ def bluetooth_discovering():
             data = ""
 
             try:
-                try:
+                if debug:
+                    print '# In bluetooth_discovering() function'
+                    print '# Discovering devices...'
+                    print
+                # Discovering devices
+                data = bluetooth.bluez.discover_devices(duration=5,lookup_names=True)
+                #data = bluetooth.discover_devices(duration=3,lookup_names=True)
+                if debug:
+                    print '# In bluetooth_discovering() function'
+                    print '# Data retrieved: {}'.format(data)
+                    print
+                
+                if data:
+                    # We start a new thread that process the information retrieved 
+                    loc = global_location
                     if debug:
-                        print '# In bluetooth_discovering() function'
-                        print '# Discovering devices...'
+                        print '# We start a new thread that process the information retrieved'
+                        print '# loc={}'.format(loc)
+                        print '# threading.Thread(None,target = process_devices,args=(data,loc))'
+                        print '# process_device_information_thread.setDaemon(True)'
                         print
-                    # Discovering devices
-                    data = bluetooth.bluez.discover_devices(duration=3,lookup_names=True)
-                    #data = bluetooth.discover_devices(duration=3,lookup_names=True)
-                    if debug:
-                        print '# In bluetooth_discovering() function'
-                        print '# Data retrieved: {}'.format(data)
-                        print
-                    
-                    if data:
-                        # We start a new thread that process the information retrieved 
-                        loc = global_location
-                        if debug:
-                            print '# We start a new thread that process the information retrieved'
-                            print '# loc={}'.format(loc)
-                            print '# threading.Thread(None,target = process_devices,args=(data,loc))'
-                            print '# process_device_information_thread.setDaemon(True)'
-                            print
-                        process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,loc))
-                        process_device_information_thread.setDaemon(True)
-                        process_device_information_thread.start()
-                    else: 
-                        # No devices
-                        print '  -'
-                        if flag_sound:
-                            if global_location:
-                                # If we have gps, play a sound
-                                pygame.mixer.music.load('nodevice-withgps.ogg')
-                                pygame.mixer.music.play()
-                            else:
-                                if debug:
-                                    print 'No global location on discover_devices'
-                                    print global_location
-                                # If we do not have gps, play a sound
-                                pygame.mixer.music.load('nodevice-withoutgps.ogg')
-                                pygame.mixer.music.play()
-                except:
-                    if debug:
-                        print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
-                    continue
+                    process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,loc))
+                    process_device_information_thread.setDaemon(True)
+                    process_device_information_thread.start()
+                else: 
+                    # No devices
+                    print '  -'
+                    if flag_sound:
+                        if global_location:
+                            # If we have gps, play a sound
+                            pygame.mixer.music.load('nodevice-withgps.ogg')
+                            pygame.mixer.music.play()
+                        else:
+                            if debug:
+                                print 'No global location on discover_devices'
+                                print global_location
+                            # If we do not have gps, play a sound
+                            pygame.mixer.music.load('nodevice-withoutgps.ogg')
+                            pygame.mixer.music.play()
+                counter=0
             except KeyboardInterrupt:
                 print 'Exiting. It may take a few seconds.'
                 threadbreak = True
             except Exception as inst:
-                print 'Exception in while of bluetooth_discovering() function'
-                threadbreak = True
-                print 'Ending threads, exiting when finished'
-                print type(inst) # the exception instance
-                print inst.args # arguments stored in .args
-                print inst # _str_ allows args to printed directly
-                x, y = inst # _getitem_ allows args to be unpacked directly
-                print 'x =', x
-                print 'y =', y
-                sys.exit(1)
-
+                if debug:
+                    print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+                counter+=1
+                if counter > 30:
+                    print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+                    threadbreak=True
+                    print 'Ending threads, exiting when finished'
+                    print
+                    print 'Information of the exception: '
+                    print '----------------------------------------------------------------------------'
+                    print type(inst) # the exception instance
+                    print inst.args # arguments stored in .args
+                    print inst # _str_ allows args to printed directly
+                    x, y = inst # _getitem_ allows args to be unpacked directly
+                    print 'x =', x
+                    print 'y =', y
+                    print '----------------------------------------------------------------------------'
+                    break
+                    sys.exit(-1)
+                    break
+                else:
+                    continue
         threadbreak = True
         return True
 
@@ -1016,6 +1024,7 @@ def main():
                 else:
                     flag_lookup_services = True
                     print GRE+'Look up services activated'+END
+            """
             if k == 'g':
                 if flag_gps == True:
                     flag_gps = False
@@ -1025,7 +1034,7 @@ def main():
                 else:
                     flag_gps = True
                     print GRE+'GPS activated'+END
-
+            """
             if k == 'Q' or k == 'q':
                 break
 
