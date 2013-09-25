@@ -93,9 +93,13 @@ def usage():
   print "  -d, --database       If you wish to analyze another database, just give the file name here."
 
 
-def createWebServer(port, ip_addresss):
+def createWebServer(port, ip_addresss, database):
     """ Crate a web server """
     global debug
+
+    global database
+    database=database
+
     # By default bind to localhost
     server_address = (ip_addresss, port)
 
@@ -1029,7 +1033,7 @@ def main():
 
         try:
             # TODO sanitize the input of the ip_addresss and port
-            createWebServer(webserver_port, webserver_ip)
+            createWebServer(webserver_port, webserver_ip, database)
 
         except Exception, e:
             print "misc. exception (runtime error from user callback?):", e

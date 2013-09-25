@@ -940,7 +940,8 @@ def main():
                 print '# Here we start the thread to get the web server running'
                 print '# flag_run_webserver={}'.format(flag_run_webserver)
                 print
-            webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(webserver_port,webserver_ip))
+            #webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(webserver_port,webserver_ip))
+            webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(webserver_port,webserver_ip,database_name))
             webserver_thread.setDaemon(True)
             webserver_thread.start()
         else:
