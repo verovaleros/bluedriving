@@ -93,12 +93,12 @@ def usage():
   print "  -d, --database       If you wish to analyze another database, just give the file name here."
 
 
-def createWebServer(port, ip_addresss, database):
+def createWebServer(port, ip_addresss, current_database):
     """ Crate a web server """
     global debug
 
     global database
-    database=database
+    database = current_database
 
     # By default bind to localhost
     server_address = (ip_addresss, port)
