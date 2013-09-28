@@ -77,6 +77,7 @@ import smtplib
 # Global variables
 vernum = '0.1'
 debug = False
+verbose = False
 threadbreak = False
 global_location = ""
 flag_sound = True
@@ -153,6 +154,7 @@ def usage():
 
 def getGPS():
     """
+    This functions gets the gps data from the gpsd session already started.
     """
     global debug
     global global_location
@@ -196,71 +198,6 @@ def getGPS():
         print 'y =', y
         sys.exit(1)
 
-""""
-#FUNCTION DEPRECATED
-def get_coordinates_from_gps():
-    global debug
-    global global_location
-    global threadbreak
-
-    counter = 0
-    gps_session = ""
-    gps_flag = False
-    try:
-        while True:
-            if gps_session:
-                while True:
-                    if counter < 10:
-                        try:
-                            gpsdata = gps_session.next()
-                            global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
-                            if global_location and not gps_flag:
-                                pygame.mixer.music.load('gps.ogg')
-                                pygame.mixer.music.play()
-                                gps_flag = True
-                        except Exception, e:
-                            try:
-                                gpsdata = gps_session.next()
-                                global_location =  str(gpsdata['lat'])+','+str(gpsdata['lon'])
-                            except Exception,e:
-                                #print "misc. exception (runtime error from user callback?):", e
-                                global_location = False
-                                counter = counter + 1
-                    else:
-                        try:
-                            try:
-                                gps_session.close()
-                            except: 
-                                pass
-                            gps_session = gps(mode=WATCH_ENABLE)
-                            gps_session.sock.settimeout(1)
-                            counter = 0
-                            gps_flag = False
-                        except:
-                            pass
-            else:
-                try:
-                    gps_session = gps(mode=WATCH_ENABLE)
-                    gps_session.sock.settimeout(1)
-                except:
-                    time.sleep(10)
-                    pass
-
-    except KeyboardInterrupt:
-        print 'Exiting. It may take a few seconds.'
-        threadbreak = True
-    except Exception as inst:
-        print 'Exception in get_coordinates_from_gps'
-        threadbreak = True
-        print 'Ending threads, exiting when finished'
-        print type(inst) # the exception instance
-        print inst.args # arguments stored in .args
-        print inst # _str_ allows args to printed directly
-        x, y = inst # _getitem_ allows args to be unpacked directly
-        print 'x =', x
-        print 'y =', y
-        sys.exit(1)
-"""
 def get_address_from_gps(location_gps):
     global debug
     global verbose
@@ -312,7 +249,8 @@ def get_address_from_gps(location_gps):
 # Discovering function
 def bluetooth_discovering():
     """
-    This function performs a continue discovering of the nearby bluetooth devices and then sends the list of devices to the lookupdevices function.
+    This function performs a continue discovering of the nearby bluetooth devices. 
+    It sends the list of devices to the lookupdevices function.
     """
     global debug
     global verbose
@@ -320,62 +258,87 @@ def bluetooth_discovering():
     global flag_sound
     global global_location
 
+    counter=0
     try:
         if debug:
-            print '[+] In bluetooth_discovering() function'
+            print '# In bluetooth_discovering() function'
+            print '# debug={0}'.format(debug)
+            print '# verbose={0}'.format(verbose)
+            print '# threadbreak={0}'.format(threadbreak)
+            print '# flag_sound={0}'.format(flag_sound)
+            print '# global_location={0}'.format(global_location)
+            print
             
         while not threadbreak:
             data = ""
 
             try:
-                try:
+                if debug:
+                    print '# In bluetooth_discovering() function'
+                    print '# Discovering devices...'
+                    print
+                # Discovering devices
+                data = bluetooth.bluez.discover_devices(duration=5,lookup_names=True)
+                #data = bluetooth.discover_devices(duration=3,lookup_names=True)
+                if debug:
+                    print '# In bluetooth_discovering() function'
+                    print '# Data retrieved: {}'.format(data)
+                    print
+                
+                if data:
+                    # We start a new thread that process the information retrieved 
+                    loc = global_location
                     if debug:
-                        print 'Discovering devices...'
-                    # Discovering devices
-                    data = bluetooth.bluez.discover_devices(duration=3,lookup_names=True)
-                    #data = bluetooth.discover_devices(duration=3,lookup_names=True)
-                    if debug:
-                        print data
-                    
-                    if data:
-                        # We start a new thread that process the information retrieved 
-                        loc = global_location
-                        process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,loc))
-                        process_device_information_thread.setDaemon(True)
-                        process_device_information_thread.start()
-                    else: 
-                        # No devices
-                        print '  -'
-                        if flag_sound:
-                            if global_location:
-                                # If we have gps, play a sound
-                                pygame.mixer.music.load('nodevice-withgps.ogg')
-                                pygame.mixer.music.play()
-                            else:
+                        print '# We start a new thread that process the information retrieved'
+                        print '# loc={}'.format(loc)
+                        print '# threading.Thread(None,target = process_devices,args=(data,loc))'
+                        print '# process_device_information_thread.setDaemon(True)'
+                        print
+                    process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,loc))
+                    process_device_information_thread.setDaemon(True)
+                    process_device_information_thread.start()
+                else: 
+                    # No devices
+                    print '  -'
+                    if flag_sound:
+                        if global_location:
+                            # If we have gps, play a sound
+                            pygame.mixer.music.load('nodevice-withgps.ogg')
+                            pygame.mixer.music.play()
+                        else:
+                            if debug:
                                 print 'No global location on discover_devices'
                                 print global_location
-                                # If we do not have gps, play a sound
-                                pygame.mixer.music.load('nodevice-withoutgps.ogg')
-                                pygame.mixer.music.play()
-                except:
-                    if debug:
-                        print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
-                    continue
+                            # If we do not have gps, play a sound
+                            pygame.mixer.music.load('nodevice-withoutgps.ogg')
+                            pygame.mixer.music.play()
+                counter=0
             except KeyboardInterrupt:
                 print 'Exiting. It may take a few seconds.'
                 threadbreak = True
             except Exception as inst:
-                print 'Exception in while of bluetooth_discovering() function'
-                threadbreak = True
-                print 'Ending threads, exiting when finished'
-                print type(inst) # the exception instance
-                print inst.args # arguments stored in .args
-                print inst # _str_ allows args to printed directly
-                x, y = inst # _getitem_ allows args to be unpacked directly
-                print 'x =', x
-                print 'y =', y
-                sys.exit(1)
-
+                if debug:
+                    print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+                counter+=1
+                if counter > 30:
+                    print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+                    threadbreak=True
+                    print 'Ending threads, exiting when finished'
+                    print
+                    print 'Information of the exception: '
+                    print '----------------------------------------------------------------------------'
+                    print type(inst) # the exception instance
+                    print inst.args # arguments stored in .args
+                    print inst # _str_ allows args to printed directly
+                    x, y = inst # _getitem_ allows args to be unpacked directly
+                    print 'x =', x
+                    print 'y =', y
+                    print '----------------------------------------------------------------------------'
+                    break
+                    sys.exit(-1)
+                    break
+                else:
+                    continue
         threadbreak = True
         return True
 
@@ -401,7 +364,6 @@ def process_devices(device_list,loc):
     global flag_gps
     global flag_internet
     global flag_sound
-    #global global_location
     global list_devices
     global queue_devices
 
@@ -411,6 +373,10 @@ def process_devices(device_list,loc):
     flag_new_device = False
     try:
         if device_list:
+            if debug:
+                print '# In process_devices(device_list,loc) function'
+                print '# device_list len={}'.format(len(device_list))
+                print '# loc={}'.format(loc)
             for d in device_list:
                 flag_new_device = False
                 try:
@@ -426,21 +392,41 @@ def process_devices(device_list,loc):
 
                 # We get location's related information
                 if flag_gps:
-                    #location_gps = global_location
-                    if location_gps:
-                        try:
-                            location_gps = str(loc.get('lat'))+","+str(loc.get('lon'))
+                    if debug:
+                        print "# flag_gps={}".format(flag_gps)
+                    try:
+                        location_gps = str(loc.get('lat'))+","+str(loc.get('lon'))
+                        if debug:
+                            print "# location_gps={}".format(location_gps)
+                        if flag_internet:
+                            location_address = get_address_from_gps(location_gps)
                             if debug:
-                                print "location_gps: {}".format(location_gps)
-                            if flag_internet:
-                                location_address = get_address_from_gps(location_gps)
-                        except:
-                            location_address=""
+                                print "# location_address={}".format(location_gps)
+                    except:
+                        location_address=""
+                        if debug:
+                            print "# location_address={}".format(location_gps)
+                else:
+                    if loc:
+                        location_gps=loc
+                        if debug:
+                            print "# flag_gps={}".format(flag_gps)
+                            print "# location_gps={}".format(location_gps)
+                        if flag_internet:
+                            location_address = get_address_from_gps(location_gps)
+                            if debug:
+                                print "# location_address={}".format(location_gps)
 
                 # We try to lookup more information about the device
                 device_services = []
                 if flag_lookup_services:
-                    services_data = lightblue.findservices(d[0])
+                    if debug:
+                        print '# flag_lookup_services={}'.format(flag_lookup_services)
+                    try:
+                        services_data = lightblue.findservices(d[0])
+                    except:
+                        print 'Exception in process_devices, lightblue.findservices(d[0])'
+                        services_data=[]
                     if services_data:
                         for i in services_data:
                             device_services.append(i[2])
@@ -929,35 +915,74 @@ def main():
 
         # Here we start the thread to get gps location        
         if flag_gps and not flag_fake_gps:
+            if debug:
+                print '# Here we start the thread to get gps location'
+                print '# flag_gps={0}'.format(flag_gps)
+                print '# fake_gps={0}'.format(fake_gps)
+                print
             #gps_thread = threading.Thread(None,target=get_coordinates_from_gps)
             gps_thread = threading.Thread(None,target=getGPS)
             gps_thread.setDaemon(True)
             gps_thread.start()
         elif fake_gps:
-            # Verify fake_gps
+            # Here we are setting up the global location to use the fake gps
             if debug:
-                print 'Using the fake gps address: {0}'.format(fake_gps)
+                print '# Here we are setting up the global location to use the fake gps'
+                print '# flag_gps={0}'.format(flag_gps)
+                print '# fake_gps={0}'.format(fake_gps)
             global_location = fake_gps
+            if debug:
+                print '# global_location={0}'.format(global_location)
+                print
         
         # Here we start the web server
         if flag_run_webserver:
-            webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(webserver_port,webserver_ip))
+            if debug:
+                print '# Here we start the thread to get the web server running'
+                print '# flag_run_webserver={}'.format(flag_run_webserver)
+                print
+            #webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(webserver_port,webserver_ip))
+            webserver_thread = threading.Thread(None,createWebServer,"web_server",args=(webserver_port,webserver_ip,database_name))
             webserver_thread.setDaemon(True)
             webserver_thread.start()
+        else:
+            if debug:
+                print '# The webserver flag is not set. Not running webserver.'
+                print '# flag_run_webserver={}'.format(flag_run_webserver)
+                print
 
         # Here we start the discovering devices threads
+        if debug:
+            print '# Here we start the discovering devices thread'
+            print '# threading.Thread(None,target = bluetooth_discovering)'
+            print '# bluetooth_discovering_thread.setDaemon(True)'
+            print
         bluetooth_discovering_thread = threading.Thread(None,target = bluetooth_discovering)
         bluetooth_discovering_thread.setDaemon(True)
         bluetooth_discovering_thread.start()
 
         # Here we start the thread that will continuosly store data to the database
+        if debug:
+            print '# Here we start the thread that will continuosly store data to the database'
+            print '# threading.Thread(None,target = store_device_information,args=(database_name,))'
+            print '# store_device_information_thread.setDaemon(True)'
+            print
         store_device_information_thread = threading.Thread(None,target = store_device_information,args=(database_name,))
         store_device_information_thread.setDaemon(True)
         store_device_information_thread.start()
 
         # Initializating sound
         if flag_sound:
-            pygame.init()
+            if debug:
+                print '# Initializating soud'
+                print '# pygame.init()'
+            try:
+                pygame.init()
+            except:
+                print '(!) pygame couldn''t been initialized. Mutting bluedriving.'
+                flag_sound=False
+                print '(!) flag_sound=()'.format(flag_sound)
+                print
 
         # This options are for live-options interaction
         k = ""
@@ -1001,6 +1026,7 @@ def main():
                 else:
                     flag_lookup_services = True
                     print GRE+'Look up services activated'+END
+            """
             if k == 'g':
                 if flag_gps == True:
                     flag_gps = False
@@ -1010,7 +1036,7 @@ def main():
                 else:
                     flag_gps = True
                     print GRE+'GPS activated'+END
-
+            """
             if k == 'Q' or k == 'q':
                 break
 
