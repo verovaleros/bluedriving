@@ -30,7 +30,12 @@ import os, pwd, string, sys
 import getopt
 import re
 import urllib2
-import simplejson
+try:
+    import simplejson
+except:
+    print 'Library needed. apt-get install python-simplejson'
+    exit(-1)
+
 
 
 ####################
