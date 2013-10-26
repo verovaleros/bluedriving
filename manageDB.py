@@ -26,6 +26,9 @@
 # manageDB is a python tool to manage bluedriving database
 #
 # TODO
+# - with -L if the device does not exists, output nothing.
+# - check if the database file exists before using it
+# - For all the devices output all the locations with gps address and mac and vendor.
 # - Given one date, print all the devices found that day, along with the gps and address.
 # - When -L is used, check the address in the DB. If it exists, print it and do not search it again. If not, search for it and store it on the DB.
 
