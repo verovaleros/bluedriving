@@ -26,6 +26,13 @@
 # manageDB is a python tool to manage bluedriving database
 #
 # TODO
+# - It seams that when merging BOTH databases are modified. Not sure why. And the database in -d can be corrupted...
+# ../bluedriving-git/manageDB.py -d bluedriving.all.db -n
+#         [+] Database: bluedriving.all.db
+#         [+] Connection established
+#         Exception in db_list_devices_and_names
+#         [+] Connection closed
+
 # - with -L if the device does not exists, output nothing.
 # - check if the database file exists before using it
 # - For all the devices output all the locations with gps address and mac and vendor.
