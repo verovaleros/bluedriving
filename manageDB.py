@@ -26,6 +26,7 @@
 # manageDB is a python tool to manage bluedriving database
 #
 # TODO
+# - If the name of the device has a ' then we have sqlinjection
 # - It seams that when merging BOTH databases are modified. Not sure why. And the database in -d can be corrupted...
 # ../bluedriving-git/manageDB.py -d bluedriving.all.db -n
 #         [+] Database: bluedriving.all.db
