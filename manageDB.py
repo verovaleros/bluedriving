@@ -30,11 +30,11 @@
 # position without GPS it stop searching for more (?)
 # For example the MAC 00:09:DD:50:24:2A has 7 Locations in the db win GPS (9 in total), but the tool returns only 5 positions.
 # ./manageDB.py -d bluedriving.all.db -L 00:09:DD:50:24:2A -q 
-#                'ZORO': '2013-08-15 12:23:40'-'2013-08-15 12:23:40', '50.076935,14.418241667' (Na zbořenci 271/2, 120 00 Prague 2-New Town, Czech Republic)
-#                'ZORO': '2013-08-15 12:23:46'-'2013-08-15 12:23:46', '50.07693,14.418201667' (Na zbořenci 271/2, 120 00 Prague 2-New Town, Czech Republic)
+#                'ZORO': '2013-08-15 12:23:40'-'2013-08-15 12:23:40', '50.076935,14.418241667' (Na zborenci 271/2, 120 00 Prague 2-New Town, Czech Republic)
+#                'ZORO': '2013-08-15 12:23:46'-'2013-08-15 12:23:46', '50.07693,14.418201667' (Na zborenci 271/2, 120 00 Prague 2-New Town, Czech Republic)
 #                'ZORO': '2013-08-19 07:49:37'-'2013-08-19 07:49:37', '50.076913333,14.418308333' (Charles Square 292/15, 120 00 Prague 2-New Town, Czech Republic)
-#                'ZORO': '2013-08-19 07:51:41'-'2013-08-19 07:51:41', '50.077228333,14.417115' (Na zbořenci 3-5, 120 00 Prague 2, Czech Republic)
-#                'ZORO': '2013-08-19 13:21:52'-'2013-08-19 13:21:52', '50.0772,14.418968333' (Odborů 288/8, 120 00 Prague-Prague 2, Czech Republic)
+#                'ZORO': '2013-08-19 07:51:41'-'2013-08-19 07:51:41', '50.077228333,14.417115' (Na zborenci 3-5, 120 00 Prague 2, Czech Republic)
+#                'ZORO': '2013-08-19 13:21:52'-'2013-08-19 13:21:52', '50.0772,14.418968333' (Odboru 288/8, 120 00 Prague-Prague 2, Czech Republic)
 #                NO GPS.
 #                        Ignoring: 'ZORO': '2013-08-20 12:22:17'-'2013-08-23 00:21:12', False ()
 
