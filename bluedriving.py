@@ -216,7 +216,7 @@ def get_address_from_gps(location_gps):
                 address = address_cache[location_gps]
             except:
                 if flag_internet:
-                    print location_gps
+                    # print location_gps
                     #[coordinates,address] = getCoordinatesFromAddress.getCoordinates(location_gps)
                     [coordinates,address] = getCoordinates(location_gps)
                     address = address.encode('utf-8')

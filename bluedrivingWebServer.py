@@ -32,6 +32,8 @@
 # Web server for the bludriving.py
 #
 #
+# TODO
+# When the first position of a device is '', them map does not show.
 
 
 # Standard imports
