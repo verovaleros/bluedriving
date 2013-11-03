@@ -900,7 +900,7 @@ def main():
         if opt in ("-i", "--not-internet"): flag_internet = False
         if opt in ("-l", "--not-lookup-services"): flag_lookup_services = False
         if opt in ("-g", "--not-gps"): flag_gps = False; flag_internet = False
-        if opt in ("-f", "--fake-gps"): fake_gps = arg
+        if opt in ("-f", "--fake-gps"): fake_gps = arg; flag_gps = False;
         if opt in ("-m", "--mail-user"): mail_username = arg; print 'Provide your gmail password for given user: ',; mail_password = getpass.getpass()
         if opt in ("-p", "--webserver-port"): webserver_port = int(arg)
         if opt in ("-I", "--webserver-ip"): webserver_ip = str(arg)
