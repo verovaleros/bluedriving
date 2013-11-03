@@ -32,6 +32,8 @@
 # Web server for the bludriving.py
 #
 #
+# TODO
+# When the first position of a device is '', them map does not show.
 
 
 # Standard imports
@@ -39,8 +41,17 @@ import getopt
 import sys
 import BaseHTTPServer
 from os import curdir, sep
-import simplejson as json
-import sqlite3
+try:
+    import simplejson as json
+except:
+    print 'Library needed. apt-get install python-simplejson'
+    exit(-1)
+        
+try:
+    import sqlite3
+except:
+    print 'Library needed. apt-get install python-sqlite'
+    exit(-1)
 import copy
 
 ####################
