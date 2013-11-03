@@ -109,7 +109,7 @@ def version():
 
     print RED
     print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT"
-    print "   Authors: Vero Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
+    print "   Authors: Veronica Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
     print "   Contributors: nanojaus"
     print "   Bluedriving is a bluetooth wardriving utility."
     print 
@@ -125,7 +125,7 @@ def usage():
     print RED
     print
     print "   "+ sys.argv[0] + " Version "+ vernum +" @COPYLEFT"
-    print "   Authors: Vero Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
+    print "   Authors: Veronica Valeros (vero.valeros@gmail.com), Seba Garcia (eldraco@gmail.com)"
     print "   Contributors: nanojaus"
     print "   Bluedriving is a bluetooth wardriving utility."
     print 
@@ -184,10 +184,10 @@ def getGPS():
                 pass
 
     except KeyboardInterrupt:
-        print 'Exiting. It may take a few seconds.'
+        print 'Exiting received in getGPS() function. It may take a few seconds.'
         threadbreak = True
     except Exception as inst:
-        print 'Exception getGPS()'
+        print 'Exception getGPS() function.'
         threadbreak = True
         print 'Ending threads, exiting when finished'
         print type(inst) # the exception instance
@@ -199,6 +199,9 @@ def getGPS():
         sys.exit(1)
 
 def get_address_from_gps(location_gps):
+    """
+    This function gets an address from gps coordinates. 
+    """
     global debug
     global verbose
     global address_cache
@@ -225,14 +228,14 @@ def get_address_from_gps(location_gps):
                     
                     address_cache[location_gps] = address
                 else:
-                    address = "Internet deactivated"
+                    address = "Internet option deactivated"
         return address
 
     except KeyboardInterrupt:
-        print 'Exiting. It may take a few seconds.'
+        print 'Exiting received in get_address_from_gps(location_gps) function. It may take a few seconds.'
         threadbreak = True
     except Exception as inst:
-        print 'Exception in get_address_from_gps()'
+        print 'Exception in get_address_from_gps(location_gps)'
         print 'Received coordinates: {}'.format(location_gps)
         print 'Retrieved coordinates: {}'.format(coordinates)
         print 'Retrieved Address: {}'.format(address)
@@ -278,7 +281,7 @@ def bluetooth_discovering():
                     print '# Discovering devices...'
                     print
                 # Discovering devices
-                data = bluetooth.bluez.discover_devices(duration=5,lookup_names=True)
+                data = bluetooth.bluez.discover_devices(duration=3,lookup_names=True)
                 #data = bluetooth.discover_devices(duration=3,lookup_names=True)
                 if debug:
                     print '# In bluetooth_discovering() function'
@@ -286,6 +289,7 @@ def bluetooth_discovering():
                     print
                 
                 if data:
+                    # If there is some data:
                     # We start a new thread that process the information retrieved 
                     loc = global_location
                     if debug:
@@ -298,7 +302,8 @@ def bluetooth_discovering():
                     process_device_information_thread.setDaemon(True)
                     process_device_information_thread.start()
                 else: 
-                    # No devices
+                    # If there is NO data:
+                    # we print a dash and play a sound
                     print '  -'
                     if flag_sound:
                         if global_location:
@@ -314,14 +319,14 @@ def bluetooth_discovering():
                             pygame.mixer.music.play()
                 counter=0
             except KeyboardInterrupt:
-                print 'Exiting. It may take a few seconds.'
+                print 'Exiting received in bluetooth_discovering() function, inside the while loop. It may take a few seconds.'
                 threadbreak = True
             except Exception as inst:
                 if debug:
-                    print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+                    print 'Exception in bluetooth.bluez.discover_devices(duration=3,lookup_names=True) function.'
                 counter+=1
                 if counter > 30:
-                    print 'Exception in bluetooth.discover_devices(duration=3,lookup_names=True) function.'
+                    print 'Exception in bluetooth.bluez.discover_devices(duration=3,lookup_names=True) function.'
                     threadbreak=True
                     print 'Ending threads, exiting when finished'
                     print
@@ -343,7 +348,7 @@ def bluetooth_discovering():
         return True
 
     except KeyboardInterrupt:
-        print 'Exiting. It may take a few seconds.'
+        print 'Exiting received in bluetooth_discovering function. It may take a few seconds.'
         threadbreak = True
     except Exception as inst:
         print 'Exception in bluetooth_discovering() function'
@@ -358,6 +363,9 @@ def bluetooth_discovering():
         sys.exit(1)
 
 def process_devices(device_list,loc):
+    """
+    This function gets a list of discovered devices and gets it ready for storing on the database. The services discovering happens here.
+    """
     global debug
     global verbose
     global threadbreak
@@ -370,6 +378,8 @@ def process_devices(device_list,loc):
     location_gps = ""
     location_address = ""
     ftime = ""
+    #this flag will help us identify if we found a new device or we already seen the device before.
+    #with this we can play different sounds.
     flag_new_device = False
     try:
         if device_list:
@@ -377,17 +387,21 @@ def process_devices(device_list,loc):
                 print '# In process_devices(device_list,loc) function'
                 print '# device_list len={}'.format(len(device_list))
                 print '# loc={}'.format(loc)
+            # We process all devices retrieved in one run of the discovery function
             for d in device_list:
                 flag_new_device = False
                 try:
+                    #if the device is on list devices, then we already see it.
                     list_devices[d[0]]
                     flag_new_device = False
                 except:
+                    #if the device is not in the list is a new device
                     list_devices[d[0]]=d[1]
                     flag_new_device = True
                     if debug:
                         print 'New device found'
-                #ftime = time.asctime()
+
+                # We setup the timestamp
                 ftime = time.strftime("%Y-%m-%d %H:%M:%S",time.localtime())
 
                 # We get location's related information
@@ -451,7 +465,6 @@ def process_devices(device_list,loc):
 
                 if debug:
                     print 'Data loaded to queue'
-                #time.sleep(0.5)
         # no devices?
         
     except KeyboardInterrupt:
@@ -470,6 +483,9 @@ def process_devices(device_list,loc):
         sys.exit(1)
 
 def db_create_database(database_name):
+    """
+    This function creates a database for storing the data collected
+    """
     global debug
     global verbose
     global threadbreak
@@ -509,6 +525,7 @@ def db_create_database(database_name):
 
 def db_get_database_connection(database_name):
     """
+    This function creates a database connection and returns it
     """
     global debug
     global verbose
@@ -580,6 +597,7 @@ def db_get_device_id(connection,bdaddr,device_information):
 
 def db_add_device(connection,bdaddr,device_information):
     """
+    This function receives a db connection ,mac address and device information. It insert this information in the table Devices. If the mac is already there it will ignore it.
     """
     global debug
     global verbose
@@ -614,6 +632,7 @@ def db_add_device(connection,bdaddr,device_information):
 
 def db_update_device(connection,device_id,device_information):
     """
+    This function updates the Info field of the table devices with the new device information.
     """
     global debug
     global verbose
@@ -650,6 +669,7 @@ def db_update_device(connection,device_id,device_information):
 
 def db_add_location(connection,device_id,location_gps,first_seen,location_address,device_name):
     """
+    This function adds a new location to the Locations database
     """
     global debug
     global verbose
@@ -688,6 +708,7 @@ def db_add_location(connection,device_id,location_gps,first_seen,location_addres
 
 def db_update_location(connection,device_id,location_gps,first_seen):
     """
+    This function updates the lastSeen time of the table Locations for a given macId.
     """
     global debug
     global verbose
@@ -726,6 +747,9 @@ def db_update_location(connection,device_id,location_gps,first_seen):
         sys.exit(1)
 
 def device_alert(device_id,device_name,database_name,location_gps,location_address,last_seen):
+    """
+    This function handles the alerts for devices already seen.
+    """
     global debug
     global verbose
     global mail_username
@@ -775,6 +799,9 @@ def device_alert(device_id,device_name,database_name,location_gps,location_addre
         sys.exit(1)
 
 def store_device_information(database_name):
+    """
+    This function handles the storage of the information collected by the bluetooth_discovering. The information is stored in the database.
+    """
     global debug
     global verbose
     global queue_devices
@@ -908,9 +935,14 @@ def main():
         queue_devices = Queue.Queue()
         startTime = time.time()
 
-        # We print the header for printing results on console
-        print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("Date","MAC address","Device name","Global Position","Aproximate address","Info")
-        print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("----","-----------","-----------","---------------","------------------","----")
+        if flag_lookup_services:
+            # We print the header for printing results on console
+            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("Date","MAC address","Device name","Global Position","Aproximate address","Info")
+            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("----","-----------","-----------","---------------","------------------","----")
+        else:
+            # We print the header for printing results on console
+            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("Date","MAC address","Device name","Global Position","Aproximate address")
+            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("----","-----------","-----------","---------------","------------------")
 
         # Here we start the thread to get gps location        
         if flag_gps and not fake_gps:
