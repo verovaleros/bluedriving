@@ -25,6 +25,7 @@
 #  - Updated README on the github wiki
 #
 # TODO
+# When there is a communication error with the bluetooth device do not kill the thread and continue working.
 # Check this: Fix crashing when multiple threads try to write in the database
 # Redesign the whole program. 
 #
@@ -482,7 +483,8 @@ def db_create_database(database_name):
             # Creating database
             connection = sqlite3.connect(database_name)
             # Creating tables
-            connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
+            #connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT)")
+            connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT, Vendor TEXT)")
             connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
             connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
             connection.execute("CREATE TABLE Alarms(Id INTEGER, Alarm TEXT)")
