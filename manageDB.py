@@ -27,7 +27,6 @@
 #
 # TODO
 # - with -L if the device does not exists, output nothing.
-# - check if the database file exists before using it
 # - For all the devices output all the locations with gps address and mac and vendor.
 # - Given one date, print all the devices found that day, along with the gps and address.
 # - When -L is used, check the address in the DB. If it exists, print it and do not search it again. If not, search for it and store it on the DB.
@@ -763,6 +762,10 @@ def main():
             if not quiet:
                 version()
                 print "[+] Database: {}".format(database)
+            import os
+            if not os.path.isfile(database):
+                print 'The database does not exists.'
+                exit(-1)
             connection = db_connect(database)
 
             if connection:
@@ -826,11 +829,18 @@ def main():
                     for (Id,gps,fseen,lseen,name,address) in locations_dates_results:
 			# This part of the code needs a LOT of improvements. Hopefully fixing it soon.
                         address = address.encode('utf-8')
+                        gps = str(gps)
                         if debug:
-                            print '* This is the data that is currently being processed:'
+                            print '\n\n* This is the data that is currently being processed:'
                             print '* Id: {}, GPS: {}, FirstSeen: {}, LastSeen: {}, Name: {}, Address: {}'.format(Id,gps,fseen,lseen,name,address)
                             print
-                        if (str(gps) != "False") or (str(gps) != ' ') or (str(gps) != 'GPS') or ('NO GPS' not in str(gps)):
+                        #if (str(gps) != "False") or (str(gps) != ' ') or (str(gps) != 'GPS') or ('NO GPS' not in str(gps)):
+                        #if ( len(gps.split(',')) == 2 and len(gps.split(',')[0].split('.')) == 2 and len(gps.split(',')[1].split('.')) == 2 ):
+
+                        # Search for a proper gps position string
+                        import re
+                        gpspattern = re.compile('[0-9]+\.[0-9]+,[0-9]+\.[0-9]+')
+                        if ( gpspattern.search(gps) ):
                             if debug:
                                 print '* gps: {} is not \'False\' nor empty nor \'GPS\''.format(gps)
                                 print 
@@ -849,15 +859,16 @@ def main():
                                     sys.exit(1)
                                     break
                                 except:
+                                    # This can be deleted. There is nothing here that is not a proper gps...
 				    try:
 					str(gps).split(",")[1]
 				    except:
 					print '\t\tNO GPS.'
                                         print "\t\t\tIgnoring: {}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
 					break
-				    time.sleep(1)
+				    #time.sleep(1)
                                     a = gps
-                                    addr= getCoordinates(str(a.strip("\'").strip("\'")))
+                                    addr = getCoordinates(str(a.strip("\'").strip("\'")))
                                     address_to_insert = addr[1]
                                     address_to_insert = address_to_insert.encode('utf-8')
                                     try:
