@@ -325,7 +325,9 @@ def db_merge(db_merged_connection,db_to_merge_connection):
                 sys.exit(0)
             locationinfo = result.fetchall()
             for (MacIdLoc,GPS,FSeen,LSeen,Address,Name) in locationinfo:
-                Address = Address.encode('utf-8')
+                # To avoid the errors when inserting in the db from old databases
+                Address = Address.encode('utf-8').replace('"','').replace('<','').replace('>','').replace('/', '')
+                Name = Name.encode('utf-8').replace('"','').replace('<','').replace('>', '').replace('/', '')
                 if debug:
                     print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
                 newMacId = db_get_id_from_mac(db_merged_connection,Mac)
