@@ -106,7 +106,7 @@ def db_create(database_name):
             # Creating database
             connection = sqlite3.connect(database_name)
             # Creating tables
-            connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT, UNIQUE(Mac))")
+            connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT, Vendor TEXT)")
             connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
             connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
             connection.execute("CREATE TABLE Alarms(Id INTEGER, Alarm TEXT)")
@@ -448,6 +448,9 @@ def db_list_devices_and_names(connection, limit):
                 name=""
                 result = connection.execute("SELECT Name FROM Locations WHERE MacId=\""+str(dev[0])+"\" LIMIT 1") 
                 name = result.fetchall()
+                if not name:
+                    print 'The device existed, but there are no locations for it. Maybe a broken merge.'
+                    continue
                 deviceswname.append([dev[1],name[0][0]])
                 if debug:
                     print "{} - {} - {}".format(dev[0],dev[1],name[0][0])
@@ -761,7 +764,12 @@ def db_update_vendor(connection, mac):
             print 'Updating vendor for mac {}'.format(mac)
 
         # Get the curent vendor for this mac
-        ((vendor,),) = connection.execute("SELECT Vendor FROM Devices WHERE mac like '%" + mac + "%'")
+        try:
+            ((vendor,),) = connection.execute("SELECT Vendor FROM Devices WHERE mac like '%" + mac + "%'")
+        except :
+            if debug:
+                print 'There was no column vendor!! Maybe an old database? Add it manually.'
+            exit(-1)
 
 
         # If there is no vendor, get it
@@ -774,8 +782,13 @@ def db_update_vendor(connection, mac):
 
             if debug:
                 print 'Updating the database.'
-            connection.execute("UPDATE Devices SET Vendor='" + str(vendor)+ "' WHERE mac like '%" + mac + "%'")
-            connection.commit()
+            try:
+                connection.execute("UPDATE Devices SET Vendor='" + str(vendor)+ "' WHERE mac like '%" + mac + "%'")
+                connection.commit()
+            except :
+                if debug:
+                    print 'There was no column vendor'
+                exit(-1)
 
             # If you need to verify the writing
             #(vendor,) = connection.execute("SELECT Vendor FROM Devices WHERE mac like '%" + mac + "%'")
@@ -942,7 +955,7 @@ def main():
     grep_names = False
     rank_devices = False
     ranking=""
-    limit=999999
+    limit=99999999
     merge_db=False
     db_to_merge=""
     db_count=False
