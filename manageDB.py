@@ -325,19 +325,20 @@ def db_merge(db_merged_connection,db_to_merge_connection):
                 sys.exit(0)
             locationinfo = result.fetchall()
             for (MacIdLoc,GPS,FSeen,LSeen,Address,Name) in locationinfo:
-                    if debug:
-                        print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
-                    newMacId = db_get_id_from_mac(db_merged_connection,Mac)
-                    if debug:
-                        print 'New macId: {}'.format(newMacId)
-                    try:
-                        result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\",\""+str(Name)+"\");")
-                    except:
-                        print "Exception in sql query: \"INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES(\""
-                        print str(GPS)+","+str(FSeen)+","+str(LSeen)+","+str(Address)+","+str(Name).encode('utf-8')
+                Address = Address.encode('utf-8')
+                if debug:
+                    print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
+                newMacId = db_get_id_from_mac(db_merged_connection,Mac)
+                if debug:
+                    print 'New macId: {}'.format(newMacId)
+                try:
+                    result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\",\""+str(Name)+"\");")
+                except:
+                    print "Exception in sql query: \"INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES(\""
+                    print str(GPS)+","+str(FSeen)+","+str(LSeen)+","+str(Address)+","+str(Name).encode('utf-8')
 
-                        sys.exit(0)
-                    count_loc = count_loc+1
+                    sys.exit(0)
+                count_loc = count_loc+1
 
             db_merged_connection.commit()
 
