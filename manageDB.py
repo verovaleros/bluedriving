@@ -27,7 +27,6 @@
 #
 # TODO
 # - with -L if the device does not exists, output nothing.
-# - check if the database file exists before using it
 # - For all the devices output all the locations with gps address and mac and vendor.
 # - Given one date, print all the devices found that day, along with the gps and address.
 # - When -L is used, check the address in the DB. If it exists, print it and do not search it again. If not, search for it and store it on the DB.
@@ -46,6 +45,7 @@ from getCoordinatesFromAddress import getCoordinates
 # Global variables
 vernum = '0.1'
 debug = False
+quiet = False
 
 
 def version():
@@ -87,6 +87,7 @@ def usage():
     print "  \t-C, --count-devices                  Count the amount of devices on the database"
     print "  \t-c, --create-db                      Create an empty database. Useful for merging."
     print "  \t-S, --grep-locations                 Find devices near this GPS location. Use % for pattern matching, like '%50.071%,14.402%' "
+    print "  \t-A, --all-data                       Get all the data for all the devices in the database."
 
 def db_create(database_name):
     """
@@ -105,7 +106,7 @@ def db_create(database_name):
             # Creating database
             connection = sqlite3.connect(database_name)
             # Creating tables
-            connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT, UNIQUE(Mac))")
+            connection.execute("CREATE TABLE Devices(Id INTEGER PRIMARY KEY AUTOINCREMENT, Mac TEXT , Info TEXT, Vendor TEXT)")
             connection.execute("CREATE TABLE Locations(Id INTEGER PRIMARY KEY AUTOINCREMENT, MacId INTEGER, GPS TEXT, FirstSeen TEXT, LastSeen TEXT, Address TEXT, Name TEXT, UNIQUE(MacId,GPS))")
             connection.execute("CREATE TABLE Notes(Id INTEGER, Note TEXT)")
             connection.execute("CREATE TABLE Alarms(Id INTEGER, Alarm TEXT)")
@@ -324,19 +325,22 @@ def db_merge(db_merged_connection,db_to_merge_connection):
                 sys.exit(0)
             locationinfo = result.fetchall()
             for (MacIdLoc,GPS,FSeen,LSeen,Address,Name) in locationinfo:
-                    if debug:
-                        print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
-                    newMacId = db_get_id_from_mac(db_merged_connection,Mac)
-                    if debug:
-                        print 'New macId: {}'.format(newMacId)
-                    try:
-                        result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\",\""+str(Name)+"\");")
-                    except:
-                        print "Exception in sql query: \"INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES(\""
-                        print str(GPS)+","+str(FSeen)+","+str(LSeen)+","+str(Address)+","+str(Name).encode('utf-8')
+                # To avoid the errors when inserting in the db from old databases
+                Address = Address.encode('utf-8').replace('"','').replace('<','').replace('>','').replace('/', '')
+                Name = Name.encode('utf-8').replace('"','').replace('<','').replace('>', '').replace('/', '')
+                if debug:
+                    print '{} {} {} {} {} {}'.format(MacIdLoc,GPS,FSeen,LSeen,Address,Name)
+                newMacId = db_get_id_from_mac(db_merged_connection,Mac)
+                if debug:
+                    print 'New macId: {}'.format(newMacId)
+                try:
+                    result = db_merged_connection.execute("INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES("+str(newMacId)+",\""+str(GPS)+"\",\""+str(FSeen)+"\",\""+str(LSeen)+"\",\""+str(Address)+"\",\""+str(Name)+"\");")
+                except:
+                    print "Exception in sql query: \"INSERT OR IGNORE INTO Locations (MacId, GPS, FirstSeen, LastSeen, Address, Name) VALUES(\""
+                    print str(GPS)+","+str(FSeen)+","+str(LSeen)+","+str(Address)+","+str(Name).encode('utf-8')
 
-                        sys.exit(0)
-                    count_loc = count_loc+1
+                    sys.exit(0)
+                count_loc = count_loc+1
 
             db_merged_connection.commit()
 
@@ -444,6 +448,9 @@ def db_list_devices_and_names(connection, limit):
                 name=""
                 result = connection.execute("SELECT Name FROM Locations WHERE MacId=\""+str(dev[0])+"\" LIMIT 1") 
                 name = result.fetchall()
+                if not name:
+                    print 'The device existed, but there are no locations for it. Maybe a broken merge.'
+                    continue
                 deviceswname.append([dev[1],name[0][0]])
                 if debug:
                     print "{} - {} - {}".format(dev[0],dev[1],name[0][0])
@@ -755,6 +762,240 @@ def db_remove_device(connection, mac):
         print 'y =', y
         sys.exit(1)
 
+def steam_vendors_names(vendor):
+    """
+    """
+    try:
+        global debug
+        global verbose
+
+        steamed_vendor = ''
+
+        if 'samsung' in vendor.lower():
+            steamed_vendor = 'Samsung'
+        elif 'nokia' in vendor.lower():
+            steamed_vendor = 'Nokia'
+        elif 'parrot' in vendor.lower():
+            steamed_vendor = 'Parrot'
+        elif 'garmin' in vendor.lower():
+            steamed_vendor = 'Garmin'
+        elif 'ericsson' in vendor.lower():
+            steamed_vendor = 'Ericsson'
+        elif 'lg' in vendor.lower():
+            steamed_vendor = 'LG'
+        elif 'hon hai precision' in vendor.lower():
+            steamed_vendor = 'Hon Hai Precision'
+        elif 'apple' in vendor.lower():
+            steamed_vendor = 'Apple'
+        elif 'research in motion' in vendor.lower() or 'rim' in vendor.lower():
+            steamed_vendor = 'RIM'
+        elif 'motorola' in vendor.lower():
+            steamed_vendor = 'Motorola'
+        elif 'cisco' in vendor.lower():
+            steamed_vendor = 'Cisco'
+        else:
+            steamed_vendor = vendor
+
+        return steamed_vendor
+   
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in steam_vendors_names function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        sys.exit(1)
+
+
+def db_update_vendor(connection, mac):
+    """
+    Get a mac and if its vendor is not in the db, look it up and update the db.
+    """
+    try:
+        global debug
+        global verbose
+        import os
+
+        
+        if debug:
+            print 'Updating vendor for mac {}'.format(mac)
+
+        # Get the curent vendor for this mac
+        try:
+            ((vendor,),) = connection.execute("SELECT Vendor FROM Devices WHERE mac like '%" + mac + "%'")
+        except :
+            if debug:
+                print 'There was no column vendor!! Maybe an old database? Add it manually.'
+            exit(-1)
+
+
+        # If there is no vendor, get it
+        if vendor == None or vendor == '':
+            if debug:
+                print 'Getting the vendor from internet.'
+            vendor = os.popen("wget -qO- 'http://www.coffer.com/mac_find/?string=" + mac + "'|grep -i 'class=\"Table2\"><a'|awk -F\"q=\" '{print $2}'|awk -F\> '{print $1}' |uniq").read().strip('\n').split('\n')[0][:-1] 
+            if debug:
+                print 'Vendor: {0}'.format(vendor)
+
+            if debug:
+                print 'Updating the database.'
+            try:
+                connection.execute("UPDATE Devices SET Vendor='" + str(vendor)+ "' WHERE mac like '%" + mac + "%'")
+                connection.commit()
+            except :
+                if debug:
+                    print 'There was no column vendor'
+                exit(-1)
+
+            # If you need to verify the writing
+            #(vendor,) = connection.execute("SELECT Vendor FROM Devices WHERE mac like '%" + mac + "%'")
+            #for a in vendor:
+                #print a
+        #elif vendor != (None,):
+            #print vendor
+
+        return vendor
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in db_update_vendor function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        sys.exit(1)
+
+
+
+
+def get_locations_and_dates(connection, mac):
+    """
+    Get a mac address and return all its locations, dates and vendor
+    """
+    try:
+        global debug
+        global verbose
+        global quiet
+
+
+        if debug:
+            print '* In get locations and dates from device'
+        addresslist = {}
+        address = ""
+        address_to_insert = ""
+
+        locations_dates_results = db_locations_and_dates(connection,mac)
+
+        # Update the mac vendor if it is not there.
+        vendor = db_update_vendor(connection, str(mac))
+
+        # Get the steamed version also
+        steamed_vendor = steam_vendors_names(vendor)
+
+        if not quiet:
+            print "\tMAC Address: {0}. Vendor: {1}. Steamed Vendor: {2}".format(mac,vendor,steamed_vendor)
+
+        # Get all the locations from the db for this mac
+        for (Id,gps,fseen,lseen,name,address) in locations_dates_results:
+            address = address.encode('utf-8')
+            gps = str(gps)
+
+
+            if debug:
+                print '\n\n* This is the data that is currently being processed:'
+                print '* Id: {}, GPS: {}, FirstSeen: {}, LastSeen: {}, Name: {}, Address: {}'.format(Id,gps,fseen,lseen,name,address)
+                print
+
+
+            #if (str(gps) != "False") or (str(gps) != ' ') or (str(gps) != 'GPS') or ('NO GPS' not in str(gps)):
+            #if ( len(gps.split(',')) == 2 and len(gps.split(',')[0].split('.')) == 2 and len(gps.split(',')[1].split('.')) == 2 ):
+
+            # Search for a proper gps position string using regular expresions
+            import re
+            gpspattern = re.compile('[0-9]+\.[0-9]+,[0-9]+\.[0-9]+')
+            if ( gpspattern.search(gps) ):
+                if debug:
+                    print '* gps: {} is not \'False\' nor empty nor \'GPS\''.format(gps)
+                    print 
+                if ('NO ADDRESS' in address) or (len(address)<8):
+                    if debug:
+                        print '* address: {} is not \'NO ADDRESS\' nor empty'.format(address)
+                        print
+                    try:
+                        address_to_insert = addresslist[gps]
+                        if debug:
+                            print '* Address to insert: {}'.format(address_to_insert)
+                            print
+                        print 'Address cached: {}'.format(address_to_insert)
+                    except KeyboardInterrupt: 
+                        print 'Exiting'
+                        sys.exit(1)
+                        break
+                    except:
+                        # This can be deleted. There is nothing here that is not a proper gps...
+                        try:
+                            gps.split(",")[1]
+                        except:
+                            print '\t\tNO GPS.'
+                            print "\t\t\tIgnoring: {}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
+                            break
+                        #time.sleep(1)
+                        a = gps
+                        addr = getCoordinates(str(a.strip("\'").strip("\'")))
+                        address_to_insert = addr[1]
+                        address_to_insert = address_to_insert.encode('utf-8')
+                        try:
+                            addresslist[gps]=address_to_insert 
+                        except:
+                            print 'Cannot add new address to cache'
+                    try:
+                        if debug:
+                            print '* Updating Locations table, setting address.'
+                        if len(address_to_insert) > 5:
+                                connection.execute("UPDATE Locations SET Address=\""+str(address_to_insert)+"\" WHERE Id="+str(Id))
+                                connection.commit()
+                                print "\t\t*{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
+                        else:
+                                print '\t\tAddress content seems incorrect'
+                                print "\t\t\tNot updating: {}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
+                    except KeyboardInterrupt: 
+                        print 'Exiting'
+                        sys.exit(1)
+                        break
+                    except:
+                        print "Exception updating device address"
+                        print "{}".format(gps)
+                        print "{}".format(address)
+                        print "{}".format(address_to_insert)
+                else:
+                    if debug:
+                        print 'Address already exists'
+                    print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
+            else:
+                if debug:
+                    print 'There is no GPS.'
+                print "\t\t#{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
+
+
+    except KeyboardInterrupt:
+        print 'Exiting. It may take a few seconds.'
+        sys.exit(1)
+    except Exception as inst:
+        print 'Exception in get_locations_and_dates() function'
+        print 'Ending threads, exiting when finished'
+        print type(inst) # the exception instance
+        print inst.args # arguments stored in .args
+        print inst # _str_ allows args to printed directly
+        sys.exit(1)
+
+
+
+
 
 def main():
     """
@@ -762,6 +1003,7 @@ def main():
     """
     global debug
     global verbose
+    global quiet
 
     database=""
     connection=""
@@ -773,8 +1015,7 @@ def main():
     grep_names = False
     rank_devices = False
     ranking=""
-    limit=999999
-    quiet=False
+    limit=99999999
     merge_db=False
     db_to_merge=""
     db_count=False
@@ -787,7 +1028,7 @@ def main():
     try:
 
         # By default we crawl a max of 5000 distinct URLs
-        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:S:u:", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates=","grep-locations=","update-address="])
+        opts, args = getopt.getopt(sys.argv[1:], "hDd:l:enE:R:g:r:qm:Cc:L:S:A", ["help","debug","database-name=","limit=","get-devices","get-devices-with-names","device-exists=","remove-device=","grep-names=","rank-devices=","quiet","merge-with=","count-devices","create-db=","get-locations-with-dates=","grep-locations=","all-data"])
     except:
         usage()
         exit(-1)
@@ -809,8 +1050,7 @@ def main():
         if opt in ("-c", "--create-db"): database = arg; create_db=True
         if opt in ("-L", "--get-locations-with-dates"): mac = arg; locations_and_dates=True
         if opt in ("-S", "--grep-locations"): coordinates = arg; grep_locations=True
-        if opt in ("-u","--update-address"): device_mac = arg; update_address=True
-
+        if opt in ("-A", "--all-data"): all_data = True
 
     try:
         if create_db:
@@ -825,6 +1065,10 @@ def main():
             if not quiet:
                 version()
                 print "[+] Database: {}".format(database)
+            import os
+            if not os.path.isfile(database):
+                print 'The database does not exists.'
+                exit(-1)
             connection = db_connect(database)
 
             if connection:
@@ -876,89 +1120,28 @@ def main():
                 elif db_count:
                     number_of_devices = db_count_devices(connection)
                     print '\tNumber of devices on the database: {}'.format(number_of_devices)
+
                 elif locations_and_dates:
-                    if debug:
-                        print '* In get locations and dates from device'
-                    addresslist={}
-                    address=""
-                    address_to_insert=""
-                    locations_dates_results = db_locations_and_dates(connection,mac)
-                    if not quiet:
-                        print "\tMAC Address: {}".format(mac)
-                    for (Id,gps,fseen,lseen,name,address) in locations_dates_results:
-			# This part of the code needs a LOT of improvements. Hopefully fixing it soon.
-                        address = address.encode('utf-8')
-                        if debug:
-                            print '* This is the data that is currently being processed:'
-                            print '* Id: {}, GPS: {}, FirstSeen: {}, LastSeen: {}, Name: {}, Address: {}'.format(Id,gps,fseen,lseen,name,address)
-                            print
-                        if (str(gps) != "False") or (str(gps) != ' ') or (str(gps) != 'GPS') or ('NO GPS' not in str(gps)):
-                            if debug:
-                                print '* gps: {} is not \'False\' nor empty nor \'GPS\''.format(gps)
-                                print 
-                            if ('NO ADDRESS' in address) or (len(address)<8):
-                                if debug:
-                                    print '* address: {} is not \'NO ADDRESS\' nor empty'.format(address)
-                                    print
-                                try:
-                                    address_to_insert = addresslist[str(gps)]
-                                    if debug:
-                                        print '* Address to insert: {}'.format(address_to_insert)
-                                        print
-                                    print 'Address cached: {}'.format(address_to_insert)
-                                except KeyboardInterrupt: 
-                                    print 'Exiting'
-                                    sys.exit(1)
-                                    break
-                                except:
-				    try:
-					str(gps).split(",")[1]
-				    except:
-					print '\t\tNO GPS.'
-                                        print "\t\t\tIgnoring: {}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
-					break
-				    time.sleep(1)
-                                    a = gps
-                                    addr= getCoordinates(str(a.strip("\'").strip("\'")))
-                                    address_to_insert = addr[1]
-                                    address_to_insert = address_to_insert.encode('utf-8')
-                                    try:
-                                        addresslist[gps]=address_to_insert 
-                                    except:
-                                        print 'Cannot add new address to cache'
-                                try:
-                                    if debug:
-                                        print '* Updating Locations table, setting address.'
-				    if len(address_to_insert) > 5:
-					    connection.execute("UPDATE Locations SET Address=\""+str(address_to_insert)+"\" WHERE Id="+str(Id))
-					    connection.commit()
-                                            print "\t\t*{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
-			            else:
-					    print '\t\tAddress content seems incorrect'
-                                            print "\t\t\tNot updating: {}: {}-{}, {} ({})".format(name, fseen, lseen, gps, str(address_to_insert))
-                                except KeyboardInterrupt: 
-                                    print 'Exiting'
-                                    sys.exit(1)
-                                    break
-                                except:
-                                    print "Exception updating device address"
-                                    print "{}".format(gps)
-                                    print "{}".format(address)
-                                    print "{}".format(address_to_insert)
-                            else:
-                                if debug:
-                                    print 'Address already exists'
-                                print "\t\t{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
-                        else:
-                            if debug:
-                                print 'There is no GPS.'
-                            print "\t\t#{}: {}-{}, {} ({})".format(name, fseen, lseen, gps, address)
+                    # Get all the Locations and dates from the devices
+                    get_locations_and_dates(connection, mac)
+
                 elif grep_locations:
                     locations = db_grep_locations(connection,coordinates)
                     if locations:
                         for (name,macid,fseen,gps) in locations:
                             mac = db_get_mac_from_id(connection,macid)
-                            print '{}::{} {} {}'.format(mac,name,fseen,gps)
+                            print ' {}::{} {} {}'.format(mac,name,fseen,gps)
+                elif all_data:
+                    
+                    # Get all the macs
+                    if debug:
+                        print 'Getting all the information from all the macs'
+                    result = connection.execute("SELECT Mac FROM Devices")
+                    # Get the data for all the macs
+                    for mac in result:
+                        (mac,) = mac
+                        get_locations_and_dates(connection, mac)
+
                 else:
                     print "Nothing to do. Please select an option."
 
