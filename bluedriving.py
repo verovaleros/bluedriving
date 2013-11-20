@@ -944,8 +944,8 @@ def main():
             print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("----","-----------","-----------","---------------","------------------","----")
         else:
             # We print the header for printing results on console
-            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("Date","MAC address","Device name","Global Position","Aproximate address")
-            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}  {:<20}'.format("----","-----------","-----------","---------------","------------------")
+            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}'.format("Date","MAC address","Device name","Global Position","Aproximate address")
+            print '  {:<24}  {:<17}  {:<30}  {:<27}  {:<30}'.format("----","-----------","-----------","---------------","------------------")
 
         # Here we start the thread to get gps location        
         if flag_gps and not flag_fake_gps:
