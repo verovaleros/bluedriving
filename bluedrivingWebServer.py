@@ -154,7 +154,7 @@ def get_unread_registers():
         # First select all the locations
         # This can be VERY HEAVY with a huge database...
         #for row in cursor.execute('SELECT * FROM Locations order by lastseen DESC limit 9000'):
-        askname = ('%Vlada%',)
+        askname = ('%%',)
 
         for row in cursor.execute('SELECT * FROM Locations where Name like ? order by lastseen DESC limit 9000 ',askname):
 
