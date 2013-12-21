@@ -262,7 +262,6 @@ def bluetooth_discovering():
     global flag_sound
     global global_location
 
-    counter=0
     try:
         if debug:
             print '# In bluetooth_discovering() function'
@@ -273,6 +272,7 @@ def bluetooth_discovering():
             print '# global_location={0}'.format(global_location)
             print
             
+        counter=0
         while not threadbreak:
             data = ""
 
@@ -299,6 +299,8 @@ def bluetooth_discovering():
                         print '# threading.Thread(None,target = process_devices,args=(data,loc))'
                         print '# process_device_information_thread.setDaemon(True)'
                         print
+                    if verbose:
+                        print 'Found: {} devices'.format(len(data))
                     process_device_information_thread = threading.Thread(None,target = process_devices,args=(data,loc))
                     process_device_information_thread.setDaemon(True)
                     process_device_information_thread.start()
@@ -322,29 +324,23 @@ def bluetooth_discovering():
             except KeyboardInterrupt:
                 print 'Exiting received in bluetooth_discovering() function, inside the while loop. It may take a few seconds.'
                 threadbreak = True
-            except Exception as inst:
+            except:
+                counter=counter+1
                 if debug:
-                    print 'Exception in bluetooth.bluez.discover_devices(duration=3,lookup_names=True) function.'
-                counter+=1
-                if counter > 30:
-                    print 'Exception in bluetooth.bluez.discover_devices(duration=3,lookup_names=True) function.'
-                    threadbreak=True
+                    print 'An exception occured on the bluetooth_discovering() function. Trying to continue the scanning'
+                if counter > 9000:
+                    print 'Too many exceptions in bluetooth_discovering() function'
+                    threadbreak = True
                     print 'Ending threads, exiting when finished'
-                    print
-                    print 'Information of the exception: '
-                    print '----------------------------------------------------------------------------'
                     print type(inst) # the exception instance
                     print inst.args # arguments stored in .args
                     print inst # _str_ allows args to printed directly
                     x, y = inst # _getitem_ allows args to be unpacked directly
                     print 'x =', x
                     print 'y =', y
-                    print '----------------------------------------------------------------------------'
-                    break
-                    sys.exit(-1)
-                    break
-                else:
-                    continue
+                    sys.exit(1)
+
+
         threadbreak = True
         return True
 
