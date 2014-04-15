@@ -909,7 +909,7 @@ def main():
     flag_fake_gps=False
 
     try:
-        # By default we crawl a max of 5000 distinct URLs
+        
         opts, args = getopt.getopt(sys.argv[1:], "hDd:wsilgf:m:I:p:", ["help","debug","database-name=","webserver","disable-sound","not-internet","not-lookup-services","not-gps","fake-gps=","mail-user=","webserver-port=","webserver-ip="])
     except: 
         usage()
